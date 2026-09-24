@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { PEOPLE, money, toKey, useUsTwo } from "@/lib/ustwo";
 import { Avatar, EmptyNote, Lightbox, SectionTitle, TxnCard, useLightbox } from "./shared";
-import { WidgetPreview } from "./WidgetPreview";
 import { cn } from "@/lib/utils";
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
