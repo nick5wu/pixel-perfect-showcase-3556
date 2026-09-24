@@ -165,8 +165,6 @@ export function HomeTab({ selected, onSelect }: { selected: string; onSelect: (d
         ))}
       </section>
 
-      <WidgetPreview />
-
       <section>
         <SectionTitle zh={`${selected.slice(5)} 的花費`} en="Selected date" />
         <div className="space-y-2.5">
