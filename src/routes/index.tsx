@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus } from "lucide-react";
 
@@ -32,9 +32,11 @@ export const Route = createFileRoute("/")({
     ],
   }),
   component: () => (
-    <UsTwoProvider>
-      <App />
-    </UsTwoProvider>
+    <ClientOnly fallback={<div className="ambient-glow min-h-screen bg-background" />}>
+      <UsTwoProvider>
+        <App />
+      </UsTwoProvider>
+    </ClientOnly>
   ),
 });
 
