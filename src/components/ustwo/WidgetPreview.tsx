@@ -6,7 +6,7 @@ export function WidgetPreview() {
   const spent = visible
     .filter((t) => t.date.startsWith(month) && t.kind === "expense")
     .reduce((s, t) => s + t.amount, 0);
-  const goal = goals[0]!;
+  const goal = goals[0] ?? { zh: "還沒有目標", saved: 0, target: 1 };
   const pct = Math.round((goal.saved / goal.target) * 100);
 
   return (
@@ -22,7 +22,7 @@ export function WidgetPreview() {
         </div>
         <div className="glass-strong w-[42%] rounded-[1.6rem] p-3.5">
           <p className="text-[10px] font-bold text-muted-foreground">
-            {goal.emoji} {goal.zh}
+            {goal.zh}
           </p>
           <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full neu-inset">
             <div

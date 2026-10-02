@@ -82,7 +82,8 @@ export type Goal = {
   id: string;
   title: string;
   zh: string;
-  emoji: string;
+  icon: string; // key in ICONS
+  tint: string;
   target: number;
   saved: number;
 };
@@ -126,10 +127,10 @@ const seed: Txn[] = [
 ];
 
 const goalSeed: Goal[] = [
-  { id: "g1", title: "Trip to Japan", zh: "日本行", emoji: "🗼", target: 120000, saved: 74500 },
-  { id: "g2", title: "New Sofa", zh: "新沙發", emoji: "🛋️", target: 32000, saved: 21800 },
-  { id: "g3", title: "Rainy Day Fund", zh: "安心基金", emoji: "☂️", target: 60000, saved: 15400 },
-  { id: "g4", title: "Cat's Vet Fund", zh: "貓咪醫藥費", emoji: "🐱", target: 20000, saved: 18200 },
+  { id: "g1", title: "Trip to Japan", zh: "日本行", icon: "plane", tint: tint(4), target: 120000, saved: 74500 },
+  { id: "g2", title: "New Sofa", zh: "新沙發", icon: "home", tint: tint(0), target: 32000, saved: 21800 },
+  { id: "g3", title: "Rainy Day Fund", zh: "安心基金", icon: "umbrella", tint: tint(2), target: 60000, saved: 15400 },
+  { id: "g4", title: "Cat's Vet Fund", zh: "貓咪醫藥費", icon: "cat", tint: tint(6), target: 20000, saved: 18200 },
 ];
 
 type Store = {
@@ -140,6 +141,8 @@ type Store = {
   visible: Txn[];
   goals: Goal[];
   addToGoal: (id: string, amount: number) => void;
+  addGoal: (g: Omit<Goal, "id" | "saved">) => void;
+  removeGoal: (id: string) => void;
   anniversary: string;
   categories: CatDef[];
   getCat: (id: Category) => CatDef;
@@ -167,6 +170,8 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
         setGoals((prev) =>
           prev.map((g) => (g.id === id ? { ...g, saved: Math.min(g.target, g.saved + amount) } : g)),
         ),
+      addGoal: (g) => setGoals((prev) => [...prev, { ...g, id: `g${Date.now()}`, saved: 0 }]),
+      removeGoal: (id) => setGoals((prev) => prev.filter((g) => g.id !== id)),
       anniversary: "2021-10-16",
       categories,
       getCat: (id) => categories.find((c) => c.id === id) ?? FALLBACK,
