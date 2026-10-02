@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { PEOPLE, money, iconOf, useUsTwo, type Category } from "@/lib/ustwo";
-import { SectionTitle, EmptyNote } from "./shared";
+import { PEOPLE, money, iconOf, toKey, useUsTwo, type Category } from "@/lib/ustwo";
+import { Avatar, SectionTitle, EmptyNote } from "./shared";
 import { cn } from "@/lib/utils";
 
 type Mode = "joint" | "private";
@@ -32,7 +32,7 @@ function Donut({ slices }: { slices: { color: string; value: number }[] }) {
 }
 
 export function StatsTab() {
-  const { txns, activeUser, getCat } = useUsTwo();
+  const { txns, visible, activeUser, getCat } = useUsTwo();
   const [mode, setMode] = useState<Mode>("joint");
 
   const rows = useMemo(
@@ -53,6 +53,12 @@ export function StatsTab() {
   const total = rows.reduce((s, t) => s + t.amount, 0);
   const mine = rows.filter((t) => t.payer === "me").reduce((s, t) => s + t.amount, 0);
   const hers = total - mine;
+
+  const today = toKey(new Date());
+  const todayPaid = { me: 0, her: 0 };
+  for (const t of visible) if (t.date === today && t.kind === "expense") todayPaid[t.payer] += t.amount;
+  const todayTotal = todayPaid.me + todayPaid.her;
+  const todayPct = todayTotal ? (todayPaid.me / todayTotal) * 100 : 50;
 
   return (
     <div className="space-y-5">
@@ -83,6 +89,35 @@ export function StatsTab() {
           </button>
         ))}
       </div>
+
+      {/* Today's duel */}
+      <section>
+        <SectionTitle zh="今日付款對決" en="Today's duel" />
+        <div className="glass rounded-[1.75rem] p-4">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            {(["me", "her"] as const).map((who, i) => (
+              <div key={who} className={cn("flex min-w-0 items-center gap-2.5", i === 1 && "order-3 flex-row-reverse text-right")}>
+                <Avatar who={who} />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold text-muted-foreground">{who === "me" ? "我今天付了" : "另一半今天付了"}</p>
+                  <p className="truncate text-lg font-extrabold tabular-nums" style={{ color: PEOPLE[who].color }}>
+                    {money(todayPaid[who])}
+                  </p>
+                </div>
+              </div>
+            ))}
+            <span className="order-2 flex h-8 w-8 items-center justify-center rounded-full neu text-[10px] font-extrabold text-muted-foreground">VS</span>
+          </div>
+          <div className="mt-3 flex h-3 overflow-hidden rounded-full neu-inset">
+            <div className="transition-[width] duration-700" style={{ width: `${todayPct}%`, backgroundColor: PEOPLE.me.color }} />
+            <div className="flex-1 transition-[width] duration-700" style={{ backgroundColor: todayTotal ? PEOPLE.her.color : "transparent" }} />
+          </div>
+          <p className="mt-2 text-center text-[11px] font-semibold text-muted-foreground">
+            {todayTotal === 0 ? "今天還沒有人花錢，好棒！" : todayPaid.me === todayPaid.her ? "今天平手，默契滿分" : `今天${todayPaid.me > todayPaid.her ? "我" : "她"}多付了 ${money(Math.abs(todayPaid.me - todayPaid.her))}`}
+          </p>
+        </div>
+      </section>
+
 
       {rows.length === 0 ? (
         <EmptyNote text={mode === "private" ? "你還沒有私房錢紀錄 🤫" : "還沒有共同支出紀錄"} />
