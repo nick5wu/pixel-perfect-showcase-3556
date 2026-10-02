@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Lock } from "lucide-react";
-import { CATEGORIES, PEOPLE, money, type Txn } from "@/lib/ustwo";
+import { PEOPLE, money, iconOf, useUsTwo, type Txn } from "@/lib/ustwo";
 import { cn } from "@/lib/utils";
 
 export function Avatar({ who, size = "md" }: { who: "me" | "her"; size?: "sm" | "md" | "lg" }) {
@@ -54,8 +54,8 @@ export function TxnCard({
   onPhoto?: (src: string) => void;
   index?: number;
 }) {
-  const cat = CATEGORIES[t.category];
-  const Icon = cat.icon;
+  const cat = useUsTwo().getCat(t.category);
+  const Icon = iconOf(cat);
   const tilt = index % 2 === 0 ? "rotate-1" : "-rotate-1";
 
   return (

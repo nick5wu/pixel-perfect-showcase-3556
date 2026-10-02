@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CATEGORIES, PEOPLE, money, useUsTwo, type Category } from "@/lib/ustwo";
+import { PEOPLE, money, iconOf, useUsTwo, type Category } from "@/lib/ustwo";
 import { SectionTitle, EmptyNote } from "./shared";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +32,7 @@ function Donut({ slices }: { slices: { color: string; value: number }[] }) {
 }
 
 export function StatsTab() {
-  const { txns, activeUser } = useUsTwo();
+  const { txns, activeUser, getCat } = useUsTwo();
   const [mode, setMode] = useState<Mode>("joint");
 
   const rows = useMemo(
@@ -90,26 +90,27 @@ export function StatsTab() {
         <>
           <section className="glass rounded-[2rem] p-5">
             <Donut
-              slices={byCat.map(([c, v]) => ({ color: `var(--cat-${catIndex(c)})`, value: v }))}
+              slices={byCat.map(([c, v]) => ({ color: getCat(c).tint, value: v }))}
             />
             <div className="mt-5 space-y-2.5">
               {byCat.map(([c, v]) => {
                 const pct = Math.round((v / total) * 100);
-                const Icon = CATEGORIES[c].icon;
+                const cd = getCat(c);
+                const Icon = iconOf(cd);
                 return (
                   <div key={c} className="flex items-center gap-3">
                     <span
                       className="flex h-9 w-9 items-center justify-center rounded-xl"
-                      style={{ backgroundColor: `color-mix(in oklch, ${CATEGORIES[c].tint} 26%, white)` }}
+                      style={{ backgroundColor: `color-mix(in oklch, ${cd.tint} 26%, white)` }}
                     >
                       <Icon
                         className="h-4 w-4"
-                        style={{ color: `color-mix(in oklch, ${CATEGORIES[c].tint} 80%, black)` }}
+                        style={{ color: `color-mix(in oklch, ${cd.tint} 80%, black)` }}
                       />
                     </span>
                     <div className="flex-1">
                       <div className="flex justify-between text-xs font-semibold">
-                        <span>{CATEGORIES[c].zh}</span>
+                        <span>{cd.zh}</span>
                         <span className="tabular-nums">
                           {money(v)} · {pct}%
                         </span>
@@ -117,7 +118,7 @@ export function StatsTab() {
                       <div className="mt-1 h-2 w-full overflow-hidden rounded-full neu-inset">
                         <div
                           className="h-full rounded-full"
-                          style={{ width: `${pct}%`, backgroundColor: CATEGORIES[c].tint }}
+                          style={{ width: `${pct}%`, backgroundColor: cd.tint }}
                         />
                       </div>
                     </div>
@@ -152,18 +153,3 @@ export function StatsTab() {
   );
 }
 
-function catIndex(c: Category) {
-  const order: Category[] = [
-    "food",
-    "coffee",
-    "grocery",
-    "date",
-    "transit",
-    "fun",
-    "pet",
-    "home",
-    "income",
-  ];
-  const i = order.indexOf(c === "gift" ? "date" : c);
-  return (i < 0 ? 0 : i) + 1;
-}

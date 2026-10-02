@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { CATEGORIES, money, useUsTwo, type Category } from "@/lib/ustwo";
+import { money, useUsTwo, type Category } from "@/lib/ustwo";
 import { EmptyNote, Lightbox, SectionTitle, TxnCard, useLightbox } from "./shared";
 import { cn } from "@/lib/utils";
 
 export function OverviewTab() {
-  const { visible } = useUsTwo();
+  const { visible, categories } = useUsTwo();
   const [q, setQ] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -59,7 +59,7 @@ export function OverviewTab() {
         </div>
 
         <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {(Object.keys(CATEGORIES) as Category[]).map((c) => {
+          {categories.map(({ id: c, zh, tint }) => {
             const on = cats.includes(c);
             return (
               <button
@@ -69,9 +69,9 @@ export function OverviewTab() {
                   "bouncy shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold",
                   on ? "text-primary-foreground" : "neu text-muted-foreground",
                 )}
-                style={on ? { backgroundColor: CATEGORIES[c].tint } : undefined}
+                style={on ? { backgroundColor: tint } : undefined}
               >
-                {CATEGORIES[c].zh}
+                {zh}
               </button>
             );
           })}
