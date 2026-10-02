@@ -32,7 +32,7 @@ function Donut({ slices }: { slices: { color: string; value: number }[] }) {
 }
 
 export function StatsTab() {
-  const { txns, activeUser } = useUsTwo();
+  const { txns, activeUser, getCat } = useUsTwo();
   const [mode, setMode] = useState<Mode>("joint");
 
   const rows = useMemo(
