@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { PEOPLE, money, toKey, useUsTwo } from "@/lib/ustwo";
-import { Avatar, EmptyNote, Lightbox, SectionTitle, TxnCard, useLightbox } from "./shared";
+import { toKey, useUsTwo } from "@/lib/ustwo";
+import { EmptyNote, Lightbox, SectionTitle, TxnCard, useLightbox } from "./shared";
 import { cn } from "@/lib/utils";
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
@@ -49,10 +49,6 @@ export function HomeTab({ selected, onSelect }: { selected: string; onSelect: (d
 
   const dayTxns = visible.filter((t) => t.date === selected);
   const today = toKey(new Date());
-  const paidToday = (who: "me" | "her") =>
-    visible
-      .filter((t) => t.date === today && t.kind === "expense" && t.payer === who)
-      .reduce((s, t) => s + t.amount, 0);
 
   return (
     <div className="space-y-5">
@@ -147,21 +143,6 @@ export function HomeTab({ selected, onSelect }: { selected: string; onSelect: (d
             );
           })}
         </div>
-      </section>
-
-      {/* Duel cards */}
-      <section className="grid grid-cols-2 gap-3">
-        {(["me", "her"] as const).map((who) => (
-          <div key={who} className="glass flex flex-col items-center gap-1 rounded-[1.75rem] p-4">
-            <Avatar who={who} />
-            <p className="text-[11px] font-semibold text-muted-foreground">
-              {who === "me" ? "我今天付了" : "另一半今天付了"}
-            </p>
-            <p className="text-xl font-extrabold tabular-nums" style={{ color: PEOPLE[who].color }}>
-              {money(paidToday(who))}
-            </p>
-          </div>
-        ))}
       </section>
 
       <section>
