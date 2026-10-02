@@ -29,7 +29,8 @@ export const ICONS: Record<string, LucideIcon> = {
   laptop: Laptop, mail: Mail, piggy: PiggyBank, coins: Coins,
 };
 
-export const TINTS = Array.from({ length: 9 }, (_, i) => `var(--cat-${i + 1})`);
+const tint = (i: number) => `var(--cat-${i + 1})`;
+export const TINTS: string[] = Array.from({ length: 9 }, (_, i) => tint(i));
 
 export type CatDef = {
   id: Category;
@@ -41,28 +42,28 @@ export type CatDef = {
 };
 
 const DEFAULT_CATS: CatDef[] = [
-  { id: "breakfast", zh: "早餐", kind: "expense", icon: "croissant", tint: TINTS[6] },
-  { id: "lunch", zh: "午餐", kind: "expense", icon: "sandwich", tint: TINTS[0] },
-  { id: "dinner", zh: "晚餐", kind: "expense", icon: "soup", tint: TINTS[3] },
-  { id: "coffee", zh: "咖啡飲料", kind: "expense", icon: "coffee", tint: TINTS[1] },
-  { id: "snack", zh: "點心宵夜", kind: "expense", icon: "cookie", tint: TINTS[6] },
-  { id: "grocery", zh: "超市採買", kind: "expense", icon: "basket", tint: TINTS[2] },
-  { id: "daily", zh: "生活用品", kind: "expense", icon: "bag", tint: TINTS[7] },
-  { id: "transit", zh: "交通", kind: "expense", icon: "train", tint: TINTS[4] },
-  { id: "home", zh: "居家水電", kind: "expense", icon: "bulb", tint: TINTS[7] },
-  { id: "date", zh: "約會", kind: "expense", icon: "heart", tint: TINTS[3] },
-  { id: "fun", zh: "娛樂", kind: "expense", icon: "game", tint: TINTS[5] },
-  { id: "pet", zh: "毛孩", kind: "expense", icon: "cat", tint: TINTS[6] },
-  { id: "gift", zh: "禮物", kind: "expense", icon: "gift", tint: TINTS[3] },
-  { id: "salary", zh: "薪水", kind: "income", icon: "wallet", tint: TINTS[8] },
-  { id: "bonus", zh: "獎金", kind: "income", icon: "trophy", tint: TINTS[6] },
-  { id: "invest", zh: "投資理財", kind: "income", icon: "trend", tint: TINTS[2] },
-  { id: "side", zh: "接案副業", kind: "income", icon: "laptop", tint: TINTS[4] },
-  { id: "redpacket", zh: "紅包禮金", kind: "income", icon: "mail", tint: TINTS[3] },
-  { id: "otherin", zh: "其他收入", kind: "income", icon: "coins", tint: TINTS[1] },
+  { id: "breakfast", zh: "早餐", kind: "expense", icon: "croissant", tint: tint(6) },
+  { id: "lunch", zh: "午餐", kind: "expense", icon: "sandwich", tint: tint(0) },
+  { id: "dinner", zh: "晚餐", kind: "expense", icon: "soup", tint: tint(3) },
+  { id: "coffee", zh: "咖啡飲料", kind: "expense", icon: "coffee", tint: tint(1) },
+  { id: "snack", zh: "點心宵夜", kind: "expense", icon: "cookie", tint: tint(6) },
+  { id: "grocery", zh: "超市採買", kind: "expense", icon: "basket", tint: tint(2) },
+  { id: "daily", zh: "生活用品", kind: "expense", icon: "bag", tint: tint(7) },
+  { id: "transit", zh: "交通", kind: "expense", icon: "train", tint: tint(4) },
+  { id: "home", zh: "居家水電", kind: "expense", icon: "bulb", tint: tint(7) },
+  { id: "date", zh: "約會", kind: "expense", icon: "heart", tint: tint(3) },
+  { id: "fun", zh: "娛樂", kind: "expense", icon: "game", tint: tint(5) },
+  { id: "pet", zh: "毛孩", kind: "expense", icon: "cat", tint: tint(6) },
+  { id: "gift", zh: "禮物", kind: "expense", icon: "gift", tint: tint(3) },
+  { id: "salary", zh: "薪水", kind: "income", icon: "wallet", tint: tint(8) },
+  { id: "bonus", zh: "獎金", kind: "income", icon: "trophy", tint: tint(6) },
+  { id: "invest", zh: "投資理財", kind: "income", icon: "trend", tint: tint(2) },
+  { id: "side", zh: "接案副業", kind: "income", icon: "laptop", tint: tint(4) },
+  { id: "redpacket", zh: "紅包禮金", kind: "income", icon: "mail", tint: tint(3) },
+  { id: "otherin", zh: "其他收入", kind: "income", icon: "coins", tint: tint(1) },
 ];
 
-const FALLBACK: CatDef = { id: "?", zh: "其他", kind: "expense", icon: "sparkles", tint: TINTS[1] };
+const FALLBACK: CatDef = { id: "?", zh: "其他", kind: "expense", icon: "sparkles", tint: tint(1) };
 export const iconOf = (c: CatDef): LucideIcon => ICONS[c.icon] ?? Sparkles;
 
 export type Txn = {

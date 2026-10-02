@@ -36,7 +36,7 @@ export function AddModal({
   const [editing, setEditing] = useState(false);
   const [newName, setNewName] = useState("");
   const [newIcon, setNewIcon] = useState("sparkles");
-  const [newTint, setNewTint] = useState(TINTS[0]);
+  const [newTint, setNewTint] = useState<string>("var(--cat-1)");
   const list = categories.filter((c) => c.kind === kind);
 
   const switchKind = (k: Kind) => {
@@ -213,7 +213,7 @@ export function AddModal({
             <div className="flex items-center gap-3">
               <Stamp tint={newTint} big>
                 {(() => {
-                  const I = ICONS[newIcon];
+                  const I = ICONS[newIcon] ?? Plus;
                   return <I className="h-5 w-5" strokeWidth={2.2} style={{ color: `color-mix(in oklch, ${newTint} 75%, black)` }} />;
                 })()}
               </Stamp>
