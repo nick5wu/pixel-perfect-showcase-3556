@@ -24,7 +24,7 @@ function Sheet({ children, onClose }: { children: React.ReactNode; onClose: () =
 }
 
 function GoalIcon({ g, size = "h-12 w-12" }: { g: Pick<Goal, "icon" | "tint">; size?: string }) {
-  const Icon = ICONS[g.icon] ?? ICONS.piggy!;
+  const Icon = ICONS[g.icon] ?? ICONS["piggy"]!;
   return (
     <span
       className={cn("flex shrink-0 items-center justify-center rounded-2xl", size)}
@@ -41,7 +41,7 @@ function DepositSheet({ goal, onClose }: { goal: Goal; onClose: () => void }) {
   const n = Number(amt);
   const left = goal.target - goal.saved;
   const submit = () => {
-    if (!n || n <= 0) return toast.error("請輸入金額");
+    if (!n || n <= 0) { toast.error("請輸入金額"); return; }
     addToGoal(goal.id, n);
     toast.success(`往「${goal.zh}」存了 ${money(Math.min(n, left))}`);
     onClose();
@@ -93,8 +93,8 @@ function NewGoalSheet({ onClose }: { onClose: () => void }) {
   const [tint, setTint] = useState(TINTS[0]!);
   const submit = () => {
     const t = Number(target);
-    if (!zh.trim()) return toast.error("請輸入目標名稱");
-    if (!t) return toast.error("請輸入目標金額");
+    if (!zh.trim()) { toast.error("請輸入目標名稱"); return; }
+    if (!t) { toast.error("請輸入目標金額"); return; }
     addGoal({ zh: zh.trim(), title: title.trim() || zh.trim(), target: t, icon, tint });
     toast.success(`新增目標「${zh.trim()}」`);
     onClose();
