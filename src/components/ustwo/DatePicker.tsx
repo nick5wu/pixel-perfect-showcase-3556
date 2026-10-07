@@ -70,10 +70,10 @@ export function DatePicker({
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          className="glass-strong pop-in pointer-events-auto z-[90] w-auto max-w-[calc(100vw-1rem)] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto rounded-[2rem] border border-primary/15 p-3 shadow-xl"
+          className="planner-popup pointer-events-auto z-[90] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto"
         >
           {showQuickPresets && (
-            <div className="mb-2 flex items-center gap-1.5 px-1">
+            <div className="mb-5 flex items-center gap-3">
               {[
                 { label: "今天", key: todayKey },
                 { label: "昨天", key: yesterdayKey },
@@ -83,24 +83,12 @@ export function DatePicker({
                   disabled={!!max && key > max}
                   key={key}
                   type="button"
+                  aria-pressed={value === key}
                   onClick={() => {
                     onChange(key);
                     setOpen(false);
                   }}
-                  className={cn(
-                    "bouncy rounded-full px-3 py-1 text-xs font-bold transition-all",
-                    value === key
-                      ? "text-primary-foreground shadow-sm"
-                      : "neu text-muted-foreground",
-                  )}
-                  style={
-                    value === key
-                      ? {
-                          backgroundImage:
-                            "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
-                        }
-                      : undefined
-                  }
+                  className="planner-preset bouncy h-10 rounded-full px-6 text-sm font-semibold"
                 >
                   {label}
                 </Button>
@@ -118,16 +106,11 @@ export function DatePicker({
                 setOpen(false);
               }
             }}
-            className="pointer-events-auto p-1"
           />
           <Button
             type="button"
             onClick={() => setOpen(false)}
-            className="bouncy mt-2 h-9 w-full rounded-2xl text-xs font-bold text-primary-foreground"
-            style={{
-              backgroundImage:
-                "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
-            }}
+            className="planner-complete bouncy w-full text-base font-bold text-primary-foreground"
           >
             完成
           </Button>

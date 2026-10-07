@@ -36,14 +36,14 @@ export function DateRangePicker({ from, to, onChange }: Props) {
             <span className="truncate">{text}</span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="glass-strong pointer-events-auto z-[90] w-auto max-w-[calc(100vw-1rem)] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto rounded-[2rem] border border-primary/15 p-3 shadow-xl">
-          <div className="no-scrollbar mb-2 flex gap-1.5 overflow-x-auto">
+        <PopoverContent align="start" className="planner-popup pointer-events-auto z-[90] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto">
+          <div className="no-scrollbar mb-5 flex gap-2 overflow-x-auto">
             {presets.map(([name, fn]) => (
               <Button
                 variant="ghost"
                 key={name}
                 onClick={() => { const [a, b] = fn(); onChange(toKey(a), toKey(b)); setOpen(false); }}
-                className="bouncy shrink-0 rounded-full neu px-3 py-1.5 text-xs font-bold"
+                className="planner-preset bouncy h-10 shrink-0 rounded-full px-3 text-xs font-semibold"
               >
                 {name}
               </Button>
@@ -54,10 +54,8 @@ export function DateRangePicker({ from, to, onChange }: Props) {
             selected={range}
             defaultMonth={parse(from) ?? now}
             onSelect={(r) => onChange(r?.from ? toKey(r.from) : "", r?.to ? toKey(r.to) : r?.from ? toKey(r.from) : "")}
-            className="pointer-events-auto p-1"
           />
-          <Button onClick={() => setOpen(false)} className="bouncy mt-2 h-10 w-full rounded-2xl text-sm font-bold text-primary-foreground"
-            style={{ backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))" }}>
+          <Button onClick={() => setOpen(false)} className="planner-complete bouncy w-full text-base font-bold text-primary-foreground">
             完成
           </Button>
         </PopoverContent>

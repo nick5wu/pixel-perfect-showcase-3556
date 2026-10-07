@@ -92,6 +92,9 @@
   --border: oklch(0.9 0.02 74);
   --input: oklch(0.9 0.02 74);
   --ring: var(--caramel);
+  --planner-paper: #fffbf7;
+  --planner-wash: #fdf2e9;
+  --planner-shadow: 0 20px 50px -12px oklch(0.4 0.035 55 / 0.18);
 
   --cat-1: oklch(0.74 0.15 45);
   --cat-2: oklch(0.68 0.09 62);
@@ -170,6 +173,92 @@
   --shadow-neu-inset:
     inset 3px 3px 8px oklch(0 0 0 / 0.40), inset -3px -3px 8px oklch(1 0 0 / 0.04);
   --shadow-pop: 0 18px 40px -14px oklch(0 0 0 / 0.65);
+  --planner-paper: var(--popover);
+  --planner-wash: var(--accent);
+  --planner-shadow: var(--shadow-soft);
+}
+
+/* One continuous paper surface for every planner date popup. */
+.planner-popup {
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  padding: 24px 20px;
+  border: 0;
+  border-radius: 36px;
+  background: var(--planner-paper);
+  box-shadow: var(--planner-shadow);
+}
+
+.planner-calendar[data-slot="calendar"] {
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  --cell-size: 2.5rem;
+}
+
+.planner-calendar .rdp-month {
+  gap: 20px;
+}
+
+.planner-calendar .rdp-dropdown_root {
+  border: 0;
+  border-radius: 16px;
+  background: var(--planner-wash);
+  box-shadow: none;
+}
+
+.planner-calendar .rdp-caption_label {
+  height: 40px;
+  padding-inline: 12px;
+  font-weight: 600;
+}
+
+.planner-calendar .rdp-day {
+  background: transparent;
+}
+
+.planner-calendar .rdp-day_button {
+  min-width: 0;
+  height: 40px;
+  width: 40px;
+  max-width: 100%;
+  margin-inline: auto;
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+.planner-calendar .rdp-today:not([data-selected="true"]) .rdp-day_button {
+  color: var(--primary);
+  background: var(--planner-wash);
+}
+
+.planner-calendar .rdp-range_middle {
+  background: var(--accent);
+}
+
+.planner-calendar .rdp-day_button[data-range-middle="true"] {
+  width: 100%;
+  border-radius: 0;
+}
+
+.planner-preset {
+  background: var(--planner-wash);
+  color: var(--primary);
+  box-shadow: none;
+}
+
+.planner-preset[aria-pressed="true"] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-soft);
+}
+
+.planner-complete {
+  height: 48px;
+  margin-top: 20px;
+  border-radius: 24px;
+  background: var(--primary);
+  box-shadow: var(--shadow-soft);
 }
 
 @layer base {
