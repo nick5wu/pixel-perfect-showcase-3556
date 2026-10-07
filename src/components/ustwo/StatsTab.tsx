@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { PEOPLE, money, iconOf, toKey, useUsTwo, type Category } from "@/lib/ustwo";
-import { Avatar, SectionTitle, EmptyNote } from "./shared";
+import { Lock, Sparkles, ShieldCheck } from "lucide-react";
+import { money, iconOf, toKey, useUsTwo, type Category, type Txn } from "@/lib/ustwo";
+import { Avatar, SectionTitle, EmptyNote, TxnCard, Lightbox, useLightbox } from "./shared";
 import { cn } from "@/lib/utils";
 
 type Mode = "joint" | "private";
@@ -31,10 +32,13 @@ function Donut({ slices }: { slices: { color: string; value: number }[] }) {
   );
 }
 
-export function StatsTab() {
-  const { txns, visible, activeUser, getCat } = useUsTwo();
+export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
+  const { txns, visible, activeUser, getCat, people } = useUsTwo();
   const [mode, setMode] = useState<Mode>("joint");
+  const lb = useLightbox();
 
+  // Joint: all public expense txns
+  // Private: ONLY current activeUser's private expense txns
   const rows = useMemo(
     () =>
       txns.filter((t) =>
@@ -62,11 +66,12 @@ export function StatsTab() {
 
   return (
     <div className="space-y-5">
+      {/* Mode switcher */}
       <div className="glass grid grid-cols-2 gap-1 rounded-[1.75rem] p-1.5">
         {(
           [
-            ["joint", "共同支出"],
-            ["private", "個人私房錢"],
+            ["joint", "共同支出統計"],
+            ["private", "個人私房錢統計"],
           ] as [Mode, string][]
         ).map(([m, label]) => (
           <button
@@ -90,35 +95,50 @@ export function StatsTab() {
         ))}
       </div>
 
-      {/* Today's duel */}
-      <section>
-        <SectionTitle zh="今日付款對決" en="Today's duel" />
-        <div className="glass rounded-[1.75rem] p-4">
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-            {(["me", "her"] as const).map((who, i) => (
-              <div key={who} className={cn("flex min-w-0 items-center gap-2.5", i === 1 && "order-3 flex-row-reverse text-right")}>
-                <Avatar who={who} />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-semibold text-muted-foreground">{who === "me" ? "我今天付了" : "另一半今天付了"}</p>
-                  <p className="truncate text-lg font-extrabold tabular-nums" style={{ color: PEOPLE[who].color }}>
-                    {money(todayPaid[who])}
-                  </p>
-                </div>
-              </div>
-            ))}
-            <span className="order-2 flex h-8 w-8 items-center justify-center rounded-full neu text-[10px] font-extrabold text-muted-foreground">VS</span>
+      {/* Privacy Notice in Private Mode */}
+      {mode === "private" && (
+        <section className="glass rounded-[1.75rem] p-4 text-xs">
+          <div className="flex items-center gap-2 text-primary font-bold">
+            <ShieldCheck className="h-4 w-4" />
+            <span>私密帳本隔離保護中</span>
           </div>
-          <div className="mt-3 flex h-3 overflow-hidden rounded-full neu-inset">
-            <div className="transition-[width] duration-700" style={{ width: `${todayPct}%`, backgroundColor: PEOPLE.me.color }} />
-            <div className="flex-1 transition-[width] duration-700" style={{ backgroundColor: todayTotal ? PEOPLE.her.color : "transparent" }} />
-          </div>
-          <p className="mt-2 text-center text-[11px] font-semibold text-muted-foreground">
-            {todayTotal === 0 ? "今天還沒有人花錢，好棒！" : todayPaid.me === todayPaid.her ? "今天平手，默契滿分" : `今天${todayPaid.me > todayPaid.her ? "我" : "她"}多付了 ${money(Math.abs(todayPaid.me - todayPaid.her))}`}
+          <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
+            這是 <span className="font-bold text-foreground">{people[activeUser].zh}</span> 的專屬秘密小帳本。另一半在首頁、日曆、總覽與圖表完全看不到這些紀錄，亦不計入共同預算。
           </p>
-        </div>
-      </section>
+        </section>
+      )}
 
+      {/* Today's duel (Only shown in joint mode) */}
+      {mode === "joint" && (
+        <section>
+          <SectionTitle zh="今日付款對決" en="Today's duel" />
+          <div className="glass rounded-[1.75rem] p-4">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              {(["me", "her"] as const).map((who, i) => (
+                <div key={who} className={cn("flex min-w-0 items-center gap-2.5", i === 1 && "order-3 flex-row-reverse text-right")}>
+                  <Avatar who={who} />
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold text-muted-foreground">{who === "me" ? "我今天付了" : "另一半今天付了"}</p>
+                    <p className="truncate text-lg font-extrabold tabular-nums" style={{ color: people[who].color }}>
+                      {money(todayPaid[who])}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <span className="order-2 flex h-8 w-8 items-center justify-center rounded-full neu text-[10px] font-extrabold text-muted-foreground">VS</span>
+            </div>
+            <div className="mt-3 flex h-3 overflow-hidden rounded-full neu-inset">
+              <div className="transition-[width] duration-700" style={{ width: `${todayPct}%`, backgroundColor: people.me.color }} />
+              <div className="flex-1 transition-[width] duration-700" style={{ backgroundColor: todayTotal ? people.her.color : "transparent" }} />
+            </div>
+            <p className="mt-2 text-center text-[11px] font-semibold text-muted-foreground">
+              {todayTotal === 0 ? "今天還沒有人花錢，好棒！" : todayPaid.me === todayPaid.her ? "今天平手，默契滿分" : `今天${todayPaid.me > todayPaid.her ? "我" : "她"}多付了 ${money(Math.abs(todayPaid.me - todayPaid.her))}`}
+            </p>
+          </div>
+        </section>
+      )}
 
+      {/* Main Charts */}
       {rows.length === 0 ? (
         <EmptyNote text={mode === "private" ? "你還沒有私房錢紀錄 🤫" : "還沒有共同支出紀錄"} />
       ) : (
@@ -163,28 +183,47 @@ export function StatsTab() {
             </div>
           </section>
 
+          {/* Joint breakdown comparison */}
           {mode === "joint" && (
             <section>
               <SectionTitle zh="誰付得多？" en="Who paid more" />
               <div className="glass rounded-[1.75rem] p-4">
                 <div className="flex h-5 overflow-hidden rounded-full neu-inset">
                   <div
-                    style={{ width: `${(mine / (total || 1)) * 100}%`, backgroundColor: PEOPLE.me.color }}
+                    style={{ width: `${(mine / (total || 1)) * 100}%`, backgroundColor: people.me.color }}
                   />
                   <div
-                    style={{ width: `${(hers / (total || 1)) * 100}%`, backgroundColor: PEOPLE.her.color }}
+                    style={{ width: `${(hers / (total || 1)) * 100}%`, backgroundColor: people.her.color }}
                   />
                 </div>
                 <div className="mt-2 flex justify-between text-xs font-bold">
-                  <span>🐻 我 {money(mine)}</span>
-                  <span>🐰 她 {money(hers)}</span>
+                  <span>🐻 {people.me.zh} {money(mine)}</span>
+                  <span>🐰 {people.her.zh} {money(hers)}</span>
                 </div>
+              </div>
+            </section>
+          )}
+
+          {/* Private Mode: List of private records with edit support */}
+          {mode === "private" && (
+            <section>
+              <SectionTitle zh="私房錢明細列表" en="Private records" />
+              <div className="space-y-2.5">
+                {rows.map((t) => (
+                  <TxnCard
+                    key={t.id}
+                    txn={t}
+                    onClickImage={lb.open}
+                    onEdit={onEdit}
+                  />
+                ))}
               </div>
             </section>
           )}
         </>
       )}
+
+      {lb.src && <Lightbox src={lb.src} onClose={lb.close} />}
     </div>
   );
 }
-

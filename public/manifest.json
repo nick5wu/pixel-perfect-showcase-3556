@@ -1,0 +1,27 @@
+{
+  "name": "UsTwo Ledger 我們倆的記帳小窩",
+  "short_name": "UsTwo",
+  "description": "情侶專屬的溫暖記帳小窩：共同帳本、私人花費、夢想撲滿",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8f0e6",
+  "theme_color": "#bd6b2f",
+  "categories": ["finance", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icon-192.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "lang": "zh-TW",
+  "dir": "ltr"
+}

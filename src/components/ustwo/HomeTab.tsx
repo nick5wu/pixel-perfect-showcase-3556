@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import { toKey, useUsTwo } from "@/lib/ustwo";
+import { toKey, useUsTwo, type Txn } from "@/lib/ustwo";
+import { BudgetBanner } from "./BudgetBanner";
 import { EmptyNote, Lightbox, SectionTitle, TxnCard, useLightbox } from "./shared";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +13,15 @@ function startOfWeek(d: Date) {
   return c;
 }
 
-export function HomeTab({ selected, onSelect }: { selected: string; onSelect: (d: string) => void }) {
+export function HomeTab({
+  selected,
+  onSelect,
+  onEdit,
+}: {
+  selected: string;
+  onSelect: (d: string) => void;
+  onEdit: (t: Txn) => void;
+}) {
   const { visible } = useUsTwo();
   const [expanded, setExpanded] = useState(false);
   const [cursor, setCursor] = useState(() => new Date(selected));
@@ -52,6 +61,9 @@ export function HomeTab({ selected, onSelect }: { selected: string; onSelect: (d
 
   return (
     <div className="space-y-5">
+      {/* Budget progress banner — only shows when budget is set */}
+      <BudgetBanner />
+
       {/* Calendar */}
       <section className="glass rounded-[2rem] p-4">
         <div className="mb-3 flex items-center justify-between">
@@ -149,7 +161,9 @@ export function HomeTab({ selected, onSelect }: { selected: string; onSelect: (d
         <SectionTitle zh={`${selected.slice(5)} 的花費`} en="Selected date" />
         <div className="space-y-2.5">
           {dayTxns.length ? (
-            dayTxns.map((t, i) => <TxnCard key={t.id} t={t} index={i} onPhoto={lb.setPhoto} />)
+            dayTxns.map((t, i) => (
+              <TxnCard key={t.id} t={t} index={i} onPhoto={lb.setPhoto} onEdit={onEdit} />
+            ))
           ) : (
             <EmptyNote text="這天還沒有記帳，很省錢喔 🎉" />
           )}

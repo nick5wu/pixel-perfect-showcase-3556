@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { Lock } from "lucide-react";
+import { useRef, useState } from "react";
+import { Lock, Pencil, Trash2, X } from "lucide-react";
 import { PEOPLE, money, iconOf, useUsTwo, type Txn } from "@/lib/ustwo";
 import { cn } from "@/lib/utils";
 
 export function Avatar({ who, size = "md" }: { who: "me" | "her"; size?: "sm" | "md" | "lg" }) {
-  const p = PEOPLE[who];
+  const { people } = useUsTwo();
+  const p = people[who];
   return (
     <span
       className={cn(
@@ -45,21 +46,52 @@ export function Lightbox({ src, onClose }: { src: string | null; onClose: () => 
   );
 }
 
+/** Confirm-delete overlay shown inline inside TxnCard */
+function DeleteConfirm({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
+  return (
+    <div className="pop-in absolute inset-0 z-10 flex items-center justify-center gap-3 rounded-3xl bg-white/80 backdrop-blur-sm">
+      <p className="text-sm font-semibold">確定刪除這筆？</p>
+      <button
+        onClick={onConfirm}
+        className="bouncy rounded-2xl bg-destructive px-4 py-1.5 text-xs font-bold text-destructive-foreground"
+      >
+        刪除
+      </button>
+      <button
+        onClick={onCancel}
+        className="bouncy rounded-2xl neu px-4 py-1.5 text-xs font-bold"
+      >
+        取消
+      </button>
+    </div>
+  );
+}
+
 export function TxnCard({
   t,
   onPhoto,
+  onEdit,
   index = 0,
 }: {
   t: Txn;
   onPhoto?: (src: string) => void;
+  onEdit?: (t: Txn) => void;
   index?: number;
 }) {
-  const cat = useUsTwo().getCat(t.category);
+  const { people, getCat, deleteTxn } = useUsTwo();
+  const cat = getCat(t.category);
   const Icon = iconOf(cat);
   const tilt = index % 2 === 0 ? "rotate-1" : "-rotate-1";
+  const [confirming, setConfirming] = useState(false);
 
   return (
-    <div className="glass pop-in flex items-center gap-3 rounded-3xl p-3">
+    <div className="glass pop-in relative flex items-center gap-3 rounded-3xl p-3">
+      {confirming && (
+        <DeleteConfirm
+          onCancel={() => setConfirming(false)}
+          onConfirm={() => { deleteTxn(t.id); setConfirming(false); }}
+        />
+      )}
       <span
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/60"
         style={{ backgroundColor: `color-mix(in oklch, ${cat.tint} 24%, white)` }}
@@ -77,8 +109,8 @@ export function TxnCard({
           )}
         </div>
         <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-          <span>{PEOPLE[t.payer].emoji}</span>
-          {PEOPLE[t.payer].zh}付的 · {cat.zh}
+          <span>{people[t.payer].emoji}</span>
+          {people[t.payer].zh}付的 · {cat.zh}
         </p>
       </div>
 
@@ -103,6 +135,26 @@ export function TxnCard({
         {t.kind === "income" ? "+" : "-"}
         {money(t.amount)}
       </p>
+
+      {/* Action buttons */}
+      <div className="ml-1 flex shrink-0 flex-col gap-1">
+        {onEdit && (
+          <button
+            onClick={() => onEdit(t)}
+            aria-label="編輯"
+            className="bouncy flex h-7 w-7 items-center justify-center rounded-full neu"
+          >
+            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+        )}
+        <button
+          onClick={() => setConfirming(true)}
+          aria-label="刪除"
+          className="bouncy flex h-7 w-7 items-center justify-center rounded-full neu"
+        >
+          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+        </button>
+      </div>
     </div>
   );
 }

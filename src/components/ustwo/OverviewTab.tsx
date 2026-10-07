@@ -1,11 +1,11 @@
 import { useMemo, useRef, useState } from "react";
 import { Search } from "lucide-react";
-import { money, useUsTwo, type Category } from "@/lib/ustwo";
+import { money, useUsTwo, type Category, type Txn } from "@/lib/ustwo";
 import { EmptyNote, Lightbox, SectionTitle, TxnCard, useLightbox } from "./shared";
 import { DateRangePicker } from "./DateRangePicker";
 import { cn } from "@/lib/utils";
 
-export function OverviewTab() {
+export function OverviewTab({ onEdit }: { onEdit: (t: Txn) => void }) {
   const { visible, categories } = useUsTwo();
   const [q, setQ] = useState("");
   const [from, setFrom] = useState("");
@@ -97,7 +97,7 @@ export function OverviewTab() {
             <SectionTitle zh={date} en={`${list.length} items`} />
             <div className="space-y-2.5">
               {list.map((t, i) => (
-                <TxnCard key={t.id} t={t} index={i} onPhoto={lb.setPhoto} />
+                <TxnCard key={t.id} t={t} index={i} onPhoto={lb.setPhoto} onEdit={onEdit} />
               ))}
             </div>
           </section>

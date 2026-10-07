@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">我們倆的記帳小窩</string>
+    <string name="title_activity_main">我們倆的記帳小窩</string>
+    <string name="package_name">com.ustwo.ledger</string>
+    <string name="custom_url_scheme">com.ustwo.ledger</string>
+</resources>

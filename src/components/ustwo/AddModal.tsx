@@ -1,43 +1,167 @@
-import { useState } from "react";
-import { Camera, Lock, X, Delete, Plus, Check } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Camera, CalendarDays, Lock, X, Delete, Plus, Check, ImageOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   ICONS,
   TINTS,
   iconOf,
-  PEOPLE,
-  money,
   toKey,
   useUsTwo,
   type Category,
   type Kind,
+  type Txn,
   type UserId,
 } from "@/lib/ustwo";
+import { uploadReceiptPhoto, isSupabaseConfigured } from "@/lib/supabase";
 import { Avatar } from "./shared";
 import { cn } from "@/lib/utils";
 
 const PAD = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "00", "0", "del"];
 
+// ─── Quick date helpers ───────────────────────────────────────────────────────
+
+function todayStr() { return toKey(new Date()); }
+function yesterdayStr() { const d = new Date(); d.setDate(d.getDate() - 1); return toKey(d); }
+
+// ─── Image compression helpers ────────────────────────────────────────────────
+
+function compressImage(file: File, maxPx = 800, quality = 0.75): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+function compressImageToBlob(file: File, maxPx = 1200, quality = 0.8): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error("Canvas to Blob conversion failed"));
+      }, "image/jpeg", quality);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
+// ─── Stamp badge ──────────────────────────────────────────────────────────────
+
+function Stamp({ tint, big, children }: { tint: string; big?: boolean; children: React.ReactNode }) {
+  return (
+    <span
+      className={cn("relative flex items-center justify-center rounded-full", big ? "h-12 w-12" : "h-10 w-10")}
+      style={{
+        backgroundColor: `color-mix(in oklch, ${tint} 30%, white)`,
+        boxShadow: `inset 0 -2px 0 color-mix(in oklch, ${tint} 35%, transparent), 0 2px 6px -2px color-mix(in oklch, ${tint} 50%, transparent)`,
+      }}
+    >
+      <span
+        className="absolute inset-[3px] rounded-full border border-dashed"
+        style={{ borderColor: `color-mix(in oklch, ${tint} 55%, white)` }}
+      />
+      {children}
+    </span>
+  );
+}
+
+// ─── Date picker row ──────────────────────────────────────────────────────────
+
+function DateRow({ value, onChange }: { value: string; onChange: (d: string) => void }) {
+  const today = todayStr();
+  const yesterday = yesterdayStr();
+  return (
+    <div className="mt-3 flex items-center gap-2">
+      <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
+      {[
+        { label: "今天", val: today },
+        { label: "昨天", val: yesterday },
+      ].map(({ label, val }) => (
+        <button
+          key={val}
+          onClick={() => onChange(val)}
+          className={cn(
+            "bouncy rounded-2xl px-3 py-1.5 text-xs font-bold",
+            value === val ? "text-primary-foreground" : "neu text-muted-foreground",
+          )}
+          style={value === val ? { backgroundColor: "var(--caramel)", boxShadow: "var(--shadow-soft)" } : undefined}
+        >
+          {label}
+        </button>
+      ))}
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => e.target.value && onChange(e.target.value)}
+        max={today}
+        className="h-8 flex-1 rounded-2xl neu-inset px-3 text-xs font-semibold outline-none"
+        style={{ colorScheme: "light" }}
+      />
+    </div>
+  );
+}
+
+// ─── AddModal (also used as EditModal when initialTxn is provided) ────────────
+
 export function AddModal({
   open,
   onClose,
-  date,
+  date: defaultDate,
+  initialTxn,
 }: {
   open: boolean;
   onClose: () => void;
   date: string;
+  initialTxn?: Txn; // when set → edit mode
 }) {
-  const { activeUser, addTxn, categories, addCategory, removeCategory } = useUsTwo();
-  const [amount, setAmount] = useState("");
-  const [payer, setPayer] = useState<UserId>(activeUser);
-  const [kind, setKind] = useState<Kind>("expense");
-  const [category, setCategory] = useState<Category>("breakfast");
+  const { activeUser, addTxn, updateTxn, categories, addCategory, removeCategory, people, coupleId } = useUsTwo();
+  const isEdit = !!initialTxn;
+
+  const [amount, setAmount] = useState(isEdit ? String(initialTxn.amount) : "");
+  const [date, setDate] = useState(isEdit ? initialTxn.date : (defaultDate || todayStr()));
+  const [payer, setPayer] = useState<UserId>(isEdit ? initialTxn.payer : activeUser);
+  const [kind, setKind] = useState<Kind>(isEdit ? initialTxn.kind : "expense");
+  const [category, setCategory] = useState<Category>(isEdit ? initialTxn.category : "breakfast");
+  const [note, setNote] = useState(isEdit ? initialTxn.note : "");
+  const [isPrivate, setIsPrivate] = useState(isEdit ? initialTxn.isPrivate : false);
+  const [photo, setPhoto] = useState<string | null>(isEdit ? (initialTxn.photo ?? null) : null);
+  const [photoLoading, setPhotoLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [newName, setNewName] = useState("");
   const [newIcon, setNewIcon] = useState("sparkles");
   const [newTint, setNewTint] = useState<string>("var(--cat-1)");
+
+  const fileRef = useRef<HTMLInputElement>(null);
   const list = categories.filter((c) => c.kind === kind);
+
+  // Sync date when defaultDate changes (e.g. calendar selects a new day) — only for add mode
+  useEffect(() => {
+    if (!isEdit) setDate(defaultDate || todayStr());
+  }, [defaultDate, isEdit]);
 
   const switchKind = (k: Kind) => {
     setKind(k);
@@ -48,35 +172,51 @@ export function AddModal({
 
   const createCat = () => {
     const zh = newName.trim();
-    if (!zh) {
-      toast("幫細項取個名字吧 ✨");
-      return;
-    }
+    if (!zh) { toast("幫細項取個名字吧 ✨"); return; }
     const def = addCategory({ zh, kind, icon: newIcon, tint: newTint });
     setCategory(def.id);
     setNewName("");
     setCreating(false);
     toast.success(`新增了「${zh}」`);
   };
-  const [note, setNote] = useState("");
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [photo, setPhoto] = useState<string | null>(null);
-
-  if (!open) return null;
 
   const press = (k: string) => {
     if (k === "del") setAmount((a) => a.slice(0, -1));
     else setAmount((a) => (a.length > 7 ? a : (a + k).replace(/^0+(?=\d)/, "")));
   };
 
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoLoading(true);
+    try {
+      if (coupleId && isSupabaseConfigured()) {
+        const blob = await compressImageToBlob(file);
+        const cloudUrl = await uploadReceiptPhoto(blob, coupleId);
+        if (cloudUrl) {
+          setPhoto(cloudUrl);
+          toast.success("照片已上傳至雲端相簿 ☁️");
+          setPhotoLoading(false);
+          if (fileRef.current) fileRef.current.value = "";
+          return;
+        }
+      }
+      const b64 = await compressImage(file);
+      setPhoto(b64);
+      toast.success("照片已備妥 📷");
+    } catch {
+      toast.error("照片載入失敗，請再試一次");
+    } finally {
+      setPhotoLoading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
   const save = () => {
     const value = Number(amount);
-    if (!value) {
-      toast("先輸入金額唷 ✨");
-      return;
-    }
-    addTxn({
-      date: date || toKey(new Date()),
+    if (!value) { toast("先輸入金額唷 ✨"); return; }
+    const txnData = {
+      date: date || todayStr(),
       amount: value,
       kind,
       category,
@@ -84,14 +224,20 @@ export function AddModal({
       payer,
       isPrivate,
       ...(photo ? { photo } : {}),
-    });
-    toast.success(isPrivate ? "已偷偷記下來 🤫" : "記好囉，甜甜的一筆 🧡");
-    setAmount("");
-    setNote("");
-    setPhoto(null);
-    setIsPrivate(false);
+    };
+    if (isEdit && initialTxn) {
+      updateTxn(initialTxn.id, txnData);
+      toast.success("已更新這筆記帳 ✏️");
+    } else {
+      addTxn(txnData);
+      toast.success(isPrivate ? "已偷偷記下來 🤫" : "記好囉，甜甜的一筆 🧡");
+    }
     onClose();
   };
+
+  if (!open) return null;
+
+  const money_ = (n: number) => `NT$${Math.round(n).toLocaleString()}`;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center">
@@ -110,13 +256,18 @@ export function AddModal({
           <X className="h-4 w-4" />
         </button>
 
-        <p className="text-center text-xs font-semibold text-muted-foreground">記一筆 · {date}</p>
+        <p className="text-center text-xs font-semibold text-muted-foreground">
+          {isEdit ? "編輯這筆 ✏️" : "記一筆 🧡"}
+        </p>
         <p className="mt-1 text-center text-4xl font-extrabold tabular-nums">
-          {amount ? money(Number(amount)) : <span className="text-muted-foreground">NT$0</span>}
+          {amount ? money_(Number(amount)) : <span className="text-muted-foreground">NT$0</span>}
         </p>
 
+        {/* Date row */}
+        <DateRow value={date} onChange={setDate} />
+
         {/* Payer */}
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-3 grid grid-cols-2 gap-2">
           {(["me", "her"] as UserId[]).map((u) => (
             <button
               key={u}
@@ -127,12 +278,12 @@ export function AddModal({
               )}
               style={
                 payer === u
-                  ? { backgroundColor: PEOPLE[u].color, boxShadow: "var(--shadow-pop)" }
+                  ? { backgroundColor: people[u].color, boxShadow: "var(--shadow-pop)" }
                   : undefined
               }
             >
               <Avatar who={u} size="sm" />
-              {PEOPLE[u].zh}付
+              {people[u].zh}付
             </button>
           ))}
         </div>
@@ -281,22 +432,40 @@ export function AddModal({
             placeholder="寫點什麼呢？例如：巷口的鬆餅"
             className="h-12 flex-1 rounded-2xl neu-inset px-4 text-sm outline-none placeholder:text-muted-foreground"
           />
+          {/* Hidden file input */}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handlePhoto}
+          />
           <button
-            onClick={() => setPhoto(photo ? null : "polaroid")}
+            onClick={() => photo ? setPhoto(null) : fileRef.current?.click()}
             className="bouncy flex h-12 w-12 items-center justify-center rounded-2xl neu"
-            aria-label="Add photo"
+            aria-label={photo ? "移除照片" : "新增照片"}
           >
-            <Camera className="h-5 w-5 text-primary" />
+            {photoLoading ? (
+              <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            ) : photo ? (
+              <ImageOff className="h-5 w-5 text-destructive" />
+            ) : (
+              <Camera className="h-5 w-5 text-primary" />
+            )}
           </button>
         </div>
 
+        {/* Photo preview polaroid */}
         {photo && (
           <div className="mt-3 flex justify-center">
             <div className="polaroid rotate-[-2deg] rounded-md">
-              <div className="flex h-24 w-24 items-center justify-center rounded-sm bg-secondary text-2xl">
-                📷
-              </div>
-              <p className="mt-1 text-center text-[10px] text-muted-foreground">照片預覽</p>
+              <img
+                src={photo}
+                alt="選取的照片"
+                className="h-28 w-28 rounded-sm object-cover"
+              />
+              <p className="mt-1 text-center text-[10px] text-muted-foreground">點相機圖標可移除 📷</p>
             </div>
           </div>
         )}
@@ -331,28 +500,9 @@ export function AddModal({
             boxShadow: "var(--shadow-pop)",
           }}
         >
-          記下來 🧡
+          {isEdit ? "儲存修改 ✏️" : "記下來 🧡"}
         </button>
       </div>
     </div>
-  );
-}
-
-/** Warm planner-stamp badge: soft cream disc with a dashed inner ring. */
-function Stamp({ tint, big, children }: { tint: string; big?: boolean; children: React.ReactNode }) {
-  return (
-    <span
-      className={cn("relative flex items-center justify-center rounded-full", big ? "h-12 w-12" : "h-10 w-10")}
-      style={{
-        backgroundColor: `color-mix(in oklch, ${tint} 30%, white)`,
-        boxShadow: `inset 0 -2px 0 color-mix(in oklch, ${tint} 35%, transparent), 0 2px 6px -2px color-mix(in oklch, ${tint} 50%, transparent)`,
-      }}
-    >
-      <span
-        className="absolute inset-[3px] rounded-full border border-dashed"
-        style={{ borderColor: `color-mix(in oklch, ${tint} 55%, white)` }}
-      />
-      {children}
-    </span>
   );
 }
