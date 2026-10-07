@@ -4,21 +4,36 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>UsTwo Ledger 我們倆的記帳小窩</title>
-    <meta name="theme-color" content="#bd6b2f" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/icon-192.jpg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700&display=swap"
-    />
+    <style>
+      body {
+        margin: 0;
+        background-color: #f8f0e6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        font-family: system-ui, -apple-system, sans-serif;
+        color: #8c532b;
+      }
+      .heart {
+        font-size: 48px;
+        animation: pulse 1.2s infinite ease-in-out;
+      }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.18); }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/start.ts"></script>
+    <div class="heart">🧡</div>
+    <p style="margin-top: 16px; font-weight: bold; font-size: 16px;">我們倆的記帳小窩</p>
+    <p style="margin-top: 4px; font-size: 12px; opacity: 0.7;">正在載入小窩中...</p>
+    <script>
+      setTimeout(() => {
+        window.location.replace("https://pixel-perfect-showcase-3556.vercel.app");
+      }, 300);
+    </script>
   </body>
 </html>

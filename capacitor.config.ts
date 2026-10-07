@@ -5,17 +5,17 @@ const config: CapacitorConfig = {
   appName: '我們倆的記帳小窩',
   webDir: '.output/public',
   server: {
-    // If you run on local Wi-Fi, you can set url to: 'http://192.168.0.105:8080'
-    // cleartext: true,
-    androidScheme: 'https'
+    url: 'https://pixel-perfect-showcase-3556.vercel.app',
+    cleartext: true,
+    androidScheme: 'https',
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 1500,
       backgroundColor: '#f8f0e6',
       showSpinner: false,
-    }
-  }
+    },
+  },
 };
 
 export default config;
