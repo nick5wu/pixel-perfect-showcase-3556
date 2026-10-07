@@ -13,6 +13,7 @@ import {
   type UserId,
 } from "@/lib/ustwo";
 import { uploadReceiptPhoto, isSupabaseConfigured } from "@/lib/supabase";
+import { DatePicker } from "./DatePicker";
 import { cn } from "@/lib/utils";
 
 const PAD = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "00", "0", "del"];
@@ -263,12 +264,9 @@ export function AddModal({
           {amount ? money_(Number(amount)) : <span className="text-muted-foreground">NT$0</span>}
         </p>
 
-        {/* 4. Unified Date Logic: Static badge, no redundant pickers */}
-        <div className="mt-2 flex items-center justify-center">
-          <span className="glass inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold text-muted-foreground shadow-sm">
-            <CalendarDays className="h-3.5 w-3.5 text-primary" />
-            記帳日期 · {date}
-          </span>
+        {/* 4. 手帳風日期選擇器 (統一手帳風格) */}
+        <div className="mt-3">
+          <DatePicker value={date} onChange={setDate} />
         </div>
 
         {/* Kind Toggle (Expense / Income) */}

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { money, toKey, useUsTwo, type UserId, type DarkMode } from "@/lib/ustwo";
 import { Avatar, SectionTitle } from "./shared";
 import { WidgetPreview } from "./WidgetPreview";
+import { DatePicker } from "./DatePicker";
 import { cn } from "@/lib/utils";
 
 // ─── Emoji picker options ─────────────────────────────────────────────────────
@@ -231,18 +232,17 @@ function AnniversaryEdit() {
       <p className="text-3xl font-extrabold tabular-nums">{days} 天</p>
       {editing ? (
         <div className="mt-3 flex items-center justify-center gap-2">
-          <input
-            type="date"
+          <DatePicker
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={setDraft}
             max={toKey(new Date())}
-            className="h-9 rounded-2xl neu-inset px-3 text-sm outline-none"
-            style={{ colorScheme: "light" }}
+            showQuickPresets={false}
+            className="flex-1 max-w-[220px]"
           />
-          <button onClick={commit} className="bouncy flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <button onClick={commit} className="bouncy flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <Check className="h-4 w-4" />
           </button>
-          <button onClick={() => { setDraft(anniversary); setEditing(false); }} className="bouncy flex h-8 w-8 items-center justify-center rounded-full neu">
+          <button onClick={() => { setDraft(anniversary); setEditing(false); }} className="bouncy flex h-9 w-9 shrink-0 items-center justify-center rounded-full neu">
             <X className="h-4 w-4" />
           </button>
         </div>
