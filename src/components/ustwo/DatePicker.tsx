@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CalendarHeart } from "lucide-react";
-import { zhTW } from "date-fns/locale";
-import { Calendar } from "@/components/ui/calendar";
+import { PlannerCalendar } from "./PlannerCalendar";
+import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toKey } from "@/lib/ustwo";
 import { cn } from "@/lib/utils";
@@ -58,17 +58,19 @@ export function DatePicker({
     <div className={cn("flex items-center gap-2", className)}>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <button
+          <Button
+            variant="ghost"
+            aria-label="選擇日期"
             type="button"
             className="bouncy neu flex h-10 min-w-0 flex-1 items-center gap-2 rounded-2xl px-3.5 text-xs font-bold transition-colors"
           >
             <CalendarHeart className="h-4 w-4 shrink-0 text-primary" />
             <span className="truncate">{formatFriendly(value) || value}</span>
-          </button>
+          </Button>
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          className="glass-strong pop-in w-auto rounded-[2rem] border-0 p-3 shadow-xl"
+          className="glass-strong pop-in pointer-events-auto z-[90] w-auto max-w-[calc(100vw-1rem)] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto rounded-[2rem] border border-primary/15 p-3 shadow-xl"
         >
           {showQuickPresets && (
             <div className="mb-2 flex items-center gap-1.5 px-1">
@@ -76,7 +78,9 @@ export function DatePicker({
                 { label: "今天", key: todayKey },
                 { label: "昨天", key: yesterdayKey },
               ].map(({ label, key }) => (
-                <button
+                <Button
+                  variant="ghost"
+                  disabled={!!max && key > max}
                   key={key}
                   type="button"
                   onClick={() => {
@@ -99,13 +103,12 @@ export function DatePicker({
                   }
                 >
                   {label}
-                </button>
+                </Button>
               ))}
             </div>
           )}
-          <Calendar
+          <PlannerCalendar
             mode="single"
-            locale={zhTW}
             selected={selectedDate}
             defaultMonth={selectedDate ?? now}
             disabled={max ? (date) => toKey(date) > max : undefined}
@@ -117,7 +120,7 @@ export function DatePicker({
             }}
             className="pointer-events-auto p-1"
           />
-          <button
+          <Button
             type="button"
             onClick={() => setOpen(false)}
             className="bouncy mt-2 h-9 w-full rounded-2xl text-xs font-bold text-primary-foreground"
@@ -127,14 +130,16 @@ export function DatePicker({
             }}
           >
             完成
-          </button>
+          </Button>
         </PopoverContent>
       </Popover>
 
       {/* 快捷切換按鈕 */}
       {showQuickPresets && (
         <div className="flex shrink-0 items-center gap-1.5">
-          <button
+          <Button
+            variant="ghost"
+            disabled={!!max && todayKey > max}
             type="button"
             onClick={() => onChange(todayKey)}
             className={cn(
@@ -153,8 +158,10 @@ export function DatePicker({
             }
           >
             今天
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            disabled={!!max && yesterdayKey > max}
             type="button"
             onClick={() => onChange(yesterdayKey)}
             className={cn(
@@ -173,7 +180,7 @@ export function DatePicker({
             }
           >
             昨天
-          </button>
+          </Button>
         </div>
       )}
     </div>

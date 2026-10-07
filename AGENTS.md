@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Use the shared PlannerCalendar for single-date and date-range pickers so calendar styling and navigation remain consistent.
