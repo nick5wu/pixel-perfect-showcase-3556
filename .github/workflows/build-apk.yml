@@ -34,6 +34,11 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpemx2Z3FoaXFmcnNhc2dqb2VnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzNTIyODksImV4cCI6MjEwNjkyODI4OX0.rK5ImrvmfcgtxCi9KQp1hhUo41eRJkU_d0O5yS5S5Q8' }}
         run: npm run build
 
+      - name: Prepare Capacitor assets entry
+        run: |
+          mkdir -p .output/public
+          echo "<!DOCTYPE html><html><body>Capacitor Shell</body></html>" > .output/public/index.html
+
       - name: Sync Capacitor Android
         run: npx cap sync android
 
