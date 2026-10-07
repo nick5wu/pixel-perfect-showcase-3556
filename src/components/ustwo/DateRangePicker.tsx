@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarHeart, X } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 import { PlannerCalendar } from "./PlannerCalendar";
@@ -27,6 +27,14 @@ export function DateRangePicker({ from, to, onChange }: Props) {
   const range: DateRange | undefined = from ? { from: parse(from), to: parse(to) } : undefined;
   const text = from ? (to && to !== from ? `${label(from)} – ${label(to)}` : label(from)) : "全部日期";
 
+  const [month, setMonth] = useState<Date>(() => parse(from) ?? now);
+  useEffect(() => {
+    if (from) {
+      const parsed = parse(from);
+      if (parsed) setMonth(parsed);
+    }
+  }, [from, open]);
+
   return (
     <div className="flex items-center gap-2">
       <Popover open={open} onOpenChange={setOpen}>
@@ -52,7 +60,8 @@ export function DateRangePicker({ from, to, onChange }: Props) {
           <PlannerCalendar
             mode="range"
             selected={range}
-            defaultMonth={parse(from) ?? now}
+            month={month}
+            onMonthChange={setMonth}
             onSelect={(r) => onChange(r?.from ? toKey(r.from) : "", r?.to ? toKey(r.to) : r?.from ? toKey(r.from) : "")}
           />
           <Button onClick={() => setOpen(false)} className="planner-complete bouncy w-full text-base font-bold text-primary-foreground">

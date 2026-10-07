@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarHeart } from "lucide-react";
 import { PlannerCalendar } from "./PlannerCalendar";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,13 @@ export function DatePicker({
   const yesterdayKey = toKey(yesterday);
 
   const selectedDate = parse(value);
+  const [month, setMonth] = useState<Date>(() => selectedDate ?? new Date());
+
+  useEffect(() => {
+    if (selectedDate) {
+      setMonth(selectedDate);
+    }
+  }, [value, open]);
 
   return (
     <div className={cn("flex items-center gap-2", className)}>
@@ -98,7 +105,8 @@ export function DatePicker({
           <PlannerCalendar
             mode="single"
             selected={selectedDate}
-            defaultMonth={selectedDate ?? now}
+            month={month}
+            onMonthChange={setMonth}
             disabled={max ? (date) => toKey(date) > max : undefined}
             onSelect={(d) => {
               if (d) {
