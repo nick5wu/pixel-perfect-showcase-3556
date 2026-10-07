@@ -213,7 +213,7 @@
   font-weight: 600;
 }
 
-.planner-calendar .rdp-day {
+.planner-calendar td.rdp-day {
   background: transparent;
 }
 
