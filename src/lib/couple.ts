@@ -134,7 +134,8 @@ export async function fetchCoupleRemoteData(coupleId: string, activeUser: UserId
       note: t.note || "",
       payer: t.payer as UserId,
       isPrivate: Boolean(t.is_private),
-      photo: t.photo || undefined,
+      ...(t.for_partner_amount ? { forPartnerAmount: Number(t.for_partner_amount) } : {}),
+      ...(t.photo ? { photo: t.photo } : {}),
     }));
 
     const goals: Goal[] = (goalsRes.data || []).map((g: any) => ({
@@ -163,7 +164,7 @@ export async function saveTxnInCloud(txn: Txn, coupleId: string) {
   const client = getSupabase();
   if (!client) return false;
 
-  const row = {
+  const row: Record<string, any> = {
     id: txn.id,
     couple_id: coupleId,
     date: txn.date,
@@ -176,7 +177,18 @@ export async function saveTxnInCloud(txn: Txn, coupleId: string) {
     photo: txn.photo || null,
   };
 
-  const { error } = await client.from("transactions").upsert(row);
+  if (txn.forPartnerAmount !== undefined) {
+    row["for_partner_amount"] = txn.forPartnerAmount;
+  }
+
+  let { error } = await client.from("transactions").upsert(row);
+  // If column for_partner_amount hasn't been added to table yet, retry without it
+  if (error && error.message.includes("for_partner_amount")) {
+    delete row["for_partner_amount"];
+    const retry = await client.from("transactions").upsert(row);
+    error = retry.error;
+  }
+
   if (error) console.warn("saveTxnInCloud error:", error.message);
   return !error;
 }

@@ -209,12 +209,13 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
             <section>
               <SectionTitle zh="私房錢明細列表" en="Private records" />
               <div className="space-y-2.5">
-                {rows.map((t) => (
+                {rows.map((t, i) => (
                   <TxnCard
                     key={t.id}
-                    txn={t}
-                    onClickImage={lb.open}
-                    onEdit={onEdit}
+                    t={t}
+                    index={i}
+                    onPhoto={lb.setPhoto}
+                    {...(onEdit ? { onEdit } : {})}
                   />
                 ))}
               </div>
@@ -223,7 +224,7 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
         </>
       )}
 
-      {lb.src && <Lightbox src={lb.src} onClose={lb.close} />}
+      {lb.photo && <Lightbox src={lb.photo} onClose={lb.close} />}
     </div>
   );
 }

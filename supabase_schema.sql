@@ -26,9 +26,13 @@ create table if not exists public.transactions (
   note text not null default '',
   payer text not null check (payer in ('me', 'her')),
   is_private boolean not null default false,
+  for_partner_amount numeric not null default 0,
   photo text,
   created_at timestamptz not null default timezone('utc'::text, now())
 );
+
+-- 若已存在 transactions 表，可單獨執行此行升級：
+alter table if exists public.transactions add column if not exists for_partner_amount numeric not null default 0;
 
 -- 建立高效索引 (依小窩與日期快速查詢)
 create index if not exists idx_txns_couple_date on public.transactions(couple_id, date desc);

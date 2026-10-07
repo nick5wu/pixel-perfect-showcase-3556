@@ -100,13 +100,22 @@ export function TxnCard({
       </span>
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <p className="truncate text-[15px] font-semibold">{t.note || cat.zh}</p>
-          {t.isPrivate && (
+          {t.isPrivate ? (
             <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-secondary-foreground">
-              <Lock className="h-2.5 w-2.5" /> 私人
+              <Lock className="h-2.5 w-2.5" /> 個人
+            </span>
+          ) : (
+            <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
+              共同
             </span>
           )}
+          {t.forPartnerAmount && t.forPartnerAmount > 0 ? (
+            <span className="inline-flex shrink-0 items-center rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+              含幫出 NT${t.forPartnerAmount}
+            </span>
+          ) : null}
         </div>
         <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
           <span>{people[t.payer].emoji}</span>

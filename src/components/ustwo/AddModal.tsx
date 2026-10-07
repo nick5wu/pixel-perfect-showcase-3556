@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, CalendarDays, Lock, X, Delete, Plus, Check, ImageOff, Loader2 } from "lucide-react";
+import { Camera, CalendarDays, Lock, Users, X, Delete, Plus, Check, ImageOff } from "lucide-react";
 import { toast } from "sonner";
 import {
   ICONS,
@@ -13,15 +13,13 @@ import {
   type UserId,
 } from "@/lib/ustwo";
 import { uploadReceiptPhoto, isSupabaseConfigured } from "@/lib/supabase";
-import { Avatar } from "./shared";
 import { cn } from "@/lib/utils";
 
 const PAD = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "00", "0", "del"];
 
-// ─── Quick date helpers ───────────────────────────────────────────────────────
-
-function todayStr() { return toKey(new Date()); }
-function yesterdayStr() { const d = new Date(); d.setDate(d.getDate() - 1); return toKey(d); }
+function todayStr() {
+  return toKey(new Date());
+}
 
 // ─── Image compression helpers ────────────────────────────────────────────────
 
@@ -88,43 +86,7 @@ function Stamp({ tint, big, children }: { tint: string; big?: boolean; children:
   );
 }
 
-// ─── Date picker row ──────────────────────────────────────────────────────────
-
-function DateRow({ value, onChange }: { value: string; onChange: (d: string) => void }) {
-  const today = todayStr();
-  const yesterday = yesterdayStr();
-  return (
-    <div className="mt-3 flex items-center gap-2">
-      <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
-      {[
-        { label: "今天", val: today },
-        { label: "昨天", val: yesterday },
-      ].map(({ label, val }) => (
-        <button
-          key={val}
-          onClick={() => onChange(val)}
-          className={cn(
-            "bouncy rounded-2xl px-3 py-1.5 text-xs font-bold",
-            value === val ? "text-primary-foreground" : "neu text-muted-foreground",
-          )}
-          style={value === val ? { backgroundColor: "var(--caramel)", boxShadow: "var(--shadow-soft)" } : undefined}
-        >
-          {label}
-        </button>
-      ))}
-      <input
-        type="date"
-        value={value}
-        onChange={(e) => e.target.value && onChange(e.target.value)}
-        max={today}
-        className="h-8 flex-1 rounded-2xl neu-inset px-3 text-xs font-semibold outline-none"
-        style={{ colorScheme: "light" }}
-      />
-    </div>
-  );
-}
-
-// ─── AddModal (also used as EditModal when initialTxn is provided) ────────────
+// ─── AddModal (Private First + Safe Area + Centralized Date) ─────────────────
 
 export function AddModal({
   open,
@@ -137,16 +99,23 @@ export function AddModal({
   date: string;
   initialTxn?: Txn; // when set → edit mode
 }) {
-  const { activeUser, addTxn, updateTxn, categories, addCategory, removeCategory, people, coupleId } = useUsTwo();
+  const { activeUser, addTxn, updateTxn, categories, addCategory, removeCategory, coupleId } = useUsTwo();
   const isEdit = !!initialTxn;
 
   const [amount, setAmount] = useState(isEdit ? String(initialTxn.amount) : "");
+  // Date is directly taken from the current selected/today date, no complex picker here
   const [date, setDate] = useState(isEdit ? initialTxn.date : (defaultDate || todayStr()));
-  const [payer, setPayer] = useState<UserId>(isEdit ? initialTxn.payer : activeUser);
   const [kind, setKind] = useState<Kind>(isEdit ? initialTxn.kind : "expense");
   const [category, setCategory] = useState<Category>(isEdit ? initialTxn.category : "breakfast");
   const [note, setNote] = useState(isEdit ? initialTxn.note : "");
-  const [isPrivate, setIsPrivate] = useState(isEdit ? initialTxn.isPrivate : false);
+
+  // 1. Private First: Default is personal expense (isShared = false).
+  // Only when user explicitly enables "轉為共同花費" does it become a joint expense.
+  const [isShared, setIsShared] = useState(isEdit ? !initialTxn.isPrivate : false);
+  const [forPartnerAmount, setForPartnerAmount] = useState(
+    isEdit && initialTxn.forPartnerAmount ? String(initialTxn.forPartnerAmount) : "",
+  );
+
   const [photo, setPhoto] = useState<string | null>(isEdit ? (initialTxn.photo ?? null) : null);
   const [photoLoading, setPhotoLoading] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -158,7 +127,7 @@ export function AddModal({
   const fileRef = useRef<HTMLInputElement>(null);
   const list = categories.filter((c) => c.kind === kind);
 
-  // Sync date when defaultDate changes (e.g. calendar selects a new day) — only for add mode
+  // Sync date when defaultDate changes for add mode
   useEffect(() => {
     if (!isEdit) setDate(defaultDate || todayStr());
   }, [defaultDate, isEdit]);
@@ -172,7 +141,10 @@ export function AddModal({
 
   const createCat = () => {
     const zh = newName.trim();
-    if (!zh) { toast("幫細項取個名字吧 ✨"); return; }
+    if (!zh) {
+      toast("幫細項取個名字吧 ✨");
+      return;
+    }
     const def = addCategory({ zh, kind, icon: newIcon, tint: newTint });
     setCategory(def.id);
     setNewName("");
@@ -214,23 +186,41 @@ export function AddModal({
 
   const save = () => {
     const value = Number(amount);
-    if (!value) { toast("先輸入金額唷 ✨"); return; }
+    if (!value) {
+      toast("先輸入金額唷 ✨");
+      return;
+    }
+
+    // Private First logic:
+    // isShared === true -> isPrivate = false (共同帳本)
+    // isShared === false -> isPrivate = true (個人私人帳)
+    const isPrivate = !isShared;
+    const partnerAmountNum = isShared ? Number(forPartnerAmount || 0) : 0;
+
     const txnData = {
       date: date || todayStr(),
       amount: value,
       kind,
       category,
       note: note.trim(),
-      payer,
+      payer: isEdit ? initialTxn.payer : activeUser,
       isPrivate,
+      ...(partnerAmountNum > 0 ? { forPartnerAmount: partnerAmountNum } : {}),
       ...(photo ? { photo } : {}),
     };
+
     if (isEdit && initialTxn) {
       updateTxn(initialTxn.id, txnData);
       toast.success("已更新這筆記帳 ✏️");
     } else {
       addTxn(txnData);
-      toast.success(isPrivate ? "已偷偷記下來 🤫" : "記好囉，甜甜的一筆 🧡");
+      toast.success(
+        isPrivate
+          ? "已記錄為個人花費 🔒"
+          : partnerAmountNum > 0
+            ? `已記錄共同花費（含代墊 NT$${partnerAmountNum}）👥`
+            : "已記錄為共同花費 🧡",
+      );
     }
     onClose();
   };
@@ -238,6 +228,8 @@ export function AddModal({
   if (!open) return null;
 
   const money_ = (n: number) => `NT$${Math.round(n).toLocaleString()}`;
+  const totalVal = Number(amount || 0);
+  const partnerVal = Number(forPartnerAmount || 0);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center">
@@ -246,8 +238,16 @@ export function AddModal({
         onClick={onClose}
         className="absolute inset-0 bg-foreground/35 backdrop-blur-sm"
       />
-      <div className="glass-strong pop-in relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[2.5rem] p-5 pb-8">
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-border" />
+
+      <div
+        className="glass-strong pop-in relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[2.5rem] p-5"
+        style={{
+          // Safe Area protection for Android gesture pill and navigation keys
+          paddingBottom: "max(env(safe-area-inset-bottom), 28px)",
+        }}
+      >
+        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" />
+
         <button
           onClick={onClose}
           className="bouncy absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full neu"
@@ -263,33 +263,16 @@ export function AddModal({
           {amount ? money_(Number(amount)) : <span className="text-muted-foreground">NT$0</span>}
         </p>
 
-        {/* Date row */}
-        <DateRow value={date} onChange={setDate} />
-
-        {/* Payer */}
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          {(["me", "her"] as UserId[]).map((u) => (
-            <button
-              key={u}
-              onClick={() => setPayer(u)}
-              className={cn(
-                "bouncy flex items-center justify-center gap-2 rounded-3xl px-3 py-2.5 text-sm font-bold",
-                payer === u ? "text-primary-foreground" : "neu text-muted-foreground",
-              )}
-              style={
-                payer === u
-                  ? { backgroundColor: people[u].color, boxShadow: "var(--shadow-pop)" }
-                  : undefined
-              }
-            >
-              <Avatar who={u} size="sm" />
-              {people[u].zh}付
-            </button>
-          ))}
+        {/* 4. Unified Date Logic: Static badge, no redundant pickers */}
+        <div className="mt-2 flex items-center justify-center">
+          <span className="glass inline-flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-bold text-muted-foreground shadow-sm">
+            <CalendarDays className="h-3.5 w-3.5 text-primary" />
+            記帳日期 · {date}
+          </span>
         </div>
 
-        {/* Kind */}
-        <div className="glass mt-4 grid grid-cols-2 gap-1 rounded-full p-1">
+        {/* Kind Toggle (Expense / Income) */}
+        <div className="glass mt-3.5 grid grid-cols-2 gap-1 rounded-full p-1">
           {(["expense", "income"] as Kind[]).map((k) => (
             <button
               key={k}
@@ -298,7 +281,14 @@ export function AddModal({
                 "bouncy rounded-full py-2 text-sm font-extrabold transition-colors",
                 kind === k ? "text-primary-foreground" : "text-muted-foreground",
               )}
-              style={kind === k ? { backgroundColor: k === "expense" ? "var(--caramel)" : "var(--cat-9)", boxShadow: "var(--shadow-soft)" } : undefined}
+              style={
+                kind === k
+                  ? {
+                      backgroundColor: k === "expense" ? "var(--caramel)" : "var(--cat-9)",
+                      boxShadow: "var(--shadow-soft)",
+                    }
+                  : undefined
+              }
             >
               {k === "expense" ? "支出 Expense" : "收入 Income"}
             </button>
@@ -329,7 +319,11 @@ export function AddModal({
                   }}
                 >
                   <Stamp tint={c.tint}>
-                    <Icon className="h-[18px] w-[18px]" strokeWidth={2.2} style={{ color: `color-mix(in oklch, ${c.tint} 75%, black)` }} />
+                    <Icon
+                      className="h-[18px] w-[18px]"
+                      strokeWidth={2.2}
+                      style={{ color: `color-mix(in oklch, ${c.tint} 75%, black)` }}
+                    />
                   </Stamp>
                   <span className="w-full truncate px-0.5 text-center">{c.zh}</span>
                 </button>
@@ -365,7 +359,13 @@ export function AddModal({
               <Stamp tint={newTint} big>
                 {(() => {
                   const I = ICONS[newIcon] ?? Plus;
-                  return <I className="h-5 w-5" strokeWidth={2.2} style={{ color: `color-mix(in oklch, ${newTint} 75%, black)` }} />;
+                  return (
+                    <I
+                      className="h-5 w-5"
+                      strokeWidth={2.2}
+                      style={{ color: `color-mix(in oklch, ${newTint} 75%, black)` }}
+                    />
+                  );
                 })()}
               </Stamp>
               <input
@@ -382,9 +382,17 @@ export function AddModal({
                   aria-label="選擇顏色"
                   onClick={() => setNewTint(t)}
                   className="bouncy flex h-7 w-7 items-center justify-center rounded-full"
-                  style={{ backgroundColor: `color-mix(in oklch, ${t} 45%, white)`, boxShadow: newTint === t ? `0 0 0 2px ${t}` : "none" }}
+                  style={{
+                    backgroundColor: `color-mix(in oklch, ${t} 45%, white)`,
+                    boxShadow: newTint === t ? `0 0 0 2px ${t}` : "none",
+                  }}
                 >
-                  {newTint === t && <Check className="h-3.5 w-3.5" style={{ color: `color-mix(in oklch, ${t} 70%, black)` }} />}
+                  {newTint === t && (
+                    <Check
+                      className="h-3.5 w-3.5"
+                      style={{ color: `color-mix(in oklch, ${t} 70%, black)` }}
+                    />
+                  )}
                 </button>
               ))}
             </div>
@@ -395,9 +403,20 @@ export function AddModal({
                   aria-label={key}
                   onClick={() => setNewIcon(key)}
                   className="bouncy flex h-9 items-center justify-center rounded-xl"
-                  style={{ backgroundColor: newIcon === key ? `color-mix(in oklch, ${newTint} 30%, white)` : "transparent" }}
+                  style={{
+                    backgroundColor: newIcon === key ? `color-mix(in oklch, ${newTint} 30%, white)` : "transparent",
+                  }}
                 >
-                  <I className="h-4 w-4" strokeWidth={2.2} style={{ color: newIcon === key ? `color-mix(in oklch, ${newTint} 75%, black)` : "var(--muted-foreground)" }} />
+                  <I
+                    className="h-4 w-4"
+                    strokeWidth={2.2}
+                    style={{
+                      color:
+                        newIcon === key
+                          ? `color-mix(in oklch, ${newTint} 75%, black)`
+                          : "var(--muted-foreground)",
+                    }}
+                  />
                 </button>
               ))}
             </div>
@@ -412,7 +431,7 @@ export function AddModal({
         )}
 
         {/* Numpad */}
-        <div className="mt-4 grid grid-cols-3 gap-2">
+        <div className="mt-3.5 grid grid-cols-3 gap-2">
           {PAD.map((k) => (
             <button
               key={k}
@@ -424,15 +443,14 @@ export function AddModal({
           ))}
         </div>
 
-        {/* Note + photo */}
-        <div className="mt-4 flex items-center gap-2">
+        {/* Note + Photo */}
+        <div className="mt-3.5 flex items-center gap-2">
           <input
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="寫點什麼呢？例如：巷口的鬆餅"
+            placeholder="寫點備註，例如：巷口鬆餅 🥞"
             className="h-12 flex-1 rounded-2xl neu-inset px-4 text-sm outline-none placeholder:text-muted-foreground"
           />
-          {/* Hidden file input */}
           <input
             ref={fileRef}
             type="file"
@@ -442,7 +460,7 @@ export function AddModal({
             onChange={handlePhoto}
           />
           <button
-            onClick={() => photo ? setPhoto(null) : fileRef.current?.click()}
+            onClick={() => (photo ? setPhoto(null) : fileRef.current?.click())}
             className="bouncy flex h-12 w-12 items-center justify-center rounded-2xl neu"
             aria-label={photo ? "移除照片" : "新增照片"}
           >
@@ -456,7 +474,7 @@ export function AddModal({
           </button>
         </div>
 
-        {/* Photo preview polaroid */}
+        {/* Polaroid photo preview */}
         {photo && (
           <div className="mt-3 flex justify-center">
             <div className="polaroid rotate-[-2deg] rounded-md">
@@ -470,28 +488,118 @@ export function AddModal({
           </div>
         )}
 
-        {/* Private */}
-        <button
-          onClick={() => setIsPrivate((p) => !p)}
-          className="glass bouncy mt-4 flex w-full items-center justify-between rounded-3xl px-4 py-3"
-        >
-          <span className="flex items-center gap-2 text-sm font-semibold">
-            <Lock className="h-4 w-4" /> 私人花費 Private
-          </span>
-          <span
-            className={cn("relative h-7 w-12 rounded-full transition-colors")}
-            style={{ backgroundColor: isPrivate ? "var(--caramel)" : "var(--border)" }}
-          >
-            <span
-              className="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all"
-              style={{ left: isPrivate ? "1.55rem" : "0.25rem" }}
-            />
-          </span>
-        </button>
-        <p className="mt-1.5 px-2 text-[11px] text-muted-foreground">
-          私人花費只會出現在你自己的統計頁，另一半完全看不到。
-        </p>
+        {/* 1. Private First: Shared Expense Switch & Breakdown */}
+        <div className="glass mt-4 rounded-3xl p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-2xl transition-colors"
+                style={{
+                  backgroundColor: isShared ? "var(--caramel)" : "var(--color-cream)",
+                  color: isShared ? "white" : "var(--muted-foreground)",
+                  boxShadow: isShared ? "var(--shadow-soft)" : "none",
+                }}
+              >
+                {isShared ? <Users className="h-5 w-5" /> : <Lock className="h-5 w-5" />}
+              </div>
+              <div>
+                <p className="text-sm font-bold">
+                  {isShared ? "轉為共同花費 👥" : "純個人花費 🔒"}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {isShared
+                    ? "雙方小窩均可見 · 可記錄代墊明細"
+                    : "預設模式：僅自己可見，對方看不到"}
+                </p>
+              </div>
+            </div>
 
+            <button
+              type="button"
+              onClick={() => setIsShared((s) => !s)}
+              aria-label="Toggle shared expense"
+              className="relative h-7 w-12 rounded-full transition-colors"
+              style={{ backgroundColor: isShared ? "var(--caramel)" : "var(--border)" }}
+            >
+              <span
+                className="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all"
+                style={{ left: isShared ? "1.55rem" : "0.25rem" }}
+              />
+            </button>
+          </div>
+
+          {/* Breakdown input: ONLY visible when Shared Expense is toggled ON */}
+          {isShared && (
+            <div className="pop-in mt-3.5 space-y-2.5 border-t border-border/50 pt-3">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-foreground">
+                  包含我幫對方出了多少：
+                </label>
+                {partnerVal > 0 && totalVal > 0 && (
+                  <span className="text-[11px] font-semibold text-primary">
+                    我自己負擔 NT${Math.max(0, totalVal - partnerVal)}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div className="flex h-11 flex-1 items-center gap-1.5 rounded-2xl neu-inset px-3.5">
+                  <span className="text-xs font-bold text-muted-foreground">NT$</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    value={forPartnerAmount}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^\d]/g, "");
+                      setForPartnerAmount(val);
+                    }}
+                    placeholder="0（若共同均攤或幫出請填寫）"
+                    className="h-full w-full bg-transparent text-sm font-bold outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+                {forPartnerAmount && (
+                  <button
+                    type="button"
+                    onClick={() => setForPartnerAmount("")}
+                    className="bouncy flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl neu text-muted-foreground"
+                    title="清空"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Quick breakdown preset buttons */}
+              {totalVal > 0 && (
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setForPartnerAmount(String(Math.round(totalVal / 2)))}
+                    className="bouncy flex-1 rounded-2xl neu py-1.5 text-center text-[11px] font-bold text-muted-foreground hover:text-foreground"
+                  >
+                    各付一半 ({Math.round(totalVal / 2)})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForPartnerAmount(String(totalVal))}
+                    className="bouncy flex-1 rounded-2xl neu py-1.5 text-center text-[11px] font-bold text-muted-foreground hover:text-foreground"
+                  >
+                    我全幫出 ({totalVal})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setForPartnerAmount("0")}
+                    className="bouncy flex-1 rounded-2xl neu py-1.5 text-center text-[11px] font-bold text-muted-foreground hover:text-foreground"
+                  >
+                    純共同 (0)
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Submit button */}
         <button
           onClick={save}
           className="bouncy mt-4 h-14 w-full rounded-3xl text-base font-extrabold text-primary-foreground"

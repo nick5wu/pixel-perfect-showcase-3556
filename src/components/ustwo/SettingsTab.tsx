@@ -1,68 +1,12 @@
 import { useState, useRef } from "react";
 import { Heart, Sparkles, Pencil, Check, X, Sun, Moon, Monitor, Download, Wallet, Cloud } from "lucide-react";
+import { toast } from "sonner";
 import { money, toKey, useUsTwo, type UserId, type DarkMode } from "@/lib/ustwo";
 import { Avatar, SectionTitle } from "./shared";
 import { WidgetPreview } from "./WidgetPreview";
 import { cn } from "@/lib/utils";
 
-// ─── Inline editable field ────────────────────────────────────────────────────
-
-function InlineEdit({
-  label,
-  value,
-  onSave,
-  maxLen = 8,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onSave: (v: string) => void;
-  maxLen?: number;
-  placeholder?: string;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
-  const commit = () => {
-    if (draft.trim()) onSave(draft.trim());
-    else setDraft(value);
-    setEditing(false);
-  };
-  return (
-    <div className="flex items-center gap-2">
-      <span className="w-8 shrink-0 text-[11px] font-semibold text-muted-foreground">{label}</span>
-      {editing ? (
-        <div className="flex flex-1 items-center gap-1">
-          <input
-            autoFocus
-            value={draft}
-            onChange={(e) => setDraft(e.target.value.slice(0, maxLen))}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") commit();
-              if (e.key === "Escape") { setDraft(value); setEditing(false); }
-            }}
-            className="h-8 flex-1 rounded-2xl neu-inset px-3 text-sm outline-none"
-            placeholder={placeholder}
-          />
-          <button onClick={commit} className="bouncy flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <Check className="h-3.5 w-3.5" />
-          </button>
-          <button onClick={() => { setDraft(value); setEditing(false); }} className="bouncy flex h-7 w-7 items-center justify-center rounded-full neu">
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-1 items-center justify-between">
-          <span className="text-sm font-semibold">{value}</span>
-          <button onClick={() => { setDraft(value); setEditing(true); }} className="bouncy flex h-7 w-7 items-center justify-center rounded-full neu">
-            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── Emoji picker ─────────────────────────────────────────────────────────────
+// ─── Emoji picker options ─────────────────────────────────────────────────────
 
 const EMOJI_OPTIONS = [
   "🐻","🐰","🐼","🐨","🐯","🦊","🐶","🐱","🐸","🐧",
@@ -70,60 +14,197 @@ const EMOJI_OPTIONS = [
   "🍀","🌈","🐝","🦋","🐬","🦄","🎸","🍕","🧋","🎹",
 ];
 
-function EmojiPicker({ current, onPick, onClose }: { current: string; onPick: (e: string) => void; onClose: () => void }) {
+// ─── 5. Nickname & Profile Modal (Modal 化，避免外層版面跑位) ──────────────────
+
+function NicknameModal({
+  open,
+  who,
+  onClose,
+}: {
+  open: boolean;
+  who: UserId | null;
+  onClose: () => void;
+}) {
+  const { people, setPerson } = useUsTwo();
+  if (!open || !who) return null;
+  const p = people[who];
+
+  return <NicknameModalInner who={who} p={p} onClose={onClose} onSave={setPerson} />;
+}
+
+function NicknameModalInner({
+  who,
+  p,
+  onClose,
+  onSave,
+}: {
+  who: UserId;
+  p: { zh: string; name: string; emoji: string; color: string };
+  onClose: () => void;
+  onSave: (who: UserId, patch: Partial<{ zh: string; name: string; emoji: string }>) => void;
+}) {
+  const [zh, setZh] = useState(p.zh);
+  const [name, setName] = useState(p.name);
+  const [emoji, setEmoji] = useState(p.emoji);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+
+  const save = () => {
+    const trimmedZh = zh.trim() || p.zh;
+    const trimmedName = name.trim() || p.name;
+    onSave(who, { zh: trimmedZh, name: trimmedName, emoji });
+    toast.success(`已儲存「${trimmedZh}」的暱稱設定 ✨`);
+    onClose();
+  };
+
   return (
-    <div className="pop-in absolute left-0 top-full z-20 mt-2 w-60 rounded-3xl glass-strong p-3 shadow-lg">
-      <div className="grid grid-cols-8 gap-1">
-        {EMOJI_OPTIONS.map((e) => (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 bg-foreground/35 backdrop-blur-sm"
+      />
+      <div className="glass-strong pop-in relative w-full max-w-sm rounded-[2.5rem] p-6 shadow-2xl">
+        <button
+          type="button"
+          onClick={onClose}
+          className="bouncy absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full neu"
+          aria-label="Close"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <h3 className="text-center text-lg font-bold">
+          修改暱稱 · {p.zh}
+        </h3>
+        <p className="mt-0.5 text-center text-xs text-muted-foreground">
+          修改顯示暱稱與頭像表情，不會影響版面排版
+        </p>
+
+        {/* Avatar / Emoji section */}
+        <div className="my-5 flex flex-col items-center">
           <button
-            key={e}
-            onClick={() => { onPick(e); onClose(); }}
-            className={cn("bouncy flex h-8 w-8 items-center justify-center rounded-xl text-base", e === current && "neu")}
+            type="button"
+            onClick={() => setEmojiOpen((v) => !v)}
+            className="bouncy relative"
+            aria-label="點擊更換頭像表情"
           >
-            {e}
+            <span
+              className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-white/80 text-3xl shadow-[var(--shadow-soft)]"
+              style={{ backgroundColor: `color-mix(in oklch, ${p.color} 24%, white)` }}
+            >
+              {emoji}
+            </span>
+            <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
+              <Pencil className="h-3 w-3" />
+            </span>
           </button>
-        ))}
+          <span className="mt-2 text-[11px] font-semibold text-muted-foreground">
+            點擊頭像更換表情符號
+          </span>
+
+          {emojiOpen && (
+            <div className="glass-strong pop-in mt-3 w-full rounded-2xl p-3 shadow-md">
+              <div className="grid max-h-36 grid-cols-6 gap-1.5 overflow-y-auto no-scrollbar">
+                {EMOJI_OPTIONS.map((e) => (
+                  <button
+                    key={e}
+                    type="button"
+                    onClick={() => {
+                      setEmoji(e);
+                      setEmojiOpen(false);
+                    }}
+                    className={cn(
+                      "bouncy flex h-9 w-9 items-center justify-center rounded-xl text-lg",
+                      e === emoji && "neu font-bold",
+                    )}
+                  >
+                    {e}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Inputs */}
+        <div className="space-y-3">
+          <div>
+            <label className="px-1 text-xs font-bold text-muted-foreground">中文暱稱</label>
+            <input
+              value={zh}
+              onChange={(e) => setZh(e.target.value.slice(0, 8))}
+              placeholder="例如：我 / 寶貝 / 親愛的"
+              className="mt-1 h-11 w-full rounded-2xl neu-inset px-4 text-sm font-semibold outline-none"
+            />
+          </div>
+          <div>
+            <label className="px-1 text-xs font-bold text-muted-foreground">英文名稱 / 代稱</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value.slice(0, 12))}
+              placeholder="例如：Me / Darling"
+              className="mt-1 h-11 w-full rounded-2xl neu-inset px-4 text-sm font-semibold outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="mt-6 flex gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="bouncy h-11 flex-1 rounded-2xl neu text-sm font-bold text-muted-foreground"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            className="bouncy h-11 flex-1 rounded-2xl text-sm font-extrabold text-primary-foreground"
+            style={{
+              backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
+              boxShadow: "var(--shadow-soft)",
+            }}
+          >
+            儲存修改
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Person card editor ───────────────────────────────────────────────────────
+// ─── Person card (Stable layout, opens modal on click) ─────────────────────────
 
-function PersonCard({ who }: { who: UserId }) {
-  const { people, setPerson } = useUsTwo();
+function PersonCard({ who, onEdit }: { who: UserId; onEdit: () => void }) {
+  const { people } = useUsTwo();
   const p = people[who];
-  const [emojiOpen, setEmojiOpen] = useState(false);
 
   return (
-    <div className="glass flex-1 rounded-[1.75rem] p-4">
-      <div className="relative flex flex-col items-center gap-2">
-        <button
-          onClick={() => setEmojiOpen((o) => !o)}
-          className="relative bouncy"
-          aria-label="變更頭像"
-        >
-          <span
-            className="flex h-14 w-14 items-center justify-center rounded-full border border-white/70 text-2xl shadow-[var(--shadow-soft)]"
-            style={{ backgroundColor: `color-mix(in oklch, ${p.color} 22%, white)` }}
-          >
-            {p.emoji}
-          </span>
-          <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <Pencil className="h-2.5 w-2.5" />
-          </span>
-        </button>
-        {emojiOpen && (
-          <EmojiPicker
-            current={p.emoji}
-            onPick={(e) => setPerson(who, { emoji: e })}
-            onClose={() => setEmojiOpen(false)}
-          />
-        )}
+    <div
+      onClick={onEdit}
+      role="button"
+      tabIndex={0}
+      className="glass bouncy flex-1 cursor-pointer rounded-[1.75rem] p-4 text-center transition-all hover:shadow-md"
+    >
+      <div
+        className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/70 text-2xl shadow-[var(--shadow-soft)]"
+        style={{ backgroundColor: `color-mix(in oklch, ${p.color} 22%, white)` }}
+      >
+        {p.emoji}
+        <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
+          <Pencil className="h-2.5 w-2.5" />
+        </span>
       </div>
-      <div className="mt-3 space-y-2">
-        <InlineEdit label="暱稱" value={p.zh} onSave={(v) => setPerson(who, { zh: v })} maxLen={6} placeholder="輸入暱稱" />
-        <InlineEdit label="EN" value={p.name} onSave={(v) => setPerson(who, { name: v })} maxLen={10} placeholder="English name" />
+      <div className="mt-3">
+        <p className="truncate text-sm font-bold">{p.zh}</p>
+        <p className="truncate text-xs font-medium text-muted-foreground">{p.name}</p>
+      </div>
+      <div className="mt-2.5">
+        <span className="inline-flex items-center gap-1 rounded-full neu px-2.5 py-0.5 text-[10px] font-bold text-muted-foreground">
+          點擊修改
+        </span>
       </div>
     </div>
   );
@@ -328,7 +409,7 @@ function ExportSection() {
 
 // ─── Cloud Sync Section ───────────────────────────────────────────────────────
 
-function CloudSection({ onOpenCloud }: { onOpenCloud?: () => void }) {
+function CloudSection({ onOpenCloud }: { onOpenCloud?: (() => void) | undefined }) {
   const { cloudStatus, coupleCode, isPaired } = useUsTwo();
 
   return (
@@ -377,6 +458,7 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
   const { visible } = useUsTwo();
   const [showWidget, setShowWidget] = useState(true);
   const [recap, setRecap] = useState<"month" | "year">("month");
+  const [editingWho, setEditingWho] = useState<UserId | null>(null);
 
   const prefix = recap === "month" ? toKey(new Date()).slice(0, 7) : toKey(new Date()).slice(0, 4);
   const rows = visible.filter((t) => t.date.startsWith(prefix) && t.kind === "expense");
@@ -392,10 +474,17 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
       <section className="glass rounded-[2rem] p-5">
         <SectionTitle zh="我們倆" en="Partner profiles" />
         <div className="flex gap-3">
-          <PersonCard who="me" />
-          <PersonCard who="her" />
+          <PersonCard who="me" onEdit={() => setEditingWho("me")} />
+          <PersonCard who="her" onEdit={() => setEditingWho("her")} />
         </div>
       </section>
+
+      {/* Nickname Modal Dialog */}
+      <NicknameModal
+        open={Boolean(editingWho)}
+        who={editingWho}
+        onClose={() => setEditingWho(null)}
+      />
 
       {/* Anniversary */}
       <AnniversaryEdit />

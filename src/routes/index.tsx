@@ -11,11 +11,10 @@ import { StatsTab } from "@/components/ustwo/StatsTab";
 import { SettingsTab } from "@/components/ustwo/SettingsTab";
 import { AddModal } from "@/components/ustwo/AddModal";
 import { CloudModal } from "@/components/ustwo/CloudModal";
-import { Avatar } from "@/components/ustwo/shared";
-import { PEOPLE, UsTwoProvider, toKey, useUsTwo, type UserId, type Txn } from "@/lib/ustwo";
+import { UsTwoProvider, toKey, useUsTwo, type Txn } from "@/lib/ustwo";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/")(({
+export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "UsTwo Ledger 我們倆的記帳小窩" },
@@ -39,33 +38,7 @@ export const Route = createFileRoute("/")(({
       </UsTwoProvider>
     </ClientOnly>
   ),
-}));
-
-function UserSwitcher() {
-  const { activeUser, setActiveUser, people } = useUsTwo();
-  return (
-    <div className="glass-strong flex items-center gap-1 rounded-full p-1">
-      {(["me", "her"] as UserId[]).map((u) => (
-        <button
-          key={u}
-          onClick={() => setActiveUser(u)}
-          className={cn(
-            "bouncy flex items-center gap-1.5 rounded-full py-1.5 pl-1.5 pr-3 text-xs font-bold",
-            activeUser === u ? "text-primary-foreground" : "text-muted-foreground",
-          )}
-          style={
-            activeUser === u
-              ? { backgroundColor: people[u].color, boxShadow: "var(--shadow-pop)" }
-              : undefined
-          }
-        >
-          <Avatar who={u} size="sm" />
-          {u === "me" ? `以${people[u].zh}的身分` : `以${people[u].zh}的身分`}
-        </button>
-      ))}
-    </div>
-  );
-}
+});
 
 function App() {
   const { isPaired, coupleCode, cloudStatus } = useUsTwo();
@@ -80,10 +53,22 @@ function App() {
   };
 
   return (
-    <div className="ambient-glow min-h-screen bg-background">
-      <div className="mx-auto w-full max-w-md px-4 pb-36 pt-6">
-        <header className="mb-5 flex flex-col gap-3">
-          <div className="flex items-start justify-between gap-2">
+    <div
+      className="ambient-glow min-h-screen bg-background"
+      style={{
+        // 2 & 3. Android notification bar / status bar safe area protection
+        paddingTop: "max(env(safe-area-inset-top), 24px)",
+      }}
+    >
+      <div
+        className="mx-auto w-full max-w-md px-4"
+        style={{
+          // Reserve space above bottom navigation & Android gesture/3-button bar
+          paddingBottom: "calc(max(env(safe-area-inset-bottom), 24px) + 96px)",
+        }}
+      >
+        <header className="mb-5 flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
             <div>
               <h1 className="text-2xl font-extrabold tracking-tight">我們倆的記帳小窩</h1>
               <p className="text-xs font-medium text-muted-foreground">
@@ -93,7 +78,7 @@ function App() {
             <button
               onClick={() => setCloudOpen(true)}
               className={cn(
-                "bouncy flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold glass shadow-sm",
+                "bouncy flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold glass shadow-sm shrink-0",
                 isPaired && cloudStatus === "connected"
                   ? "text-emerald-700 dark:text-emerald-400"
                   : "text-muted-foreground",
@@ -104,7 +89,6 @@ function App() {
               <span>{isPaired && coupleCode ? coupleCode : "雙人同步"}</span>
             </button>
           </div>
-          <UserSwitcher />
         </header>
 
         {tab === "home" && <HomeTab selected={selected} onSelect={setSelected} onEdit={handleEdit} />}
@@ -114,11 +98,13 @@ function App() {
         {tab === "settings" && <SettingsTab onOpenCloud={() => setCloudOpen(true)} />}
       </div>
 
+      {/* Floating Add Expense Action Button with Android Safe Area offset */}
       <button
         onClick={() => setAdding(true)}
         aria-label="Add expense"
-        className="bouncy fixed bottom-28 right-5 z-50 flex h-16 w-16 items-center justify-center rounded-full text-primary-foreground"
+        className="bouncy fixed right-5 z-40 flex h-16 w-16 items-center justify-center rounded-full text-primary-foreground"
         style={{
+          bottom: "calc(max(env(safe-area-inset-bottom), 24px) + 80px)",
           backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
           boxShadow: "var(--shadow-pop), var(--shadow-neu)",
         }}

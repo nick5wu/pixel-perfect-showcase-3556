@@ -13,8 +13,13 @@ const TABS: { id: Tab; zh: string; icon: typeof House }[] = [
 
 export function BottomNav({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => void }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-4">
-      <div className="glass-strong flex w-full max-w-md items-center justify-between gap-1 rounded-[2rem] p-2">
+    <nav
+      className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pointer-events-none"
+      style={{
+        paddingBottom: "max(env(safe-area-inset-bottom), 24px)",
+      }}
+    >
+      <div className="glass-strong flex w-full max-w-md items-center justify-between gap-1 rounded-[2rem] p-2 pointer-events-auto shadow-lg">
         {TABS.map(({ id, zh, icon: Icon }) => {
           const active = tab === id;
           return (

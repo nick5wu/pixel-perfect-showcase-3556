@@ -90,7 +90,8 @@ export type Txn = {
   note: string;
   payer: UserId;
   isPrivate: boolean;
-  photo?: string;
+  forPartnerAmount?: number | undefined; // 共同花費中幫對方出 / 墊付的金額
+  photo?: string | undefined;
 };
 
 export type Goal = {
@@ -347,6 +348,7 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
       mq.addEventListener("change", handler);
       return () => mq.removeEventListener("change", handler);
     }
+    return undefined;
   }, [darkMode]);
 
   // ─── Cloud sync logic ────────────────────────────────────────────────────────
@@ -443,7 +445,7 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
       }
       setCloudStatus("connecting");
       const res = await createCoupleInCloud({
-        couple_code: customCode,
+        ...(customCode ? { couple_code: customCode } : {}),
         anniversary,
         budget,
         people,
@@ -601,14 +603,12 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
 
   // ─── Privacy Filter ──────────────────────────────────────────────────────────
   // STRICT PRIVACY:
-  // - In Home, Calendar, Overview: ONLY public/joint transactions (!t.isPrivate)
-  //   Partner NEVER sees private transactions anywhere.
-  // - In StatsTab:
-  //   - "共同支出": !t.isPrivate
-  //   - "個人私房錢": t.isPrivate && t.payer === activeUser
+  // - Private First: Active user sees their own private transactions AND all shared/public transactions.
+  //   Partner NEVER sees private transactions belonging to the other person.
+  //   Condition: !t.isPrivate || t.payer === activeUser
   const visible = useMemo(
-    () => txns.filter((t) => !t.isPrivate),
-    [txns],
+    () => txns.filter((t) => !t.isPrivate || t.payer === activeUser),
+    [txns, activeUser],
   );
 
   const value = useMemo<Store>(
