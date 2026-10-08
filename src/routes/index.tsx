@@ -58,14 +58,15 @@ function App() {
     <div
       className="ambient-glow min-h-screen bg-background"
       style={{
-        // Android notification bar / status bar safe area protection
-        paddingTop: "max(env(safe-area-inset-top), 24px)",
+        // Android notification bar / status bar safe area protection:
+        // When in farm mode, FarmHeader itself handles sticky safe-area-inset-top padding
+        paddingTop: tab === "farm" ? 0 : "max(env(safe-area-inset-top), 24px)",
       }}
     >
       <div
         className={cn(
           "mx-auto w-full max-w-md",
-          tab === "farm" ? "px-2" : "px-4"
+          tab === "farm" ? "px-0 sm:px-2" : "px-4"
         )}
         style={{
           // Reserve space above bottom navigation & Android gesture/3-button bar

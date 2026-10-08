@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { ICONS, TINTS, money, useUsTwo, type Goal } from "@/lib/ustwo";
 import { SectionTitle, EmptyNote } from "./shared";
-import { cn } from "@/lib/utils";
+import { cn, useBodyScrollLock } from "@/lib/utils";
 
 const GOAL_ICONS = ["plane", "home", "umbrella", "cat", "heart", "gift", "car", "bike", "laptop", "phone", "baby", "piggy", "star", "sparkles", "music", "book"];
 const QUICK = [500, 1000, 3000, 5000];
@@ -15,6 +15,7 @@ const pop = {
 };
 
 function Sheet({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  useBodyScrollLock(true);
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <motion.div
@@ -30,7 +31,7 @@ function Sheet({ children, onClose }: { children: React.ReactNode; onClose: () =
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: "100%", opacity: 0 }}
         transition={{ type: "spring", damping: 28, stiffness: 280 }}
-        className="glass-strong relative max-h-[90vh] w-full max-w-md overflow-y-auto no-scrollbar rounded-t-[2.5rem] p-5 shadow-2xl"
+        className="glass-strong relative max-h-[90vh] w-full max-w-md overflow-y-auto overscroll-contain touch-pan-y no-scrollbar rounded-t-[2.5rem] p-5 shadow-2xl"
         style={{
           paddingBottom: "max(env(safe-area-inset-bottom), 24px)",
         }}

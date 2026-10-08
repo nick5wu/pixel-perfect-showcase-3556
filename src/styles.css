@@ -187,6 +187,7 @@
   border-radius: 36px;
   background: var(--planner-paper);
   box-shadow: var(--planner-shadow);
+  overscroll-behavior: contain;
 }
 
 .planner-calendar[data-slot="calendar"] {

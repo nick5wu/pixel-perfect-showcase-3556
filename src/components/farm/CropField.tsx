@@ -14,6 +14,10 @@ export interface CropFieldProps {
   currentTime?: number | undefined;
   /** 點擊收成時的回呼 */
   onHarvest?: ((result: { success: boolean; message: string; cropYield?: number | undefined; xpGained?: number | undefined }) => void) | undefined;
+  /** 點擊空地請求開啟種子選擇器 */
+  onOpenSeedPicker?: ((plotId: string) => void) | undefined;
+  /** 是否當前正為此地塊開啟播種器 */
+  isPickerOpen?: boolean | undefined;
   className?: string | undefined;
 }
 
@@ -41,16 +45,14 @@ export const CropField: React.FC<CropFieldProps> = ({
   plot,
   currentTime: externalTime,
   onHarvest,
+  onOpenSeedPicker,
+  isPickerOpen,
   className,
 }) => {
   const [internalTime, setInternalTime] = useState(Date.now());
-  const [showSeedPicker, setShowSeedPicker] = useState(false);
   const [isHarvesting, setIsHarvesting] = useState(false);
   const [floatingFeedback, setFloatingFeedback] = useState<string | null>(null);
 
-  const level = useFarmStore((state) => state.level);
-  const coins = useFarmStore((state) => state.coins);
-  const plantCrop = useFarmStore((state) => state.plantCrop);
   const harvestPlot = useFarmStore((state) => state.harvestPlot);
   const getPlotGrowthStatus = useFarmStore((state) => state.getPlotGrowthStatus);
 
@@ -77,7 +79,7 @@ export const CropField: React.FC<CropFieldProps> = ({
   // 點擊土地行為
   const handlePlotClick = () => {
     if (plot.type === "empty") {
-      setShowSeedPicker((prev) => !prev);
+      onOpenSeedPicker?.(plot.id);
       return;
     }
 
@@ -91,16 +93,6 @@ export const CropField: React.FC<CropFieldProps> = ({
       }
       onHarvest?.(result);
       setTimeout(() => setIsHarvesting(false), 300);
-    }
-  };
-
-  // 執行播種
-  const handleSelectSeed = (cropType: CropType) => {
-    const res = plantCrop(plot.id, cropType, now);
-    if (res.success) {
-      setShowSeedPicker(false);
-    } else {
-      alert(res.message);
     }
   };
 
@@ -131,8 +123,9 @@ export const CropField: React.FC<CropFieldProps> = ({
         }
         className={cn(
           "bouncy glass group relative flex h-28 w-28 sm:h-32 sm:w-32 items-center justify-center p-1.5 rounded-[2rem]",
-          "border border-white/70 dark:border-white/10 shadow-[var(--shadow-soft)] transition-all",
+          "border border-white/70 dark:border-white/10 shadow-[var(--shadow-soft)] transition-all cursor-pointer",
           isReady && "animate-farm-wiggle border-[var(--caramel)]! shadow-[var(--shadow-pop)] ring-2 ring-[var(--caramel)]/40",
+          isPickerOpen && "border-[var(--caramel)]! ring-4 ring-[var(--caramel)]/50 scale-105 shadow-[var(--shadow-pop)]",
           isHarvesting && "scale-105"
         )}
       >
@@ -336,81 +329,13 @@ export const CropField: React.FC<CropFieldProps> = ({
       )}
 
       {/* 空地時：下方標籤 */}
-      {plot.type === "empty" && !showSeedPicker && (
-        <span className="mt-1 text-[11px] font-black text-[var(--caramel)]">
-          點擊播種
+      {plot.type === "empty" && (
+        <span className={cn(
+          "mt-1 text-[11px] font-black transition-colors",
+          isPickerOpen ? "text-foreground font-black underline underline-offset-2" : "text-[var(--caramel)]"
+        )}>
+          {isPickerOpen ? "播種中..." : "點擊播種"}
         </span>
-      )}
-
-      {/* 播種種子選擇彈窗 */}
-      {showSeedPicker && (
-        <div className="glass-strong rounded-3xl absolute top-full z-40 mt-2 flex w-64 flex-col gap-2 p-3.5 shadow-2xl border border-white/80 dark:border-white/10 pop-in">
-          <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
-            <span className="text-xs font-black text-foreground">選擇作物種子</span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowSeedPicker(false);
-              }}
-              className="neu bouncy flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95"
-            >
-              ✕
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1">
-            {Object.values(CROP_CONFIGS).map((crop) => {
-              const isLocked = level < crop.unlockLevel;
-              const canAfford = coins >= crop.seedCost;
-
-              return (
-                <button
-                  key={crop.id}
-                  disabled={isLocked || !canAfford}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSelectSeed(crop.id);
-                  }}
-                  className={cn(
-                    "bouncy glass flex items-center justify-between p-2 rounded-2xl text-left border border-white/60 dark:border-white/10 transition-all",
-                    isLocked || !canAfford
-                      ? "opacity-50 cursor-not-allowed bg-muted/20"
-                      : "hover:border-[var(--caramel)]/50 active:scale-95"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl drop-shadow-xs">{crop.icon}</span>
-                    <div>
-                      <div className="text-xs font-black text-foreground flex items-center gap-1">
-                        {crop.name}
-                        {isLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
-                      </div>
-                      <div className="text-[10px] font-bold text-muted-foreground">
-                        耗時 {Math.round(crop.growDurationMs / 1000)}秒 · 收穫 {crop.harvestYield}個
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <span
-                      className={cn(
-                        "text-xs font-black",
-                        canAfford ? "text-[var(--caramel)]" : "text-destructive"
-                      )}
-                    >
-                      🪙 {crop.seedCost}
-                    </span>
-                    {isLocked && (
-                      <div className="text-[9px] text-muted-foreground font-bold">
-                        Lv.{crop.unlockLevel}
-                      </div>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
       )}
     </div>
   );

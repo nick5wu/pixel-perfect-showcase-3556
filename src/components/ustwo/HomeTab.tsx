@@ -65,7 +65,7 @@ export function HomeTab({
       <BudgetBanner />
 
       {/* Calendar */}
-      <section className="glass rounded-[2rem] p-4">
+      <section className="glass rounded-[2rem] p-4 overscroll-contain">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-1">
             {expanded && (
@@ -106,7 +106,7 @@ export function HomeTab({
         </div>
 
         <div
-          className="grid grid-cols-7 gap-1 overflow-hidden transition-[max-height] duration-500 ease-out"
+          className="grid grid-cols-7 gap-1 overflow-hidden transition-[max-height] duration-500 ease-out overscroll-contain touch-pan-y"
           style={{ maxHeight: expanded ? "26rem" : "5.5rem" }}
         >
           {days.map((d) => {

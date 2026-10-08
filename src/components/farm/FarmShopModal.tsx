@@ -17,7 +17,16 @@ import {
   type AnimalType,
   type CropType,
 } from "@/store/useFarmStore";
-import { cn } from "@/lib/utils";
+import { cn, useBodyScrollLock } from "@/lib/utils";
+import {
+  ChickenBaseSvg,
+  CowBaseSvg,
+  SheepBaseSvg,
+  StrawHatSlot,
+  FlowerCrownSlot,
+  GoldenBellSlot,
+  RedScarfSlot,
+} from "./FarmAnimal";
 
 export interface FarmShopModalProps {
   /** 是否開啟彈窗 */
@@ -51,6 +60,9 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
   const [previewTarget, setPreviewTarget] = useState<PreviewTarget>("cow");
   const [selectedSlot, setSelectedSlot] = useState<"head" | "neck" | "animalStyle" | "house">("head");
   const [purchasedFeedback, setPurchasedFeedback] = useState<Record<string, boolean>>({});
+
+  // 彈窗開啟時鎖定背景滾動，避免背景跟隨滑動
+  useBodyScrollLock(open);
 
   // Store 狀態與操作
   const coins = useFarmStore((state) => state.coins);
@@ -227,7 +239,7 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
             </div>
 
             {/* Tab 內容切換區 */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-5 no-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 no-scrollbar overscroll-contain touch-pan-y">
               <AnimatePresence mode="wait">
                 {activeTab === "market" ? (
                   /* ==============================================================
@@ -397,9 +409,9 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                     transition={{ duration: 0.22 }}
                     className="flex flex-col gap-4"
                   >
-                    {/* 上半部：毛玻璃展示台 (Preview Zone) */}
+                    {/* 上半部：毛玻璃溫暖展示台 (Preview Zone) */}
                     <div className="glass-strong relative flex flex-col items-center justify-center rounded-[2.2rem] p-4.5 border border-white/70 dark:border-white/10 shadow-[var(--shadow-soft)] overflow-hidden">
-                      <div className="pointer-events-none absolute -top-8 -right-8 h-36 w-36 rounded-full bg-purple-500/10 blur-2xl" />
+                      <div className="pointer-events-none absolute -top-8 -right-8 h-36 w-36 rounded-full bg-[var(--caramel)]/10 blur-2xl" />
 
                       {/* 展示對象切換按鈕列 */}
                       <div className="neu-inset flex items-center gap-1.5 mb-2.5 p-1 rounded-2xl border border-white/40 dark:border-white/5">
@@ -435,7 +447,7 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                         className="relative flex h-36 w-36 sm:h-40 sm:w-40 items-center justify-center my-1"
                       >
                         {/* 展示台底座柔和光圈 */}
-                        <div className="pointer-events-none absolute bottom-2 h-8 w-28 rounded-full bg-purple-300/30 dark:bg-purple-500/20 blur-md" />
+                        <div className="pointer-events-none absolute bottom-2 h-8 w-28 rounded-full bg-amber-300/30 dark:bg-amber-500/20 blur-md" />
 
                         {previewTarget === "house" ? (
                           <div className="h-28 w-28 drop-shadow-md">
@@ -496,8 +508,8 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                       ))}
                     </div>
 
-                    {/* 橫向滑動裝備卡片列表 */}
-                    <div className="flex gap-3 overflow-x-auto no-scrollbar py-1 px-0.5">
+                    {/* 裝備卡片網格 (與雜貨店一致的 Bento Grid，徹底避免水平裁切與陰影截斷) */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-1">
                       {slotSkins.map((skin) => {
                         const isUnlocked = unlockedSkins.includes(skin.id);
 
@@ -545,8 +557,7 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                           <div
                             key={skin.id}
                             className={cn(
-                              "bouncy glass flex flex-col justify-between p-3.5 min-w-[150px] max-w-[150px] shrink-0 rounded-3xl",
-                              "border transition-all duration-200 shadow-xs",
+                              "bouncy glass flex flex-col justify-between p-3.5 rounded-3xl border transition-all duration-200 shadow-[var(--shadow-soft)]",
                               isEquipped
                                 ? "border-[var(--caramel)]! ring-2 ring-[var(--caramel)]/40 shadow-sm"
                                 : isUnlocked
@@ -834,42 +845,18 @@ function AnimalPreviewSvg({
     <svg viewBox="0 0 120 120" className="h-full w-full drop-shadow-md">
       <ellipse cx="60" cy="104" rx="36" ry="7" fill="#2D6A4F" opacity="0.25" />
 
-      {/* 底層動物 */}
+      {/* 底層動物 (統一使用農場標準高精純向量圖形) */}
       {type === "cow" && <CowBaseSvg />}
       {type === "chicken" && <ChickenBaseSvg />}
       {type === "sheep" && <SheepBaseSvg />}
 
-      {/* 頸部裝備插槽 */}
-      {equipment?.neck === "golden-bell" && (
-        <g transform={type === "cow" ? "translate(60, 78)" : "translate(60, 84)"}>
-          <path d="M -14 -4 Q 0 2 14 -4" stroke="#E63946" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-          <circle cx="0" cy="5" r="6" fill="#FFB703" stroke="#FB8500" strokeWidth="1" />
-          <circle cx="-2" cy="3.5" r="1.2" fill="#FFFBEB" />
-        </g>
-      )}
-      {equipment?.neck === "red-scarf" && (
-        <g transform={type === "cow" ? "translate(60, 78)" : "translate(60, 83)"}>
-          <ellipse cx="0" cy="0" rx="16" ry="5" fill="#E63946" stroke="#9B2226" strokeWidth="1" />
-          <path d="M 6 0 L 10 14 L 4 14 Z" fill="#E63946" stroke="#9B2226" strokeWidth="1" />
-        </g>
-      )}
+      {/* 頸部裝備插槽 (精準適配動物骨架) */}
+      {equipment?.neck === "golden-bell" && <GoldenBellSlot animalType={type} />}
+      {equipment?.neck === "red-scarf" && <RedScarfSlot animalType={type} />}
 
-      {/* 頭部裝備插槽 */}
-      {equipment?.head === "straw-hat" && (
-        <g transform={type === "cow" ? "translate(60, 36)" : "translate(60, 44)"}>
-          <ellipse cx="0" cy="0" rx="22" ry="6" fill="#DDA15E" stroke="#BC6C25" strokeWidth="1.2" />
-          <path d="M -12 -1 C -12 -14 12 -14 12 -1 Z" fill="#E9C46A" stroke="#BC6C25" strokeWidth="1.2" />
-          <path d="M -12 -2 Q 0 -1 12 -2 L 11 0 Q 0 1 -11 0 Z" fill="#E63946" />
-        </g>
-      )}
-      {equipment?.head === "flower-crown" && (
-        <g transform={type === "cow" ? "translate(60, 40)" : "translate(60, 48)"}>
-          <path d="M -16 0 Q 0 -6 16 0" stroke="#52B788" strokeWidth="2.5" fill="none" />
-          <circle cx="-10" cy="-2" r="3.5" fill="#FFB703" />
-          <circle cx="0" cy="-4" r="4" fill="#FF758F" />
-          <circle cx="10" cy="-2" r="3.5" fill="#72EFDD" />
-        </g>
-      )}
+      {/* 頭部裝備插槽 (精準適配動物頭部角度) */}
+      {equipment?.head === "straw-hat" && <StrawHatSlot animalType={type} />}
+      {equipment?.head === "flower-crown" && <FlowerCrownSlot animalType={type} />}
     </svg>
   );
 }
@@ -898,49 +885,5 @@ function FarmhousePreviewSvg({ skin }: { skin?: string | undefined }) {
       <rect x="22" y="44" width="56" height="38" rx="4" fill="#DEAB7E" stroke="#BC6C25" strokeWidth="2" />
       <polygon points="16,46 50,18 84,46" fill="#D97706" stroke="#B45309" strokeWidth="2" />
     </svg>
-  );
-}
-
-function ChickenBaseSvg() {
-  return (
-    <g>
-      <ellipse cx="60" cy="74" rx="28" ry="26" fill="#FFFDF0" stroke="#E9C46A" strokeWidth="2" />
-      <path d="M 54 48 C 50 38 60 36 60 48 C 64 36 74 38 70 48 Z" fill="#E76F51" />
-      <circle cx="50" cy="66" r="3.5" fill="#264653" />
-      <circle cx="49" cy="64.5" r="1.2" fill="#FFFFFF" />
-      <circle cx="70" cy="66" r="3.5" fill="#264653" />
-      <circle cx="69" cy="64.5" r="1.2" fill="#FFFFFF" />
-      <polygon points="56,71 64,71 60,77" fill="#F4A261" stroke="#E76F51" strokeWidth="1" />
-    </g>
-  );
-}
-
-function CowBaseSvg() {
-  return (
-    <g>
-      <rect x="36" y="86" width="11" height="18" rx="5" fill="#E9ECEF" stroke="#CED4DA" strokeWidth="1.5" />
-      <rect x="73" y="86" width="11" height="18" rx="5" fill="#E9ECEF" stroke="#CED4DA" strokeWidth="1.5" />
-      <ellipse cx="60" cy="72" rx="34" ry="28" fill="#F8F9FA" stroke="#DEE2E6" strokeWidth="2" />
-      <path d="M 32 64 C 30 76 44 82 46 72 C 48 64 38 56 32 64 Z" fill="#212529" />
-      <circle cx="48" cy="54" r="3.2" fill="#212529" />
-      <circle cx="72" cy="54" r="3.2" fill="#212529" />
-      <ellipse cx="60" cy="68" rx="16" ry="10" fill="#F8D7DA" stroke="#F1A7B0" strokeWidth="1.2" />
-    </g>
-  );
-}
-
-function SheepBaseSvg() {
-  return (
-    <g>
-      <g fill="#F8F9FA" stroke="#E9ECEF" strokeWidth="1.8">
-        <circle cx="60" cy="68" r="26" />
-        <circle cx="44" cy="64" r="16" />
-        <circle cx="76" cy="64" r="16" />
-        <circle cx="60" cy="50" r="15" />
-      </g>
-      <ellipse cx="60" cy="66" rx="13" ry="16" fill="#495057" />
-      <circle cx="54" cy="64" r="2" fill="#FFFFFF" />
-      <circle cx="66" cy="64" r="2" fill="#FFFFFF" />
-    </g>
   );
 }

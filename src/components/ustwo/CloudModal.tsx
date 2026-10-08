@@ -23,9 +23,10 @@ import {
   testSupabaseConnection,
   isSupabaseConfigured,
 } from "@/lib/supabase";
-import { cn } from "@/lib/utils";
+import { cn, useBodyScrollLock } from "@/lib/utils";
 
 export function CloudModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  useBodyScrollLock(open);
   const {
     cloudStatus,
     coupleCode,
@@ -209,7 +210,7 @@ create policy "receipts_insert" on storage.objects for insert with check (bucket
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.94, opacity: 0, y: 16 }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="relative max-h-[90vh] w-full max-w-md overflow-y-auto no-scrollbar rounded-[2.5rem] glass-strong p-6 shadow-2xl"
+            className="relative max-h-[90vh] w-full max-w-md overflow-y-auto overscroll-contain touch-pan-y no-scrollbar rounded-[2.5rem] glass-strong p-6 shadow-2xl"
             style={{
               paddingBottom: "max(env(safe-area-inset-bottom), 24px)",
             }}

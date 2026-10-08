@@ -229,7 +229,7 @@ export const FarmAnimal: React.FC<FarmAnimalProps> = ({
  * ============================================================================ */
 
 /** 元氣小雞底層 (Chicken Base) */
-function ChickenBaseSvg() {
+export function ChickenBaseSvg() {
   return (
     <g id="chicken-base">
       {/* 雙腿與小爪爪 */}
@@ -277,7 +277,7 @@ function ChickenBaseSvg() {
 }
 
 /** 溫和黑白乳牛底層 (Cow Base) */
-function CowBaseSvg() {
+export function CowBaseSvg() {
   return (
     <g id="cow-base">
       {/* 四條粗粗小短腿 */}
@@ -333,7 +333,7 @@ function CowBaseSvg() {
 }
 
 /** 蓬鬆雲朵綿羊底層 (Sheep Base) */
-function SheepBaseSvg() {
+export function SheepBaseSvg() {
   return (
     <g id="sheep-base">
       {/* 四隻黑色小短腿 */}
@@ -370,7 +370,7 @@ function SheepBaseSvg() {
  * ============================================================================ */
 
 /** 頭部裝備：精緻草帽 (Straw Hat Slot) */
-function StrawHatSlot({ animalType }: { animalType: string }) {
+export function StrawHatSlot({ animalType }: { animalType: string }) {
   // 依動物種類精準定位頭頂座標
   const transform =
     animalType === "chicken"
@@ -401,7 +401,7 @@ function StrawHatSlot({ animalType }: { animalType: string }) {
 }
 
 /** 頭部裝備：浪漫小花環 (Flower Crown Slot) */
-function FlowerCrownSlot({ animalType }: { animalType: string }) {
+export function FlowerCrownSlot({ animalType }: { animalType: string }) {
   const transform =
     animalType === "chicken"
       ? "translate(60, 48) scale(0.8)"
@@ -421,7 +421,7 @@ function FlowerCrownSlot({ animalType }: { animalType: string }) {
 }
 
 /** 頸部裝備：閃耀金鈴鐺 (Golden Bell Slot) */
-function GoldenBellSlot({ animalType }: { animalType: string }) {
+export function GoldenBellSlot({ animalType }: { animalType: string }) {
   // 精準定位在頸部喉前
   const transform =
     animalType === "chicken"
@@ -455,7 +455,7 @@ function GoldenBellSlot({ animalType }: { animalType: string }) {
 }
 
 /** 頸部裝備：溫暖紅圍巾 (Red Scarf Slot) */
-function RedScarfSlot({ animalType }: { animalType: string }) {
+export function RedScarfSlot({ animalType }: { animalType: string }) {
   const transform =
     animalType === "chicken"
       ? "translate(60, 83) scale(0.8)"

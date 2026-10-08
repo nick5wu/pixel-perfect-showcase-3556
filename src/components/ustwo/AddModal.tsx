@@ -15,7 +15,7 @@ import {
 } from "@/lib/ustwo";
 import { uploadReceiptPhoto, isSupabaseConfigured } from "@/lib/supabase";
 import { DatePicker } from "./DatePicker";
-import { cn } from "@/lib/utils";
+import { cn, useBodyScrollLock } from "@/lib/utils";
 
 const PAD = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "00", "0", "del"];
 
@@ -103,6 +103,8 @@ export function AddModal({
 }) {
   const { activeUser, addTxn, updateTxn, categories, addCategory, removeCategory, coupleId } = useUsTwo();
   const isEdit = !!initialTxn;
+
+  useBodyScrollLock(open);
 
   const [amount, setAmount] = useState(isEdit ? String(initialTxn.amount) : "");
   // Date is directly taken from the current selected/today date, no complex picker here
@@ -249,7 +251,7 @@ export function AddModal({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
-            className="glass-strong relative max-h-[92vh] w-full max-w-md overflow-y-auto no-scrollbar rounded-t-[2.5rem] p-5 shadow-2xl"
+            className="glass-strong relative max-h-[92vh] w-full max-w-md overflow-y-auto overscroll-contain touch-pan-y no-scrollbar rounded-t-[2.5rem] p-5 shadow-2xl"
             style={{
               // Safe Area protection for Android gesture pill and navigation keys
               paddingBottom: "max(env(safe-area-inset-bottom), 28px)",

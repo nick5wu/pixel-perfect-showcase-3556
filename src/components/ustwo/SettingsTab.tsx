@@ -6,7 +6,7 @@ import { money, toKey, useUsTwo, type UserId, type DarkMode } from "@/lib/ustwo"
 import { Avatar, SectionTitle } from "./shared";
 import { WidgetPreview } from "./WidgetPreview";
 import { DatePicker } from "./DatePicker";
-import { cn } from "@/lib/utils";
+import { cn, useBodyScrollLock } from "@/lib/utils";
 
 // ─── Emoji picker options ─────────────────────────────────────────────────────
 
@@ -27,6 +27,7 @@ function NicknameModal({
   who: UserId | null;
   onClose: () => void;
 }) {
+  useBodyScrollLock(open);
   const { people, setPerson } = useUsTwo();
   return (
     <AnimatePresence>
@@ -76,7 +77,7 @@ function NicknameModalInner({
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.94, opacity: 0, y: 16 }}
         transition={{ type: "spring", damping: 28, stiffness: 300 }}
-        className="glass-strong relative w-full max-w-sm rounded-[2.5rem] p-6 shadow-2xl overflow-hidden"
+        className="glass-strong relative w-full max-w-sm rounded-[2.5rem] p-6 shadow-2xl overflow-hidden overscroll-contain touch-pan-y"
         style={{
           paddingBottom: "max(env(safe-area-inset-bottom), 24px)",
         }}

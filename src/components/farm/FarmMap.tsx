@@ -13,12 +13,13 @@ import {
 import {
   useFarmStore,
   type AnimalType,
+  type CropType,
   CROP_CONFIGS,
   ANIMAL_CONFIGS,
 } from "@/store/useFarmStore";
 import { CropField } from "./CropField";
 import { FarmAnimal } from "./FarmAnimal";
-import { cn } from "@/lib/utils";
+import { cn, useBodyScrollLock } from "@/lib/utils";
 
 export interface FarmMapProps {
   /** 外部點擊開啟商店事件 (可指定 tab) */
@@ -29,18 +30,21 @@ export interface FarmMapProps {
 /**
  * FarmMap - 農場遊戲核心網格地圖
  * 
- * 融合 UsTwo Ledger 頂級溫暖燕麥奶與焦糖美學 (UsTwo Ledger Warm Theme)：
+ * 融合 UIUXpromax 容器化佈局原則與 UsTwo Ledger 溫暖燕麥奶焦糖美學：
  * 1. 農舍與設施區 (Farmhouse, Silo, Pond)
- * 2. 作物田地區 (Plots Grid，支援即時生長與開墾)
- * 3. 動物牧場區 (Animal Pasture，支援動物領養與副產物採集)
- * 
- * 內建 1 秒時間戳記心跳定時器，即時同步現實時間進度。
+ * 2. 自然耕作園地 (獨立 Seed Picker 彈窗，避免陰影與格子截斷，單一選擇狀態)
+ * 3. 陽光萌寵牧場 (Pasture Grid，支援夥伴領養與產物採集)
+ * 4. 嚴格防止背景滾動聯動 (useBodyScrollLock + overscroll-contain)
  */
 export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
   const [currentTime, setCurrentTime] = useState(Date.now());
   const [showInventoryModal, setShowInventoryModal] = useState(false);
   const [showAdoptModal, setShowAdoptModal] = useState(false);
+  const [activePlantingPlotId, setActivePlantingPlotId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // 彈窗開啟時鎖定背景滑動
+  useBodyScrollLock(showInventoryModal || showAdoptModal || !!activePlantingPlotId);
 
   // Store 狀態與方法
   const plots = useFarmStore((state) => state.plots);
@@ -53,6 +57,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
   const updateGrowthState = useFarmStore((state) => state.updateGrowthState);
   const expandPlot = useFarmStore((state) => state.expandPlot);
   const purchaseAnimal = useFarmStore((state) => state.purchaseAnimal);
+  const plantCrop = useFarmStore((state) => state.plantCrop);
   const sellItem = useFarmStore((state) => state.sellItem);
 
   // 全域心跳定時器：每 1 秒更新時間戳記並同步 store 成長判定
@@ -78,6 +83,18 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
   const handleExpandPlot = () => {
     const res = expandPlot();
     triggerToast(res.message);
+  };
+
+  // 播種作物
+  const handleSelectSeed = (cropType: CropType) => {
+    if (!activePlantingPlotId) return;
+    const res = plantCrop(activePlantingPlotId, cropType, Date.now());
+    if (res.success) {
+      setActivePlantingPlotId(null);
+      triggerToast(res.message);
+    } else {
+      triggerToast(res.message);
+    }
   };
 
   // 領養動物
@@ -111,7 +128,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.96 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            className="fixed top-18 left-1/2 z-50 -translate-x-1/2 pointer-events-none"
+            className="fixed top-20 left-1/2 z-50 -translate-x-1/2 pointer-events-none"
           >
             <div className="glass-strong neu rounded-full px-5 py-2.5 text-xs font-black text-foreground shadow-[var(--shadow-soft)] border border-white/80 dark:border-white/10 flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-[var(--caramel)] fill-current animate-pulse" />
@@ -124,10 +141,12 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
       {/* ====================================================================
        * 模組 1：農舍與設施區 (Farmhouse & Facilities Zone)
        * ==================================================================== */}
-      <section className="glass-strong rounded-[2.2rem] p-5 sm:p-6 shadow-[var(--shadow-soft)] border border-white/70 dark:border-white/10 relative overflow-hidden">
-        {/* 背景氛圍微光 */}
-        <div className="pointer-events-none absolute -top-12 -right-12 h-44 w-44 rounded-full bg-[var(--caramel)]/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
+      <section className="glass-strong rounded-[2.2rem] p-5 sm:p-6 shadow-[var(--shadow-soft)] border border-white/70 dark:border-white/10 relative">
+        {/* 背景裝飾微光 (獨立容器裁切，避免剪裁卡片陰影) */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[2.2rem]">
+          <div className="absolute -top-12 -right-12 h-44 w-44 rounded-full bg-[var(--caramel)]/10 blur-3xl" />
+          <div className="absolute -bottom-10 -left-10 h-36 w-36 rounded-full bg-emerald-500/10 blur-2xl" />
+        </div>
 
         {/* 標題與當前裝扮風格標籤 */}
         <div className="relative z-10 flex items-center justify-between pb-4">
@@ -146,7 +165,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
           {onOpenShop && (
             <button
               onClick={() => onOpenShop("dressing")}
-              className="bouncy neu min-h-[44px] flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-black text-foreground border border-white/60 dark:border-white/10 shadow-[var(--shadow-soft)] active:scale-95"
+              className="bouncy neu min-h-[44px] flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-black text-foreground border border-white/60 dark:border-white/10 shadow-[var(--shadow-soft)] active:scale-95 cursor-pointer"
             >
               <ShoppingBag className="h-4 w-4 text-[var(--caramel)]" />
               <span>換裝工坊</span>
@@ -206,9 +225,11 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
       {/* ====================================================================
        * 模組 2：作物田地區 (Crop Fields Zone)
        * ==================================================================== */}
-      <section className="glass-strong rounded-[2.2rem] p-5 sm:p-6 shadow-[var(--shadow-soft)] border border-white/70 dark:border-white/10 flex flex-col gap-4 relative overflow-hidden">
-        {/* 背景裝飾光斑 */}
-        <div className="pointer-events-none absolute -top-12 -left-12 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl" />
+      <section className="glass-strong rounded-[2.2rem] p-5 sm:p-6 shadow-[var(--shadow-soft)] border border-white/70 dark:border-white/10 flex flex-col gap-4 relative">
+        {/* 背景裝飾光斑 (獨立容器裁切) */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[2.2rem]">
+          <div className="absolute -top-12 -left-12 h-44 w-44 rounded-full bg-emerald-500/10 blur-3xl" />
+        </div>
 
         {/* 區域標題列 */}
         <div className="relative z-10 flex items-center justify-between">
@@ -219,7 +240,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
                 自然耕作園地
               </h2>
               <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                已開墾 {plots.length} 塊耕地 · 支援即時生長
+                已開墾 {plots.length} 塊耕地 · 點擊田地播種收成
               </span>
             </div>
           </div>
@@ -227,7 +248,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
           {/* 快速開墾按鈕 */}
           <button
             onClick={handleExpandPlot}
-            className="bouncy min-h-[44px] flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-black text-white shadow-[var(--shadow-soft)] active:scale-95"
+            className="bouncy min-h-[44px] flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-black text-white shadow-[var(--shadow-soft)] active:scale-95 cursor-pointer"
             style={{ background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }}
           >
             <Plus className="h-4 w-4 stroke-[3]" />
@@ -242,6 +263,8 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
               key={plot.id}
               plot={plot}
               currentTime={currentTime}
+              isPickerOpen={activePlantingPlotId === plot.id}
+              onOpenSeedPicker={(id) => setActivePlantingPlotId((prev) => prev === id ? null : id)}
               onHarvest={(res) => triggerToast(res.message)}
             />
           ))}
@@ -249,7 +272,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
           {/* 擴建預留卡片 */}
           <button
             onClick={handleExpandPlot}
-            className="bouncy glass rounded-3xl border-2 border-dashed border-[var(--caramel)]/40 hover:border-[var(--caramel)]/70 flex h-28 w-28 sm:h-32 sm:w-32 flex-col items-center justify-center p-2 text-muted-foreground active:scale-95 transition-all"
+            className="bouncy glass rounded-3xl border-2 border-dashed border-[var(--caramel)]/40 hover:border-[var(--caramel)]/70 flex h-28 w-28 sm:h-32 sm:w-32 flex-col items-center justify-center p-2 text-muted-foreground active:scale-95 transition-all cursor-pointer"
           >
             <div className="neu flex h-9 w-9 items-center justify-center rounded-full text-[var(--caramel)] shadow-xs">
               <Plus className="h-5 w-5 stroke-[3]" />
@@ -265,9 +288,11 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
       {/* ====================================================================
        * 模組 3：動物牧場區 (Animal Pasture Zone)
        * ==================================================================== */}
-      <section className="glass-strong rounded-[2.2rem] p-5 sm:p-6 shadow-[var(--shadow-soft)] border border-white/70 dark:border-white/10 flex flex-col gap-4 relative overflow-hidden">
-        {/* 背景裝飾光斑 */}
-        <div className="pointer-events-none absolute -bottom-12 -right-12 h-44 w-44 rounded-full bg-[var(--caramel)]/10 blur-3xl" />
+      <section className="glass-strong rounded-[2.2rem] p-5 sm:p-6 shadow-[var(--shadow-soft)] border border-white/70 dark:border-white/10 flex flex-col gap-4 relative">
+        {/* 背景裝飾光斑 (獨立容器裁切) */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[2.2rem]">
+          <div className="absolute -bottom-12 -right-12 h-44 w-44 rounded-full bg-[var(--caramel)]/10 blur-3xl" />
+        </div>
 
         {/* 區域標題列 */}
         <div className="relative z-10 flex items-center justify-between">
@@ -286,7 +311,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
           {/* 領養新夥伴按鈕 */}
           <button
             onClick={() => setShowAdoptModal(true)}
-            className="bouncy min-h-[44px] flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-black text-white shadow-[var(--shadow-soft)] active:scale-95"
+            className="bouncy min-h-[44px] flex items-center gap-1.5 rounded-2xl px-4 py-2 text-xs font-black text-white shadow-[var(--shadow-soft)] active:scale-95 cursor-pointer"
             style={{ background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }}
           >
             <Plus className="h-4 w-4 stroke-[3]" />
@@ -308,7 +333,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
           {/* 領養夥伴預留卡片 */}
           <button
             onClick={() => setShowAdoptModal(true)}
-            className="bouncy glass rounded-3xl border-2 border-dashed border-[var(--caramel)]/40 hover:border-[var(--caramel)]/70 flex h-28 w-28 sm:h-32 sm:w-32 flex-col items-center justify-center p-2 text-muted-foreground active:scale-95 transition-all"
+            className="bouncy glass rounded-3xl border-2 border-dashed border-[var(--caramel)]/40 hover:border-[var(--caramel)]/70 flex h-28 w-28 sm:h-32 sm:w-32 flex-col items-center justify-center p-2 text-muted-foreground active:scale-95 transition-all cursor-pointer"
           >
             <div className="neu flex h-9 w-9 items-center justify-center rounded-full text-[var(--caramel)] shadow-xs">
               <Plus className="h-5 w-5 stroke-[3]" />
@@ -322,7 +347,104 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
       </section>
 
       {/* ====================================================================
-       * 倉庫物資彈窗 (Inventory Modal - UsTwo Ledger Warm Glass)
+       * 作物播種選擇彈窗 (Seed Picker Modal - Dedicated Floating Modal)
+       * ==================================================================== */}
+      <AnimatePresence>
+        {activePlantingPlotId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActivePlantingPlotId(null)}
+              className="fixed inset-0 bg-[oklch(0.22_0.02_55/0.5)] backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0, y: 12 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="glass-strong rounded-[2.5rem] relative z-10 w-full max-w-sm p-6 shadow-2xl border border-white/80 dark:border-white/10 overscroll-contain touch-pan-y"
+            >
+              <div className="flex items-center justify-between pb-3.5 border-b border-border/60">
+                <div className="flex items-center gap-2">
+                  <div className="neu flex h-9 w-9 items-center justify-center rounded-2xl text-[var(--caramel)] shadow-xs">
+                    🌱
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-foreground">
+                      選擇播種作物
+                    </h3>
+                    <p className="text-[11px] font-bold text-muted-foreground">
+                      點擊種子即可播種至農田
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActivePlantingPlotId(null)}
+                  className="neu bouncy flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:text-foreground active:scale-95"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-2.5 pt-3.5 max-h-80 overflow-y-auto no-scrollbar">
+                {Object.values(CROP_CONFIGS).map((crop) => {
+                  const isLocked = level < crop.unlockLevel;
+                  const canAfford = coins >= crop.seedCost;
+
+                  return (
+                    <button
+                      key={crop.id}
+                      disabled={isLocked || !canAfford}
+                      onClick={() => handleSelectSeed(crop.id)}
+                      className={cn(
+                        "bouncy glass flex items-center justify-between p-3 rounded-2xl text-left border border-white/60 dark:border-white/10 transition-all",
+                        isLocked || !canAfford
+                          ? "opacity-50 cursor-not-allowed bg-muted/20"
+                          : "hover:border-[var(--caramel)]/50 active:scale-95 cursor-pointer shadow-xs"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-3xl drop-shadow-xs">{crop.icon}</span>
+                        <div>
+                          <div className="text-sm font-black text-foreground flex items-center gap-1.5">
+                            {crop.name}
+                            {isLocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+                          </div>
+                          <div className="text-[11px] font-bold text-muted-foreground">
+                            生長 {Math.round(crop.growDurationMs / 1000)}秒 · 收穫 {crop.harvestYield}個 · +{crop.xpReward} XP
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-right">
+                        <span
+                          className={cn(
+                            "text-xs font-black",
+                            canAfford ? "text-[var(--caramel)]" : "text-destructive"
+                          )}
+                        >
+                          🪙 {crop.seedCost}
+                        </span>
+                        {isLocked && (
+                          <div className="text-[10px] text-muted-foreground font-bold">
+                            Lv.{crop.unlockLevel} 解鎖
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ====================================================================
+       * 倉庫物資彈窗 (Inventory Modal)
        * ==================================================================== */}
       <AnimatePresence>
         {showInventoryModal && (
@@ -340,7 +462,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
               exit={{ scale: 0.94, opacity: 0, y: 12 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="glass-strong rounded-[2.5rem] relative z-10 w-full max-w-sm p-6 shadow-2xl border border-white/80 dark:border-white/10"
+              className="glass-strong rounded-[2.5rem] relative z-10 w-full max-w-sm p-6 shadow-2xl border border-white/80 dark:border-white/10 overscroll-contain touch-pan-y"
             >
               <div className="flex items-center justify-between pb-3.5 border-b border-border/60">
                 <div className="flex items-center gap-2">
@@ -363,7 +485,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
                 點擊物品可單件出售換取金幣：
               </p>
 
-              <div className="flex flex-col gap-2.5 max-h-72 overflow-y-auto pr-1">
+              <div className="flex flex-col gap-2.5 max-h-72 overflow-y-auto pr-1 no-scrollbar">
                 {Object.keys(inventory).length === 0 ? (
                   <div className="py-8 text-center text-xs font-black text-muted-foreground">
                     倉庫空空如也，趕快收割作物或收集牛奶雞蛋吧！
@@ -411,7 +533,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
 
                         <button
                           onClick={() => handleSellItem(itemId)}
-                          className="bouncy flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-black text-white shadow-xs active:scale-95"
+                          className="bouncy flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-black text-white shadow-xs active:scale-95 cursor-pointer"
                           style={{ background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }}
                         >
                           <Coins className="h-3 w-3" />
@@ -428,7 +550,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
       </AnimatePresence>
 
       {/* ====================================================================
-       * 領養動物彈窗 (Adopt Animal Modal - UsTwo Ledger Warm Glass)
+       * 領養動物彈窗 (Adopt Animal Modal)
        * ==================================================================== */}
       <AnimatePresence>
         {showAdoptModal && (
@@ -446,7 +568,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
               exit={{ scale: 0.94, opacity: 0, y: 12 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
-              className="glass-strong rounded-[2.5rem] relative z-10 w-full max-w-sm p-6 shadow-2xl border border-white/80 dark:border-white/10"
+              className="glass-strong rounded-[2.5rem] relative z-10 w-full max-w-sm p-6 shadow-2xl border border-white/80 dark:border-white/10 overscroll-contain touch-pan-y"
             >
               <div className="flex items-center justify-between pb-3.5 border-b border-border/60">
                 <h3 className="text-base font-black text-foreground">
@@ -460,7 +582,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
                 </button>
               </div>
 
-              <div className="flex flex-col gap-3 pt-3.5">
+              <div className="flex flex-col gap-3 pt-3.5 max-h-80 overflow-y-auto no-scrollbar">
                 {Object.values(ANIMAL_CONFIGS).map((cfg) => {
                   const isLocked = level < cfg.unlockLevel;
                   const canAfford = coins >= cfg.buyCost;
@@ -474,7 +596,7 @@ export const FarmMap: React.FC<FarmMapProps> = ({ onOpenShop, className }) => {
                         "bouncy glass rounded-2xl flex items-center justify-between p-3.5 text-left transition-all border border-white/60 dark:border-white/10",
                         isLocked || !canAfford
                           ? "opacity-50 cursor-not-allowed bg-muted/30"
-                          : "hover:border-[var(--caramel)]/50 active:scale-95"
+                          : "hover:border-[var(--caramel)]/50 active:scale-95 cursor-pointer shadow-xs"
                       )}
                     >
                       <div className="flex items-center gap-3">
