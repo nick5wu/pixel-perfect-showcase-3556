@@ -1,12 +1,13 @@
-import { PiggyBank, ListFilter, House, ChartPie, Settings } from "lucide-react";
+import { PiggyBank, ListFilter, House, ChartPie, Settings, Sprout } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type Tab = "savings" | "overview" | "home" | "stats" | "settings";
+export type Tab = "savings" | "overview" | "home" | "farm" | "stats" | "settings";
 
 const TABS: { id: Tab; zh: string; icon: typeof House }[] = [
   { id: "savings", zh: "存錢", icon: PiggyBank },
   { id: "overview", zh: "總覽", icon: ListFilter },
   { id: "home", zh: "首頁", icon: House },
+  { id: "farm", zh: "農場", icon: Sprout },
   { id: "stats", zh: "統計", icon: ChartPie },
   { id: "settings", zh: "設定", icon: Settings },
 ];

@@ -11,6 +11,7 @@ import { StatsTab } from "@/components/ustwo/StatsTab";
 import { SettingsTab } from "@/components/ustwo/SettingsTab";
 import { AddModal } from "@/components/ustwo/AddModal";
 import { CloudModal } from "@/components/ustwo/CloudModal";
+import { FarmView } from "@/components/farm";
 import { UsTwoProvider, toKey, useUsTwo, type Txn } from "@/lib/ustwo";
 import { cn } from "@/lib/utils";
 
@@ -67,50 +68,55 @@ function App() {
           paddingBottom: "calc(max(env(safe-area-inset-bottom), 24px) + 96px)",
         }}
       >
-        <header className="mb-5 flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <h1 className="text-2xl font-extrabold tracking-tight">我們倆的記帳小窩</h1>
-              <p className="text-xs font-medium text-muted-foreground">
-                UsTwo Ledger · 一起把日子記成甜的 🧡
-              </p>
+        {tab !== "farm" && (
+          <header className="mb-5 flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h1 className="text-2xl font-extrabold tracking-tight">我們倆的記帳小窩</h1>
+                <p className="text-xs font-medium text-muted-foreground">
+                  UsTwo Ledger · 一起把日子記成甜的 🧡
+                </p>
+              </div>
+              <button
+                onClick={() => setCloudOpen(true)}
+                className={cn(
+                  "bouncy flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold glass shadow-sm shrink-0",
+                  isPaired && cloudStatus === "connected"
+                    ? "text-emerald-700 dark:text-emerald-400"
+                    : "text-muted-foreground",
+                )}
+                title="雲端雙人同步設定"
+              >
+                <Cloud className="h-3.5 w-3.5 text-primary" />
+                <span>{isPaired && coupleCode ? coupleCode : "雙人同步"}</span>
+              </button>
             </div>
-            <button
-              onClick={() => setCloudOpen(true)}
-              className={cn(
-                "bouncy flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold glass shadow-sm shrink-0",
-                isPaired && cloudStatus === "connected"
-                  ? "text-emerald-700 dark:text-emerald-400"
-                  : "text-muted-foreground",
-              )}
-              title="雲端雙人同步設定"
-            >
-              <Cloud className="h-3.5 w-3.5 text-primary" />
-              <span>{isPaired && coupleCode ? coupleCode : "雙人同步"}</span>
-            </button>
-          </div>
-        </header>
+          </header>
+        )}
 
         {tab === "home" && <HomeTab selected={selected} onSelect={setSelected} onEdit={handleEdit} />}
         {tab === "savings" && <SavingsTab />}
         {tab === "overview" && <OverviewTab onEdit={handleEdit} />}
+        {tab === "farm" && <FarmView onBack={() => setTab("home")} />}
         {tab === "stats" && <StatsTab onEdit={handleEdit} />}
         {tab === "settings" && <SettingsTab onOpenCloud={() => setCloudOpen(true)} />}
       </div>
 
       {/* Floating Add Expense Action Button with Android Safe Area offset */}
-      <button
-        onClick={() => setAdding(true)}
-        aria-label="Add expense"
-        className="bouncy fixed right-5 z-40 flex h-16 w-16 items-center justify-center rounded-full text-primary-foreground"
-        style={{
-          bottom: "calc(max(env(safe-area-inset-bottom), 24px) + 80px)",
-          backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
-          boxShadow: "var(--shadow-pop), var(--shadow-neu)",
-        }}
-      >
-        <Plus className="h-8 w-8" strokeWidth={2.6} />
-      </button>
+      {tab !== "farm" && (
+        <button
+          onClick={() => setAdding(true)}
+          aria-label="Add expense"
+          className="bouncy fixed right-5 z-40 flex h-16 w-16 items-center justify-center rounded-full text-primary-foreground"
+          style={{
+            bottom: "calc(max(env(safe-area-inset-bottom), 24px) + 80px)",
+            backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
+            boxShadow: "var(--shadow-pop), var(--shadow-neu)",
+          }}
+        >
+          <Plus className="h-8 w-8" strokeWidth={2.6} />
+        </button>
+      )}
 
       {/* Cloud Modal */}
       <CloudModal open={cloudOpen} onClose={() => setCloudOpen(false)} />
