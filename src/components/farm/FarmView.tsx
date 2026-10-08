@@ -28,7 +28,8 @@ export const FarmView: React.FC<FarmViewProps> = ({ onBack, className }) => {
   return (
     <div
       className={cn(
-        "relative min-h-screen w-full flex flex-col bg-[#f4f7f4] dark:bg-[#1a231a] text-foreground transition-colors pb-24",
+        "relative min-h-[85vh] w-full flex flex-col transition-colors pb-6 sm:pb-8 rounded-[2.5rem]",
+        "bg-gradient-to-b from-amber-50/50 via-background to-emerald-50/30 dark:from-slate-900/60 dark:via-background dark:to-emerald-950/20",
         className
       )}
     >

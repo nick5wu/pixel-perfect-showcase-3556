@@ -109,8 +109,11 @@ export const CropField: React.FC<CropFieldProps> = ({
       {/* 飄浮收成反饋氣泡 */}
       {floatingFeedback && (
         <div className="pointer-events-none absolute -top-8 z-20 animate-farm-badge">
-          <div className="flex items-center gap-1 rounded-full bg-emerald-500/95 px-3 py-1 text-xs font-black text-white shadow-lg ring-2 ring-white">
-            <Sparkles className="h-3 w-3 fill-current text-yellow-300" />
+          <div
+            className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-black text-white shadow-lg ring-2 ring-white/80"
+            style={{ background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }}
+          >
+            <Sparkles className="h-3 w-3 fill-current text-amber-200" />
             <span>{floatingFeedback}</span>
           </div>
         </div>
@@ -127,11 +130,10 @@ export const CropField: React.FC<CropFieldProps> = ({
             : `${cropConfig?.name} 生長中`
         }
         className={cn(
-          "group relative flex h-28 w-28 sm:h-32 sm:w-32 items-center justify-center rounded-3xl p-1",
-          "transition-all duration-300 cursor-pointer outline-none focus:outline-none",
-          isReady && "animate-farm-wiggle hover:scale-105 active:scale-95",
-          isHarvesting && "scale-110",
-          !isReady && "hover:brightness-105 active:scale-98"
+          "bouncy glass group relative flex h-28 w-28 sm:h-32 sm:w-32 items-center justify-center p-1.5 rounded-[2rem]",
+          "border border-white/70 dark:border-white/10 shadow-[var(--shadow-soft)] transition-all",
+          isReady && "animate-farm-wiggle border-[var(--caramel)]! shadow-[var(--shadow-pop)] ring-2 ring-[var(--caramel)]/40",
+          isHarvesting && "scale-105"
         )}
       >
         {/* 純 SVG 土地畫布 */}
@@ -300,30 +302,34 @@ export const CropField: React.FC<CropFieldProps> = ({
           )}
         </svg>
 
-        {/* 成熟時上方浮動的收成驚嘆號 / 徽章 */}
+        {/* 成熟時上方浮動的收成徽章 */}
         {isReady && (
-          <div className="pointer-events-none absolute -top-3 z-10 flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2 py-0.5 text-[11px] font-black text-white shadow-lg ring-2 ring-white animate-farm-badge">
-            <span role="img" aria-label="收成手勢">
-              🌾
-            </span>
+          <div
+            className="pointer-events-none absolute -top-3 z-10 flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-black text-white shadow-md animate-farm-badge ring-1 ring-white/60"
+            style={{ background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }}
+          >
+            <span>🌾</span>
             <span>收成!</span>
           </div>
         )}
       </button>
 
-      {/* 生長中：下方微型進度條與倒數時間 */}
+      {/* 生長中：Neumorphic 凹槽微型進度條與倒數時間 */}
       {isGrowing && growthStatus && (
-        <div className="mt-1 flex flex-col items-center gap-0.5">
-          {/* 迷你進度條 */}
-          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-black/15 dark:bg-white/15">
+        <div className="mt-1.5 flex flex-col items-center gap-1">
+          {/* Neumorphic 凹槽進度條 */}
+          <div className="neu-inset relative h-2.5 w-20 overflow-hidden rounded-full p-0.5 border border-white/40 dark:border-white/5">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 transition-all duration-300"
-              style={{ width: `${growthStatus.progressPercent}%` }}
+              className="h-full rounded-full transition-all duration-300 shadow-xs"
+              style={{
+                width: `${growthStatus.progressPercent}%`,
+                background: "linear-gradient(90deg, var(--caramel), var(--caramel-soft))",
+              }}
             />
           </div>
-          {/* 剩餘時間標籤 */}
-          <div className="flex items-center gap-0.5 text-[10px] font-bold text-muted-foreground">
-            <Clock className="h-2.5 w-2.5 opacity-70" />
+          {/* 剩餘時間膠囊 */}
+          <div className="glass neu rounded-full flex items-center gap-1 px-2 py-0.5 text-[10px] font-black text-muted-foreground border border-white/60 dark:border-white/10 shadow-xs">
+            <Clock className="h-2.5 w-2.5 text-[var(--caramel)]" />
             <span>{formatRemainingTime(growthStatus.remainingMs)}</span>
           </div>
         </div>
@@ -331,28 +337,28 @@ export const CropField: React.FC<CropFieldProps> = ({
 
       {/* 空地時：下方標籤 */}
       {plot.type === "empty" && !showSeedPicker && (
-        <span className="mt-1 text-[11px] font-semibold text-muted-foreground/80">
+        <span className="mt-1 text-[11px] font-black text-[var(--caramel)]">
           點擊播種
         </span>
       )}
 
-      {/* 播種種子選擇彈窗 (懸浮在田地旁) */}
+      {/* 播種種子選擇彈窗 */}
       {showSeedPicker && (
-        <div className="absolute top-full z-40 mt-2 flex w-56 flex-col gap-1.5 rounded-3xl bg-white/95 dark:bg-zinc-900/95 p-3 shadow-xl backdrop-blur-md ring-1 ring-black/5 dark:ring-white/10 pop-in">
-          <div className="flex items-center justify-between pb-1 border-b border-border/50">
-            <span className="text-xs font-black text-foreground">選擇種子播種</span>
+        <div className="glass-strong rounded-3xl absolute top-full z-40 mt-2 flex w-64 flex-col gap-2 p-3.5 shadow-2xl border border-white/80 dark:border-white/10 pop-in">
+          <div className="flex items-center justify-between pb-1.5 border-b border-border/60">
+            <span className="text-xs font-black text-foreground">選擇作物種子</span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowSeedPicker(false);
               }}
-              className="text-xs font-bold text-muted-foreground hover:text-foreground"
+              className="neu bouncy flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95"
             >
               ✕
             </button>
           </div>
 
-          <div className="flex flex-col gap-1 max-h-48 overflow-y-auto pr-1">
+          <div className="flex flex-col gap-1.5 max-h-48 overflow-y-auto pr-1">
             {Object.values(CROP_CONFIGS).map((crop) => {
               const isLocked = level < crop.unlockLevel;
               const canAfford = coins >= crop.seedCost;
@@ -366,21 +372,21 @@ export const CropField: React.FC<CropFieldProps> = ({
                     handleSelectSeed(crop.id);
                   }}
                   className={cn(
-                    "flex items-center justify-between rounded-2xl p-2 text-left text-xs transition-all",
+                    "bouncy glass flex items-center justify-between p-2 rounded-2xl text-left border border-white/60 dark:border-white/10 transition-all",
                     isLocked || !canAfford
-                      ? "opacity-45 cursor-not-allowed bg-muted/30"
-                      : "hover:bg-amber-50 dark:hover:bg-amber-950/40 active:scale-98"
+                      ? "opacity-50 cursor-not-allowed bg-muted/20"
+                      : "hover:border-[var(--caramel)]/50 active:scale-95"
                   )}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-base">{crop.icon}</span>
+                    <span className="text-xl drop-shadow-xs">{crop.icon}</span>
                     <div>
-                      <div className="font-bold text-foreground flex items-center gap-1">
+                      <div className="text-xs font-black text-foreground flex items-center gap-1">
                         {crop.name}
-                        {isLocked && <Lock className="h-2.5 w-2.5 text-muted-foreground" />}
+                        {isLocked && <Lock className="h-3 w-3 text-muted-foreground" />}
                       </div>
-                      <div className="text-[10px] text-muted-foreground">
-                        {Math.round(crop.growDurationMs / 1000)}秒 · 獲{crop.harvestYield}個
+                      <div className="text-[10px] font-bold text-muted-foreground">
+                        耗時 {Math.round(crop.growDurationMs / 1000)}秒 · 收穫 {crop.harvestYield}個
                       </div>
                     </div>
                   </div>
@@ -388,15 +394,15 @@ export const CropField: React.FC<CropFieldProps> = ({
                   <div className="text-right">
                     <span
                       className={cn(
-                        "text-[11px] font-black",
-                        canAfford ? "text-amber-600 dark:text-amber-400" : "text-destructive"
+                        "text-xs font-black",
+                        canAfford ? "text-[var(--caramel)]" : "text-destructive"
                       )}
                     >
                       🪙 {crop.seedCost}
                     </span>
                     {isLocked && (
-                      <div className="text-[9px] text-muted-foreground font-semibold">
-                        Lv.{crop.unlockLevel}解鎖
+                      <div className="text-[9px] text-muted-foreground font-bold">
+                        Lv.{crop.unlockLevel}
                       </div>
                     )}
                   </div>

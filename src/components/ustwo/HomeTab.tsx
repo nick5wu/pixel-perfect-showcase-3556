@@ -71,10 +71,10 @@ export function HomeTab({
             {expanded && (
               <button
                 onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-                className="bouncy flex h-8 w-8 items-center justify-center rounded-full neu"
-                aria-label="Previous month"
+                className="bouncy flex h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
+                aria-label="上個月"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-5 w-5" />
               </button>
             )}
             <p className="px-1 text-base font-bold">
@@ -83,19 +83,19 @@ export function HomeTab({
             {expanded && (
               <button
                 onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-                className="bouncy flex h-8 w-8 items-center justify-center rounded-full neu"
-                aria-label="Next month"
+                className="bouncy flex h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
+                aria-label="下個月"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-5 w-5" />
               </button>
             )}
           </div>
           <button
             onClick={() => setExpanded((e) => !e)}
-            className="bouncy flex items-center gap-1 rounded-full neu px-3 py-1.5 text-xs font-bold"
+            className="bouncy flex min-h-[44px] items-center gap-1.5 rounded-full neu px-4 py-2 text-xs font-bold active:scale-95"
           >
             {expanded ? "收合" : "展開月曆"}
-            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", expanded && "rotate-180")} />
+            <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
           </button>
         </div>
 

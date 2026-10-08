@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { Heart, Sparkles, Pencil, Check, X, Sun, Moon, Monitor, Download, Wallet, Cloud } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { money, toKey, useUsTwo, type UserId, type DarkMode } from "@/lib/ustwo";
 import { Avatar, SectionTitle } from "./shared";
@@ -27,10 +28,13 @@ function NicknameModal({
   onClose: () => void;
 }) {
   const { people, setPerson } = useUsTwo();
-  if (!open || !who) return null;
-  const p = people[who];
-
-  return <NicknameModalInner who={who} p={p} onClose={onClose} onSave={setPerson} />;
+  return (
+    <AnimatePresence>
+      {open && who && (
+        <NicknameModalInner who={who} p={people[who]} onClose={onClose} onSave={setPerson} />
+      )}
+    </AnimatePresence>
+  );
 }
 
 function NicknameModalInner({
@@ -59,20 +63,31 @@ function NicknameModalInner({
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-      <button
-        type="button"
-        aria-label="Close"
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         onClick={onClose}
-        className="absolute inset-0 bg-foreground/35 backdrop-blur-sm"
+        className="absolute inset-0 bg-[oklch(0.22_0.02_55/0.45)] backdrop-blur-md"
       />
-      <div className="glass-strong pop-in relative w-full max-w-sm rounded-[2.5rem] p-6 shadow-2xl">
+      <motion.div
+        initial={{ scale: 0.94, opacity: 0, y: 16 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.94, opacity: 0, y: 16 }}
+        transition={{ type: "spring", damping: 28, stiffness: 300 }}
+        className="glass-strong relative w-full max-w-sm rounded-[2.5rem] p-6 shadow-2xl overflow-hidden"
+        style={{
+          paddingBottom: "max(env(safe-area-inset-bottom), 24px)",
+        }}
+      >
         <button
           type="button"
           onClick={onClose}
-          className="bouncy absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full neu"
-          aria-label="Close"
+          className="bouncy absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
+          aria-label="關閉"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </button>
 
         <h3 className="text-center text-lg font-bold">
@@ -87,7 +102,7 @@ function NicknameModalInner({
           <button
             type="button"
             onClick={() => setEmojiOpen((v) => !v)}
-            className="bouncy relative"
+            className="bouncy relative active:scale-95"
             aria-label="點擊更換頭像表情"
           >
             <span
@@ -116,7 +131,7 @@ function NicknameModalInner({
                       setEmojiOpen(false);
                     }}
                     className={cn(
-                      "bouncy flex h-9 w-9 items-center justify-center rounded-xl text-lg",
+                      "bouncy flex h-11 w-11 items-center justify-center rounded-xl text-xl active:scale-90",
                       e === emoji && "neu font-bold",
                     )}
                   >
@@ -136,7 +151,7 @@ function NicknameModalInner({
               value={zh}
               onChange={(e) => setZh(e.target.value.slice(0, 8))}
               placeholder="例如：我 / 寶貝 / 親愛的"
-              className="mt-1 h-11 w-full rounded-2xl neu-inset px-4 text-sm font-semibold outline-none"
+              className="mt-1 h-12 w-full rounded-2xl neu-inset px-4 text-sm font-semibold outline-none"
             />
           </div>
           <div>
@@ -145,7 +160,7 @@ function NicknameModalInner({
               value={name}
               onChange={(e) => setName(e.target.value.slice(0, 12))}
               placeholder="例如：Me / Darling"
-              className="mt-1 h-11 w-full rounded-2xl neu-inset px-4 text-sm font-semibold outline-none"
+              className="mt-1 h-12 w-full rounded-2xl neu-inset px-4 text-sm font-semibold outline-none"
             />
           </div>
         </div>
@@ -155,14 +170,14 @@ function NicknameModalInner({
           <button
             type="button"
             onClick={onClose}
-            className="bouncy h-11 flex-1 rounded-2xl neu text-sm font-bold text-muted-foreground"
+            className="bouncy flex min-h-[48px] h-12 flex-1 items-center justify-center rounded-2xl neu text-sm font-bold text-muted-foreground active:scale-95"
           >
             取消
           </button>
           <button
             type="button"
             onClick={save}
-            className="bouncy h-11 flex-1 rounded-2xl text-sm font-extrabold text-primary-foreground"
+            className="bouncy flex min-h-[48px] h-12 flex-1 items-center justify-center rounded-2xl text-sm font-extrabold text-primary-foreground active:scale-95 shadow-md"
             style={{
               backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
               boxShadow: "var(--shadow-soft)",
@@ -171,7 +186,7 @@ function NicknameModalInner({
             儲存修改
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

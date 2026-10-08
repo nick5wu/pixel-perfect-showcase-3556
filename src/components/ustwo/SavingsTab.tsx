@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, Trash2, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { ICONS, TINTS, money, useUsTwo, type Goal } from "@/lib/ustwo";
 import { SectionTitle, EmptyNote } from "./shared";
@@ -15,10 +16,29 @@ const pop = {
 
 function Sheet({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/25 p-3 backdrop-blur-sm sm:items-center" onClick={onClose}>
-      <div className="glass-strong pop-in w-full max-w-md rounded-[2rem] p-5" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-end justify-center">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="absolute inset-0 bg-[oklch(0.22_0.02_55/0.45)] backdrop-blur-md"
+        onClick={onClose}
+      />
+      <motion.div
+        initial={{ y: "100%", opacity: 0.8 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: "100%", opacity: 0 }}
+        transition={{ type: "spring", damping: 28, stiffness: 280 }}
+        className="glass-strong relative max-h-[90vh] w-full max-w-md overflow-y-auto no-scrollbar rounded-t-[2.5rem] p-5 shadow-2xl"
+        style={{
+          paddingBottom: "max(env(safe-area-inset-bottom), 24px)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" />
         {children}
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -54,8 +74,12 @@ function DepositSheet({ goal, onClose }: { goal: Goal; onClose: () => void }) {
           <p className="truncate font-bold">存進「{goal.zh}」</p>
           <p className="text-xs text-muted-foreground">還差 {money(left)}</p>
         </div>
-        <button onClick={onClose} className="bouncy flex h-9 w-9 items-center justify-center rounded-full neu" aria-label="關閉">
-          <X className="h-4 w-4" />
+        <button
+          onClick={onClose}
+          className="bouncy flex h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
+          aria-label="關閉"
+        >
+          <X className="h-5 w-5" />
         </button>
       </div>
       <div className="flex items-center gap-2 rounded-2xl neu-inset px-4">
@@ -72,12 +96,20 @@ function DepositSheet({ goal, onClose }: { goal: Goal; onClose: () => void }) {
       </div>
       <div className="mt-3 grid grid-cols-4 gap-2">
         {QUICK.map((q) => (
-          <button key={q} onClick={() => setAmt(String((Number(amt) || 0) + q))} className="bouncy rounded-2xl neu py-2 text-xs font-bold">
+          <button
+            key={q}
+            onClick={() => setAmt(String((Number(amt) || 0) + q))}
+            className="bouncy flex min-h-[44px] items-center justify-center rounded-2xl neu px-2 py-2.5 text-xs font-bold active:scale-95"
+          >
             +{q.toLocaleString()}
           </button>
         ))}
       </div>
-      <button onClick={submit} className="bouncy mt-4 h-12 w-full rounded-2xl font-bold text-primary-foreground" style={pop}>
+      <button
+        onClick={submit}
+        className="bouncy mt-4 h-14 w-full rounded-2xl font-bold text-primary-foreground active:scale-95 shadow-md"
+        style={pop}
+      >
         存進去
       </button>
     </Sheet>
@@ -103,8 +135,12 @@ function NewGoalSheet({ onClose }: { onClose: () => void }) {
     <Sheet onClose={onClose}>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-lg font-bold">新增存錢目標</p>
-        <button onClick={onClose} className="bouncy flex h-9 w-9 items-center justify-center rounded-full neu" aria-label="關閉">
-          <X className="h-4 w-4" />
+        <button
+          onClick={onClose}
+          className="bouncy flex h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
+          aria-label="關閉"
+        >
+          <X className="h-5 w-5" />
         </button>
       </div>
       <div className="space-y-2.5">
@@ -117,7 +153,7 @@ function NewGoalSheet({ onClose }: { onClose: () => void }) {
         {GOAL_ICONS.map((k) => {
           const Icon = ICONS[k]!;
           return (
-            <button key={k} onClick={() => setIcon(k)} className={cn("bouncy flex aspect-square items-center justify-center rounded-xl", icon === k ? "ring-2 ring-primary" : "neu")}
+            <button key={k} onClick={() => setIcon(k)} className={cn("bouncy flex aspect-square items-center justify-center rounded-xl active:scale-95", icon === k ? "ring-2 ring-primary" : "neu")}
               style={icon === k ? { backgroundColor: `color-mix(in oklch, ${tint} 26%, white)` } : undefined}>
               <Icon className="h-4 w-4" />
             </button>
@@ -127,10 +163,10 @@ function NewGoalSheet({ onClose }: { onClose: () => void }) {
       <p className="mb-2 mt-4 text-xs font-bold text-muted-foreground">顏色</p>
       <div className="flex gap-2">
         {TINTS.map((c) => (
-          <button key={c} onClick={() => setTint(c)} className={cn("bouncy h-7 w-7 rounded-full", tint === c && "ring-2 ring-foreground/50 ring-offset-2 ring-offset-background")} style={{ backgroundColor: c }} />
+          <button key={c} onClick={() => setTint(c)} className={cn("bouncy h-8 w-8 rounded-full active:scale-95", tint === c && "ring-2 ring-foreground/50 ring-offset-2 ring-offset-background")} style={{ backgroundColor: c }} />
         ))}
       </div>
-      <button onClick={submit} className="bouncy mt-5 h-12 w-full rounded-2xl font-bold text-primary-foreground" style={pop}>
+      <button onClick={submit} className="bouncy mt-5 h-14 w-full rounded-2xl font-bold text-primary-foreground active:scale-95 shadow-md" style={pop}>
         建立目標
       </button>
     </Sheet>
@@ -159,8 +195,8 @@ export function SavingsTab() {
       <section>
         <div className="flex items-center justify-between">
           <SectionTitle zh="夢想撲滿" en="Dream piggy banks" />
-          <button onClick={() => setCreating(true)} className="bouncy mb-3 flex items-center gap-1 rounded-full neu px-3 py-1.5 text-xs font-bold">
-            <Plus className="h-3.5 w-3.5" /> 新增目標
+          <button onClick={() => setCreating(true)} className="bouncy mb-3 flex min-h-[44px] items-center gap-1.5 rounded-full neu px-4 py-2 text-xs font-bold active:scale-95">
+            <Plus className="h-4 w-4" /> 新增目標
           </button>
         </div>
         <div className="space-y-3">
@@ -178,21 +214,21 @@ export function SavingsTab() {
                   </div>
                   {confirmId === g.id ? (
                     <div className="flex shrink-0 items-center gap-1.5">
-                      <button onClick={() => setConfirmId(null)} className="bouncy rounded-2xl neu px-3 py-2 text-xs font-bold">取消</button>
+                      <button onClick={() => setConfirmId(null)} className="bouncy min-h-[44px] rounded-2xl neu px-4 py-2 text-xs font-bold active:scale-95">取消</button>
                       <button
                         onClick={() => { removeGoal(g.id); setConfirmId(null); toast(`已刪除「${g.zh}」`); }}
-                        className="bouncy rounded-2xl bg-destructive px-3 py-2 text-xs font-bold text-destructive-foreground"
+                        className="bouncy min-h-[44px] rounded-2xl bg-destructive px-4 py-2 text-xs font-bold text-destructive-foreground active:scale-95"
                       >刪除</button>
                     </div>
                   ) : (
                     <>
-                      <button onClick={() => setConfirmId(g.id)} className="bouncy flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground" aria-label="刪除目標">
+                      <button onClick={() => setConfirmId(g.id)} className="bouncy flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground neu active:scale-90" aria-label="刪除目標">
                         <Trash2 className="h-4 w-4" />
                       </button>
                       <button
                         disabled={done}
                         onClick={() => setDepositId(g.id)}
-                        className="bouncy flex h-10 shrink-0 items-center gap-1 rounded-2xl px-3 text-xs font-bold text-primary-foreground disabled:opacity-60"
+                        className="bouncy flex h-11 shrink-0 items-center gap-1 rounded-2xl px-3.5 text-xs font-bold text-primary-foreground disabled:opacity-60 active:scale-95 shadow-sm"
                         style={pop}
                       >
                         {done ? "達成！" : (<><Plus className="h-4 w-4" />存錢</>)}
@@ -217,8 +253,12 @@ export function SavingsTab() {
         </div>
       </section>
 
-      {depositGoal && <DepositSheet goal={depositGoal} onClose={() => setDepositId(null)} />}
-      {creating && <NewGoalSheet onClose={() => setCreating(false)} />}
+      <AnimatePresence>
+        {depositGoal && <DepositSheet goal={depositGoal} onClose={() => setDepositId(null)} />}
+      </AnimatePresence>
+      <AnimatePresence>
+        {creating && <NewGoalSheet onClose={() => setCreating(false)} />}
+      </AnimatePresence>
     </div>
   );
 }

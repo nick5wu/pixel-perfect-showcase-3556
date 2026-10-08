@@ -101,8 +101,11 @@ export const FarmAnimal: React.FC<FarmAnimalProps> = ({
       {/* 飄浮收成反饋氣泡 */}
       {floatingFeedback && (
         <div className="pointer-events-none absolute -top-8 z-30 animate-farm-badge">
-          <div className="flex items-center gap-1 rounded-full bg-amber-500/95 px-3 py-1 text-xs font-black text-white shadow-lg ring-2 ring-white">
-            <Sparkles className="h-3 w-3 fill-current text-yellow-200" />
+          <div
+            className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-black text-white shadow-xl ring-2 ring-white/80"
+            style={{ background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }}
+          >
+            <Sparkles className="h-3.5 w-3.5 fill-current text-amber-200" />
             <span>{floatingFeedback}</span>
           </div>
         </div>
@@ -119,11 +122,10 @@ export const FarmAnimal: React.FC<FarmAnimalProps> = ({
             : `${config?.name} 正在生產中`
         }
         className={cn(
-          "group relative flex h-28 w-28 sm:h-32 sm:w-32 items-center justify-center p-1",
-          "transition-all duration-300 cursor-pointer outline-none focus:outline-none",
-          isReady && "animate-farm-wiggle hover:scale-105 active:scale-95",
-          isBouncing && "scale-115",
-          !isReady && "hover:scale-102 active:scale-98"
+          "bouncy glass group relative flex h-28 w-28 sm:h-32 sm:w-32 items-center justify-center p-1.5 rounded-[2rem]",
+          "border border-white/70 dark:border-white/10 shadow-[var(--shadow-soft)] transition-all",
+          isReady && "animate-farm-wiggle border-[var(--caramel)]! shadow-[var(--shadow-pop)] ring-2 ring-[var(--caramel)]/40",
+          isBouncing && "scale-105"
         )}
       >
         {/* 純 SVG 動物向量繪製（含裝備插槽層） */}
@@ -160,7 +162,10 @@ export const FarmAnimal: React.FC<FarmAnimalProps> = ({
 
           {/* 收取氣泡徽章 (浮動在頭頂) */}
           {isReady && (
-            <div className="pointer-events-none absolute -top-3 inset-x-0 mx-auto flex w-max items-center gap-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 px-2.5 py-0.5 text-[11px] font-black text-white shadow-lg ring-2 ring-white animate-farm-badge">
+            <div
+              className="pointer-events-none absolute -top-3 inset-x-0 mx-auto flex w-max items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-black text-white shadow-lg animate-farm-badge ring-1 ring-white/60"
+              style={{ background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }}
+            >
               <span role="img" aria-label="產物">
                 {animal.type === "chicken" ? "🥚" : animal.type === "cow" ? "🥛" : "🧶"}
               </span>
@@ -170,8 +175,11 @@ export const FarmAnimal: React.FC<FarmAnimalProps> = ({
 
           {/* 飢餓待餵食氣泡 (浮動在頭頂) */}
           {isHungry && (
-            <div className="pointer-events-none absolute -top-2 inset-x-0 mx-auto flex w-max items-center gap-1 rounded-full bg-amber-500/90 px-2 py-0.5 text-[10px] font-bold text-white shadow-md ring-1 ring-white animate-bounce">
-              <Utensils className="h-2.5 w-2.5" />
+            <div
+              className="pointer-events-none absolute -top-2 inset-x-0 mx-auto flex w-max items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black text-white shadow-md animate-bounce ring-1 ring-white/60"
+              style={{ background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }}
+            >
+              <Utensils className="h-2.5 w-2.5 stroke-[2.5]" />
               <span>點擊餵食</span>
             </div>
           )}
@@ -180,17 +188,20 @@ export const FarmAnimal: React.FC<FarmAnimalProps> = ({
 
       {/* 底部生產倒數或提示 */}
       {isProducing && produceStatus && (
-        <div className="mt-1 flex flex-col items-center gap-0.5">
-          {/* 進度條 */}
-          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-black/15 dark:bg-white/15">
+        <div className="mt-1.5 flex flex-col items-center gap-1">
+          {/* Neumorphic 凹槽進度條 */}
+          <div className="neu-inset relative h-2.5 w-20 overflow-hidden rounded-full p-0.5 border border-white/40 dark:border-white/5">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-300"
-              style={{ width: `${produceStatus.progressPercent}%` }}
+              className="h-full rounded-full transition-all duration-300 shadow-xs"
+              style={{
+                width: `${produceStatus.progressPercent}%`,
+                background: "linear-gradient(90deg, var(--caramel), var(--caramel-soft))",
+              }}
             />
           </div>
-          {/* 剩餘時間標籤 */}
-          <div className="flex items-center gap-0.5 text-[10px] font-bold text-muted-foreground">
-            <Clock className="h-2.5 w-2.5 opacity-70" />
+          {/* 剩餘時間膠囊 */}
+          <div className="glass neu rounded-full flex items-center gap-1 px-2 py-0.5 text-[10px] font-black text-muted-foreground border border-white/60 dark:border-white/10 shadow-xs">
+            <Clock className="h-2.5 w-2.5 text-[var(--caramel)]" />
             <span>{formatRemainingTime(produceStatus.remainingMs)}</span>
           </div>
         </div>
@@ -198,15 +209,15 @@ export const FarmAnimal: React.FC<FarmAnimalProps> = ({
 
       {/* 飢餓時下方餵食成本標籤 */}
       {isHungry && config && (
-        <span className="mt-1 text-[10px] font-bold text-amber-700 dark:text-amber-400">
-          🪙 {config.feedCost} 金幣
-        </span>
+        <div className="glass neu rounded-full mt-1 flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-black text-[var(--caramel)] border border-white/60 dark:border-white/10 shadow-xs">
+          <span>🪙 {config.feedCost} 金幣</span>
+        </div>
       )}
 
       {/* 收取完畢時下方名稱標籤 */}
       {isReady && config && (
-        <span className="mt-1 text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400">
-          可產出 {config.productName}
+        <span className="mt-1 text-[11px] font-black text-[var(--caramel)]">
+          產出：{config.productName}
         </span>
       )}
     </div>

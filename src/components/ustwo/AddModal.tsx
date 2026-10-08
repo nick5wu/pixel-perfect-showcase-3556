@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, CalendarDays, Lock, Users, X, Delete, Plus, Check, ImageOff } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   ICONS,
@@ -226,43 +227,50 @@ export function AddModal({
     onClose();
   };
 
-  if (!open) return null;
-
   const money_ = (n: number) => `NT$${Math.round(n).toLocaleString()}`;
   const totalVal = Number(amount || 0);
   const partnerVal = Number(forPartnerAmount || 0);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end justify-center">
-      <button
-        aria-label="Close"
-        onClick={onClose}
-        className="absolute inset-0 bg-foreground/35 backdrop-blur-sm"
-      />
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-[oklch(0.22_0.02_55/0.45)] backdrop-blur-md"
+          />
 
-      <div
-        className="glass-strong pop-in relative max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[2.5rem] p-5"
-        style={{
-          // Safe Area protection for Android gesture pill and navigation keys
-          paddingBottom: "max(env(safe-area-inset-bottom), 28px)",
-        }}
-      >
-        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" />
+          <motion.div
+            initial={{ y: "100%", opacity: 0.8 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 28, stiffness: 280 }}
+            className="glass-strong relative max-h-[92vh] w-full max-w-md overflow-y-auto no-scrollbar rounded-t-[2.5rem] p-5 shadow-2xl"
+            style={{
+              // Safe Area protection for Android gesture pill and navigation keys
+              paddingBottom: "max(env(safe-area-inset-bottom), 28px)",
+            }}
+          >
+            <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-border" />
 
-        <button
-          onClick={onClose}
-          className="bouncy absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-full neu"
-          aria-label="Close"
-        >
-          <X className="h-4 w-4" />
-        </button>
+            <button
+              onClick={onClose}
+              className="bouncy absolute right-5 top-5 flex h-12 w-12 items-center justify-center rounded-full neu active:scale-95"
+              aria-label="關閉"
+            >
+              <X className="h-5 w-5" />
+            </button>
 
-        <p className="text-center text-xs font-semibold text-muted-foreground">
-          {isEdit ? "編輯這筆 ✏️" : "記一筆 🧡"}
-        </p>
-        <p className="mt-1 text-center text-4xl font-extrabold tabular-nums">
-          {amount ? money_(Number(amount)) : <span className="text-muted-foreground">NT$0</span>}
-        </p>
+            <p className="text-center text-xs font-semibold text-muted-foreground">
+              {isEdit ? "編輯這筆 ✏️" : "記一筆 🧡"}
+            </p>
+            <p className="mt-1 text-center text-4xl font-extrabold tabular-nums">
+              {amount ? money_(Number(amount)) : <span className="text-muted-foreground">NT$0</span>}
+            </p>
 
         {/* 4. 手帳風日期選擇器 (統一手帳風格) */}
         <div className="mt-3">
@@ -373,21 +381,21 @@ export function AddModal({
                 className="h-11 flex-1 rounded-2xl neu-inset px-4 text-sm outline-none placeholder:text-muted-foreground"
               />
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center py-1">
               {TINTS.map((t) => (
                 <button
                   key={t}
                   aria-label="選擇顏色"
                   onClick={() => setNewTint(t)}
-                  className="bouncy flex h-7 w-7 items-center justify-center rounded-full"
+                  className="bouncy flex h-9 w-9 items-center justify-center rounded-full active:scale-95"
                   style={{
                     backgroundColor: `color-mix(in oklch, ${t} 45%, white)`,
-                    boxShadow: newTint === t ? `0 0 0 2px ${t}` : "none",
+                    boxShadow: newTint === t ? `0 0 0 2.5px ${t}` : "none",
                   }}
                 >
                   {newTint === t && (
                     <Check
-                      className="h-3.5 w-3.5"
+                      className="h-4 w-4"
                       style={{ color: `color-mix(in oklch, ${t} 70%, black)` }}
                     />
                   )}
@@ -400,13 +408,13 @@ export function AddModal({
                   key={key}
                   aria-label={key}
                   onClick={() => setNewIcon(key)}
-                  className="bouncy flex h-9 items-center justify-center rounded-xl"
+                  className="bouncy flex h-11 items-center justify-center rounded-xl active:scale-95"
                   style={{
                     backgroundColor: newIcon === key ? `color-mix(in oklch, ${newTint} 30%, white)` : "transparent",
                   }}
                 >
                   <I
-                    className="h-4 w-4"
+                    className="h-5 w-5"
                     strokeWidth={2.2}
                     style={{
                       color:
@@ -515,13 +523,13 @@ export function AddModal({
             <button
               type="button"
               onClick={() => setIsShared((s) => !s)}
-              aria-label="Toggle shared expense"
-              className="relative h-7 w-12 rounded-full transition-colors"
+              aria-label="切換共同花費模式"
+              className="bouncy relative flex h-10 w-16 shrink-0 cursor-pointer items-center rounded-full p-1 transition-colors active:scale-95"
               style={{ backgroundColor: isShared ? "var(--caramel)" : "var(--border)" }}
             >
               <span
-                className="absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all"
-                style={{ left: isShared ? "1.55rem" : "0.25rem" }}
+                className="h-7 w-7 rounded-full bg-[#FAF8F5] shadow-md transition-transform"
+                style={{ transform: isShared ? "translateX(1.5rem)" : "translateX(0)" }}
               />
             </button>
           </div>
@@ -541,7 +549,7 @@ export function AddModal({
               </div>
 
               <div className="flex items-center gap-2">
-                <div className="flex h-11 flex-1 items-center gap-1.5 rounded-2xl neu-inset px-3.5">
+                <div className="flex h-12 flex-1 items-center gap-1.5 rounded-2xl neu-inset px-3.5">
                   <span className="text-xs font-bold text-muted-foreground">NT$</span>
                   <input
                     type="number"
@@ -559,35 +567,36 @@ export function AddModal({
                   <button
                     type="button"
                     onClick={() => setForPartnerAmount("")}
-                    className="bouncy flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl neu text-muted-foreground"
-                    title="清空"
+                    className="bouncy flex h-12 min-w-[48px] shrink-0 items-center justify-center rounded-2xl neu text-muted-foreground active:scale-90"
+                    title="清空代墊金額"
+                    aria-label="清空代墊金額"
                   >
                     <X className="h-4 w-4" />
                   </button>
                 )}
               </div>
 
-              {/* Quick breakdown preset buttons */}
+              {/* Quick breakdown preset buttons (thumb-friendly 44px targets) */}
               {totalVal > 0 && (
                 <div className="flex gap-1.5">
                   <button
                     type="button"
                     onClick={() => setForPartnerAmount(String(Math.round(totalVal / 2)))}
-                    className="bouncy flex-1 rounded-2xl neu py-1.5 text-center text-[11px] font-bold text-muted-foreground hover:text-foreground"
+                    className="bouncy flex min-h-[44px] flex-1 items-center justify-center rounded-2xl neu px-2 py-2 text-center text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95"
                   >
                     各付一半 ({Math.round(totalVal / 2)})
                   </button>
                   <button
                     type="button"
                     onClick={() => setForPartnerAmount(String(totalVal))}
-                    className="bouncy flex-1 rounded-2xl neu py-1.5 text-center text-[11px] font-bold text-muted-foreground hover:text-foreground"
+                    className="bouncy flex min-h-[44px] flex-1 items-center justify-center rounded-2xl neu px-2 py-2 text-center text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95"
                   >
                     我全幫出 ({totalVal})
                   </button>
                   <button
                     type="button"
                     onClick={() => setForPartnerAmount("0")}
-                    className="bouncy flex-1 rounded-2xl neu py-1.5 text-center text-[11px] font-bold text-muted-foreground hover:text-foreground"
+                    className="bouncy flex min-h-[44px] flex-1 items-center justify-center rounded-2xl neu px-2 py-2 text-center text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95"
                   >
                     純共同 (0)
                   </button>
@@ -600,7 +609,7 @@ export function AddModal({
         {/* Submit button */}
         <button
           onClick={save}
-          className="bouncy mt-4 h-14 w-full rounded-3xl text-base font-extrabold text-primary-foreground"
+          className="bouncy mt-4 h-14 w-full rounded-3xl text-base font-extrabold text-primary-foreground active:scale-95"
           style={{
             backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
             boxShadow: "var(--shadow-pop)",
@@ -608,7 +617,9 @@ export function AddModal({
         >
           {isEdit ? "儲存修改 ✏️" : "記下來 🧡"}
         </button>
-      </div>
+      </motion.div>
     </div>
+      )}
+    </AnimatePresence>
   );
 }

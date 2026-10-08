@@ -1,6 +1,7 @@
 import { ClientOnly, createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus, Cloud } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { Toaster } from "@/components/ui/sonner";
 import { BottomNav, type Tab } from "@/components/ustwo/BottomNav";
@@ -57,12 +58,15 @@ function App() {
     <div
       className="ambient-glow min-h-screen bg-background"
       style={{
-        // 2 & 3. Android notification bar / status bar safe area protection
+        // Android notification bar / status bar safe area protection
         paddingTop: "max(env(safe-area-inset-top), 24px)",
       }}
     >
       <div
-        className="mx-auto w-full max-w-md px-4"
+        className={cn(
+          "mx-auto w-full max-w-md",
+          tab === "farm" ? "px-2" : "px-4"
+        )}
         style={{
           // Reserve space above bottom navigation & Android gesture/3-button bar
           paddingBottom: "calc(max(env(safe-area-inset-bottom), 24px) + 96px)",
@@ -80,34 +84,48 @@ function App() {
               <button
                 onClick={() => setCloudOpen(true)}
                 className={cn(
-                  "bouncy flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold glass shadow-sm shrink-0",
+                  "bouncy flex min-h-[48px] items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold glass shadow-xs shrink-0 active:scale-95",
                   isPaired && cloudStatus === "connected"
                     ? "text-emerald-700 dark:text-emerald-400"
                     : "text-muted-foreground",
                 )}
                 title="雲端雙人同步設定"
+                aria-label="雲端雙人同步設定"
               >
-                <Cloud className="h-3.5 w-3.5 text-primary" />
+                <Cloud className="h-4 w-4 text-primary" />
                 <span>{isPaired && coupleCode ? coupleCode : "雙人同步"}</span>
               </button>
             </div>
           </header>
         )}
 
-        {tab === "home" && <HomeTab selected={selected} onSelect={setSelected} onEdit={handleEdit} />}
-        {tab === "savings" && <SavingsTab />}
-        {tab === "overview" && <OverviewTab onEdit={handleEdit} />}
-        {tab === "farm" && <FarmView onBack={() => setTab("home")} />}
-        {tab === "stats" && <StatsTab onEdit={handleEdit} />}
-        {tab === "settings" && <SettingsTab onOpenCloud={() => setCloudOpen(true)} />}
+        {/* Android Material Shared-Axis fluid Tab Transitions */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 12, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.985 }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="w-full"
+          >
+            {tab === "home" && <HomeTab selected={selected} onSelect={setSelected} onEdit={handleEdit} />}
+            {tab === "savings" && <SavingsTab />}
+            {tab === "overview" && <OverviewTab onEdit={handleEdit} />}
+            {tab === "farm" && <FarmView onBack={() => setTab("home")} />}
+            {tab === "stats" && <StatsTab onEdit={handleEdit} />}
+            {tab === "settings" && <SettingsTab onOpenCloud={() => setCloudOpen(true)} />}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Floating Add Expense Action Button with Android Safe Area offset */}
       {tab !== "farm" && (
-        <button
+        <motion.button
+          whileTap={{ scale: 0.9 }}
           onClick={() => setAdding(true)}
           aria-label="Add expense"
-          className="bouncy fixed right-5 z-40 flex h-16 w-16 items-center justify-center rounded-full text-primary-foreground"
+          className="bouncy fixed right-5 z-40 flex h-16 w-16 items-center justify-center rounded-full text-primary-foreground shadow-2xl active:scale-90"
           style={{
             bottom: "calc(max(env(safe-area-inset-bottom), 24px) + 80px)",
             backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
@@ -115,7 +133,7 @@ function App() {
           }}
         >
           <Plus className="h-8 w-8" strokeWidth={2.6} />
-        </button>
+        </motion.button>
       )}
 
       {/* Cloud Modal */}

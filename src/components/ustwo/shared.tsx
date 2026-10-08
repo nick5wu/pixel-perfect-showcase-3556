@@ -49,17 +49,17 @@ export function Lightbox({ src, onClose }: { src: string | null; onClose: () => 
 /** Confirm-delete overlay shown inline inside TxnCard */
 function DeleteConfirm({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
   return (
-    <div className="pop-in absolute inset-0 z-10 flex items-center justify-center gap-3 rounded-3xl bg-white/80 backdrop-blur-sm">
-      <p className="text-sm font-semibold">確定刪除這筆？</p>
+    <div className="pop-in absolute inset-0 z-10 flex items-center justify-center gap-3 rounded-3xl bg-[oklch(0.97_0.015_78/0.94)] dark:bg-[oklch(0.24_0.018_55/0.95)] backdrop-blur-md px-3">
+      <p className="text-sm font-bold text-foreground">確定刪除這筆？</p>
       <button
         onClick={onConfirm}
-        className="bouncy rounded-2xl bg-destructive px-4 py-1.5 text-xs font-bold text-destructive-foreground"
+        className="bouncy flex min-h-[44px] items-center justify-center rounded-2xl bg-destructive px-4 py-2 text-xs font-black text-destructive-foreground shadow-sm active:scale-95"
       >
         刪除
       </button>
       <button
         onClick={onCancel}
-        className="bouncy rounded-2xl neu px-4 py-1.5 text-xs font-bold"
+        className="bouncy flex min-h-[44px] items-center justify-center rounded-2xl neu px-4 py-2 text-xs font-bold active:scale-95"
       >
         取消
       </button>
@@ -145,23 +145,23 @@ export function TxnCard({
         {money(t.amount)}
       </p>
 
-      {/* Action buttons */}
-      <div className="ml-1 flex shrink-0 flex-col gap-1">
+      {/* Action buttons (Android thumb-friendly touch targets) */}
+      <div className="ml-0.5 flex shrink-0 items-center gap-1">
         {onEdit && (
           <button
             onClick={() => onEdit(t)}
-            aria-label="編輯"
-            className="bouncy flex h-7 w-7 items-center justify-center rounded-full neu"
+            aria-label="編輯這筆花費"
+            className="bouncy flex h-11 w-11 items-center justify-center rounded-2xl neu text-muted-foreground transition-transform active:scale-90"
           >
-            <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+            <Pencil className="h-4 w-4" />
           </button>
         )}
         <button
           onClick={() => setConfirming(true)}
-          aria-label="刪除"
-          className="bouncy flex h-7 w-7 items-center justify-center rounded-full neu"
+          aria-label="刪除這筆花費"
+          className="bouncy flex h-11 w-11 items-center justify-center rounded-2xl neu text-destructive transition-transform active:scale-90"
         >
-          <Trash2 className="h-3.5 w-3.5 text-destructive" />
+          <Trash2 className="h-4 w-4" />
         </button>
       </div>
     </div>

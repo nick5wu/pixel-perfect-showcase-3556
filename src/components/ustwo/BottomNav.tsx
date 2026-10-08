@@ -1,4 +1,5 @@
 import { PiggyBank, ListFilter, House, ChartPie, Settings, Sprout } from "lucide-react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export type Tab = "savings" | "overview" | "home" | "farm" | "stats" | "settings";
@@ -24,12 +25,13 @@ export function BottomNav({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => v
         {TABS.map(({ id, zh, icon: Icon }) => {
           const active = tab === id;
           return (
-            <button
+            <motion.button
               key={id}
+              whileTap={{ scale: 0.92 }}
               onClick={() => onChange(id)}
               className={cn(
-                "bouncy flex flex-1 flex-col items-center gap-0.5 rounded-3xl py-2 text-[11px] font-semibold",
-                active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                "bouncy flex min-h-[48px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-3xl py-1.5 text-[11px] font-semibold transition-all select-none",
+                active ? "text-primary-foreground font-black" : "text-muted-foreground hover:text-foreground",
               )}
               style={
                 active
@@ -38,12 +40,13 @@ export function BottomNav({ tab, onChange }: { tab: Tab; onChange: (t: Tab) => v
                         "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
                       boxShadow: "var(--shadow-pop)",
                     }
-                  : undefined
+                  : {}
               }
+              aria-label={zh}
             >
-              <Icon className="h-5 w-5" strokeWidth={2.3} />
-              {zh}
-            </button>
+              <Icon className="h-5 w-5 shrink-0" strokeWidth={active ? 2.6 : 2.2} />
+              <span className="truncate">{zh}</span>
+            </motion.button>
           );
         })}
       </div>

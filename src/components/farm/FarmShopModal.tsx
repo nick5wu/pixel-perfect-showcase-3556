@@ -4,23 +4,16 @@ import {
   X,
   Store,
   Sparkles,
-  Coins,
   Check,
   Lock,
-  ShoppingBag,
-  Clock,
   Shirt,
   CheckCircle2,
-  ChevronRight,
-  Plus,
 } from "lucide-react";
 import {
   useFarmStore,
   AVAILABLE_SKINS,
   CROP_CONFIGS,
   ANIMAL_CONFIGS,
-  type SkinItem,
-  type SkinCategory,
   type AnimalType,
   type CropType,
 } from "@/store/useFarmStore";
@@ -42,11 +35,11 @@ type PreviewTarget = "cow" | "chicken" | "sheep" | "house";
 /**
  * FarmShopModal - 農場商店與造型更衣間 (Shop & Dressing Room)
  * 
- * 核心特點：
- * 1. Bottom Sheet 底部抽屜彈窗 (Framer Motion 彈性滑動與半透明毛玻璃遮罩)。
+ * 融合 UsTwo Ledger 頂級溫暖燕麥奶與焦糖美學：
+ * 1. Bottom Sheet 底部抽屜彈窗 (Framer Motion 彈性滑動與半透明毛玻璃暖調遮罩)。
  * 2. 雙 Tab 切換：「🛒 雜貨店 (Market)」與「👗 造型更衣間 (Dressing Room)」。
- * 3. 雜貨店：Bento Grid (便當盒網格) 佈局，包含種子、幼崽與資材，支援購買扣款與金幣飛走/打勾微動效。
- * 4. 更衣間：上半部毛玻璃展示台 (即時反映裝備 SVG)，下半部橫向滑動部位清單，呈現已裝備/已解鎖/未解鎖三種狀態。
+ * 3. 雜貨店：Bento Grid (便當盒網格) 佈局，包含種子、幼崽與資材，支援購買微動效。
+ * 4. 更衣間：毛玻璃溫暖展示台，即時反映裝備 SVG，橫向滑動飾品清單。
  */
 export const FarmShopModal: React.FC<FarmShopModalProps> = ({
   open,
@@ -80,7 +73,7 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
     return animals.find((a) => a.type === previewTarget) || animals[0] || null;
   }, [animals, previewTarget]);
 
-  // 購買回饋微動效 (金幣飛走 / 打勾效果)
+  // 購買回饋微動效
   const triggerPurchaseEffect = (id: string) => {
     setPurchasedFeedback((prev) => ({ ...prev, [id]: true }));
     setTimeout(() => {
@@ -93,7 +86,6 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
     if (coins < cost) return;
     const ok = spendCoins(cost);
     if (ok) {
-      // 購買後加入倉庫
       addInventoryItem(cropId, 1);
       triggerPurchaseEffect(`crop-${cropId}`);
     }
@@ -110,7 +102,7 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
   };
 
   // 處理雜貨店肥料/資材購買
-  const handleBuySupply = (id: string, cost: number, name: string) => {
+  const handleBuySupply = (id: string, cost: number) => {
     if (coins < cost) return;
     const ok = spendCoins(cost);
     if (ok) {
@@ -127,15 +119,15 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-          {/* 半透明毛玻璃黑色遮罩 Backdrop */}
+        <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center">
+          {/* 半透明毛玻璃暖調遮罩 Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.24 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/45 backdrop-blur-sm"
+            className="fixed inset-0 bg-[oklch(0.22_0.02_55/0.5)] backdrop-blur-md"
           />
 
           {/* Bottom Sheet 主面板 */}
@@ -145,70 +137,71 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
             exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
             className={cn(
-              "relative z-10 w-full max-w-xl sm:rounded-[2.5rem] rounded-t-[2.5rem]",
-              "bg-[#FAF8F5] dark:bg-zinc-900 border border-white/60 dark:border-white/10",
-              "shadow-[0_-12px_48px_rgba(0,0,0,0.18)] max-h-[92vh] flex flex-col overflow-hidden",
+              "glass-strong relative z-10 w-full max-w-xl sm:rounded-[2.5rem] rounded-t-[2.5rem]",
+              "border border-white/70 dark:border-white/10",
+              "shadow-[0_-16px_48px_rgba(0,0,0,0.18)] max-h-[92vh] flex flex-col overflow-hidden",
               className
             )}
+            style={{
+              paddingBottom: "max(env(safe-area-inset-bottom), 24px)",
+            }}
           >
             {/* 頂部拖曳把手與資產條 */}
-            <div className="flex flex-col items-center pt-3 pb-2 px-5 border-b border-amber-900/5 dark:border-white/5">
+            <div className="flex flex-col items-center pt-3 pb-2 px-5 border-b border-border/60">
               {/* 頂部手勢把手 */}
-              <div className="h-1.5 w-12 rounded-full bg-black/15 dark:bg-white/20 mb-3" />
+              <div className="h-1.5 w-12 rounded-full bg-muted-foreground/30 mb-3" />
 
               {/* 資產餘額與關閉按鈕列 */}
               <div className="flex w-full items-center justify-between">
-                {/* 玩家資產藥丸膠囊 */}
+                {/* 玩家資產膠囊 */}
                 <div className="flex items-center gap-2">
                   {/* 金幣 Coins */}
-                  <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-100 to-amber-50 dark:from-amber-950/60 dark:to-amber-900/30 px-3 py-1 border border-amber-300/60 shadow-xs">
+                  <div className="glass neu rounded-full flex items-center gap-1.5 px-3.5 py-1.5 border border-white/60 dark:border-white/10 shadow-xs">
                     <span className="text-sm select-none" role="img" aria-label="金幣">
                       🪙
                     </span>
-                    <span className="text-xs font-black tracking-tight text-amber-900 dark:text-amber-200">
+                    <span className="text-xs font-black tracking-tight text-[var(--caramel)]">
                       {coins.toLocaleString()}
                     </span>
                   </div>
 
                   {/* 造型幣 Style Tickets */}
-                  <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-100 to-pink-50 dark:from-purple-950/60 dark:to-pink-950/30 px-3 py-1 border border-purple-300/60 shadow-xs">
-                    <Sparkles className="h-3.5 w-3.5 text-purple-600 fill-purple-300" />
-                    <span className="text-xs font-black tracking-tight text-purple-900 dark:text-purple-200">
+                  <div className="glass neu rounded-full flex items-center gap-1.5 px-3.5 py-1.5 border border-white/60 dark:border-white/10 shadow-xs">
+                    <Sparkles className="h-3.5 w-3.5 text-purple-500 fill-purple-500" />
+                    <span className="text-xs font-black tracking-tight text-purple-600 dark:text-purple-400">
                       {styleTickets.toLocaleString()}
                     </span>
                   </div>
                 </div>
 
-                {/* 關閉按鈕 */}
+                {/* 關閉按鈕 (Android 48px touch target) */}
                 <button
                   onClick={onClose}
                   aria-label="關閉商店"
-                  className="bouncy flex h-8 w-8 items-center justify-center rounded-full bg-black/5 dark:bg-white/10 text-muted-foreground hover:text-foreground"
+                  className="neu bouncy flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:text-foreground active:scale-95 border border-white/60 dark:border-white/10"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
               {/* 雙 Tab 切換分頁：「🛒 雜貨店」與「👗 造型更衣間」 */}
-              <div className="relative flex w-full items-center p-1 mt-3 rounded-2xl bg-black/5 dark:bg-white/5">
+              <div className="neu-inset relative flex w-full items-center p-1.5 mt-3 rounded-2xl border border-white/40 dark:border-white/5">
                 {/* 雜貨店 Tab */}
                 <button
                   onClick={() => setActiveTab("market")}
                   className={cn(
-                    "relative flex-1 py-2 text-xs font-black transition-colors rounded-xl flex items-center justify-center gap-1.5 z-10",
+                    "bouncy relative flex-1 min-h-[44px] py-2 text-xs font-black transition-all rounded-xl flex items-center justify-center gap-1.5 z-10 active:scale-95",
                     activeTab === "market"
-                      ? "text-amber-950 dark:text-white"
+                      ? "text-white shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
                   )}
+                  style={
+                    activeTab === "market"
+                      ? { background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }
+                      : {}
+                  }
                 >
-                  {activeTab === "market" && (
-                    <motion.div
-                      layoutId="activeShopTab"
-                      className="absolute inset-0 rounded-xl bg-white dark:bg-zinc-800 shadow-sm"
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    />
-                  )}
-                  <Store className="h-3.5 w-3.5 relative z-10 text-amber-600" />
+                  <Store className="h-4 w-4 relative z-10" />
                   <span className="relative z-10">🛒 雜貨店 (Market)</span>
                 </button>
 
@@ -216,26 +209,24 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                 <button
                   onClick={() => setActiveTab("dressing")}
                   className={cn(
-                    "relative flex-1 py-2 text-xs font-black transition-colors rounded-xl flex items-center justify-center gap-1.5 z-10",
+                    "bouncy relative flex-1 min-h-[44px] py-2 text-xs font-black transition-all rounded-xl flex items-center justify-center gap-1.5 z-10 active:scale-95",
                     activeTab === "dressing"
-                      ? "text-purple-950 dark:text-white"
+                      ? "text-white shadow-xs"
                       : "text-muted-foreground hover:text-foreground"
                   )}
+                  style={
+                    activeTab === "dressing"
+                      ? { background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }
+                      : {}
+                  }
                 >
-                  {activeTab === "dressing" && (
-                    <motion.div
-                      layoutId="activeShopTab"
-                      className="absolute inset-0 rounded-xl bg-white dark:bg-zinc-800 shadow-sm"
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                    />
-                  )}
-                  <Shirt className="h-3.5 w-3.5 relative z-10 text-purple-600" />
+                  <Shirt className="h-4 w-4 relative z-10" />
                   <span className="relative z-10">👗 造型更衣間 (Dressing Room)</span>
                 </button>
               </div>
             </div>
 
-            {/* Tab 內容切換區 (帶 AnimatePresence Slide & Fade 過渡) */}
+            {/* Tab 內容切換區 */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-5 no-scrollbar">
               <AnimatePresence mode="wait">
                 {activeTab === "market" ? (
@@ -311,16 +302,16 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                       />
 
                       {/* 6. 特級有機肥料 */}
-                      <div className="flex flex-col justify-between rounded-3xl bg-[#FAF6F0] dark:bg-zinc-800/80 p-3.5 border border-amber-900/5 dark:border-white/5 shadow-xs transition-transform hover:scale-[1.02]">
+                      <div className="bouncy glass flex flex-col justify-between p-3.5 rounded-3xl border border-white/60 dark:border-white/10 shadow-[var(--shadow-soft)]">
                         <div className="flex items-start justify-between">
-                          <span className="text-2xl">🧪</span>
-                          <span className="rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[9px] font-black px-2 py-0.5">
+                          <span className="text-2xl drop-shadow-xs">🧪</span>
+                          <span className="glass neu text-emerald-600 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs">
                             熱銷道具
                           </span>
                         </div>
                         <div className="my-2">
                           <div className="text-xs font-black text-foreground">有機肥料</div>
-                          <div className="text-[10px] text-muted-foreground font-semibold">
+                          <div className="text-[10px] text-muted-foreground font-bold">
                             為土壤注入豐富養分
                           </div>
                         </div>
@@ -328,13 +319,13 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                           price={20}
                           canAfford={coins >= 20}
                           isPurchased={!!purchasedFeedback["fertilizer"]}
-                          onClick={() => handleBuySupply("fertilizer", 20, "有機肥料")}
+                          onClick={() => handleBuySupply("fertilizer", 20)}
                         />
                       </div>
                     </div>
 
                     {/* 幼崽牧場專區 */}
-                    <div className="mt-2 flex flex-col gap-2.5">
+                    <div className="mt-3 flex flex-col gap-2.5">
                       <div className="flex items-center gap-1.5">
                         <span className="text-base">🐣</span>
                         <h4 className="text-xs font-black text-foreground">
@@ -352,19 +343,21 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                             <div
                               key={animalCfg.id}
                               className={cn(
-                                "flex flex-col justify-between rounded-3xl bg-[#FAF6F0] dark:bg-zinc-800/80 p-3.5 border border-amber-900/5 dark:border-white/5 shadow-xs",
-                                "transition-transform hover:scale-[1.02]",
+                                "bouncy glass flex flex-col justify-between p-3.5 rounded-3xl border border-white/60 dark:border-white/10 shadow-[var(--shadow-soft)]",
                                 isLocked && "opacity-60"
                               )}
                             >
                               <div className="flex items-center justify-between">
-                                <span className="text-3xl">{animalCfg.icon}</span>
+                                <span className="text-3xl drop-shadow-xs">{animalCfg.icon}</span>
                                 {isLocked ? (
-                                  <span className="flex items-center gap-0.5 text-[9px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                                  <span className="glass neu flex items-center gap-0.5 text-[9px] font-bold text-muted-foreground px-2 py-0.5 rounded-full">
                                     <Lock className="h-2.5 w-2.5" /> Lv.{animalCfg.unlockLevel}
                                   </span>
                                 ) : (
-                                  <span className="text-[9px] font-black text-amber-700 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-full">
+                                  <span
+                                    className="text-[9px] font-black text-white px-2 py-0.5 rounded-full shadow-xs"
+                                    style={{ background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }}
+                                  >
                                     產{animalCfg.productName}
                                   </span>
                                 )}
@@ -374,7 +367,7 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                                 <div className="text-xs font-black text-foreground">
                                   {animalCfg.name}
                                 </div>
-                                <div className="text-[10px] text-muted-foreground font-semibold">
+                                <div className="text-[10px] text-muted-foreground font-bold">
                                   每{Math.round(animalCfg.produceDurationMs / 1000)}秒產出 · +{animalCfg.xpReward}XP
                                 </div>
                               </div>
@@ -404,10 +397,12 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                     transition={{ duration: 0.22 }}
                     className="flex flex-col gap-4"
                   >
-                    {/* 上半部：大圓角毛玻璃展示台 (Preview Zone) */}
-                    <div className="relative flex flex-col items-center justify-center rounded-3xl bg-gradient-to-b from-white/80 via-white/50 to-amber-50/40 dark:from-zinc-800/80 dark:to-zinc-800/40 p-4 border border-white/80 dark:border-white/10 shadow-sm backdrop-blur-md">
+                    {/* 上半部：毛玻璃展示台 (Preview Zone) */}
+                    <div className="glass-strong relative flex flex-col items-center justify-center rounded-[2.2rem] p-4.5 border border-white/70 dark:border-white/10 shadow-[var(--shadow-soft)] overflow-hidden">
+                      <div className="pointer-events-none absolute -top-8 -right-8 h-36 w-36 rounded-full bg-purple-500/10 blur-2xl" />
+
                       {/* 展示對象切換按鈕列 */}
-                      <div className="flex items-center gap-1.5 mb-2 bg-black/5 dark:bg-white/5 p-1 rounded-2xl">
+                      <div className="neu-inset flex items-center gap-1.5 mb-2.5 p-1 rounded-2xl border border-white/40 dark:border-white/5">
                         {(
                           [
                             { key: "cow", label: "乳牛 🐮" },
@@ -420,9 +415,9 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                             key={target.key}
                             onClick={() => setPreviewTarget(target.key)}
                             className={cn(
-                              "px-2.5 py-1 rounded-xl text-[11px] font-black transition-all",
+                              "bouncy px-3 py-1.5 rounded-xl text-xs font-black transition-all",
                               previewTarget === target.key
-                                ? "bg-white dark:bg-card text-purple-700 dark:text-purple-300 shadow-xs scale-102"
+                                ? "glass neu text-foreground shadow-xs"
                                 : "text-muted-foreground hover:text-foreground"
                             )}
                           >
@@ -431,7 +426,7 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                         ))}
                       </div>
 
-                      {/* 展示台中央 SVG 實體渲染 (含微縮放動畫) */}
+                      {/* 展示台中央 SVG 實體渲染 */}
                       <motion.div
                         key={`${previewTarget}-${equippedSkins.house}-${currentPreviewAnimal?.equipment?.head}-${currentPreviewAnimal?.equipment?.neck}`}
                         initial={{ scale: 0.92, opacity: 0.8 }}
@@ -440,14 +435,14 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                         className="relative flex h-36 w-36 sm:h-40 sm:w-40 items-center justify-center my-1"
                       >
                         {/* 展示台底座柔和光圈 */}
-                        <div className="pointer-events-none absolute bottom-2 h-8 w-28 rounded-full bg-amber-300/30 dark:bg-amber-500/10 blur-md" />
+                        <div className="pointer-events-none absolute bottom-2 h-8 w-28 rounded-full bg-purple-300/30 dark:bg-purple-500/20 blur-md" />
 
                         {previewTarget === "house" ? (
-                          <div className="h-28 w-28">
+                          <div className="h-28 w-28 drop-shadow-md">
                             <FarmhousePreviewSvg skin={equippedSkins.house} />
                           </div>
                         ) : (
-                          <div className="h-32 w-32">
+                          <div className="h-32 w-32 drop-shadow-md">
                             <AnimalPreviewSvg
                               type={previewTarget}
                               equipment={currentPreviewAnimal?.equipment}
@@ -457,9 +452,11 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                       </motion.div>
 
                       {/* 當前裝備狀態標籤 */}
-                      <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground">
+                      <div className="glass neu rounded-full flex items-center gap-2 px-3.5 py-1 text-[11px] font-black text-foreground shadow-xs mt-1 border border-white/60 dark:border-white/10">
                         {previewTarget === "house" ? (
-                          <span>當前外觀：{equippedSkins.house || "原木經典木屋"}</span>
+                          <span>
+                            當前外觀：{equippedSkins.house === "house-japanese" ? "和風日式竹屋" : equippedSkins.house === "house-european" ? "童話歐風石莊" : "原木經典木屋"}
+                          </span>
                         ) : (
                           <span>
                             頭部：{currentPreviewAnimal?.equipment?.head || "無"} · 頸部：
@@ -470,7 +467,7 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                     </div>
 
                     {/* 下半部：部位分類切換標籤 */}
-                    <div className="flex items-center gap-1.5 border-b border-border/50 pb-2 overflow-x-auto no-scrollbar">
+                    <div className="flex items-center gap-2 border-b border-border/60 pb-2.5 overflow-x-auto no-scrollbar pt-1">
                       {(
                         [
                           { key: "head", label: "👒 頭部飾品" },
@@ -483,23 +480,27 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                           key={slot.key}
                           onClick={() => setSelectedSlot(slot.key)}
                           className={cn(
-                            "px-3 py-1.5 rounded-2xl text-xs font-black whitespace-nowrap transition-all",
+                            "bouncy rounded-full px-3.5 py-1.5 text-xs font-black whitespace-nowrap transition-all border",
                             selectedSlot === slot.key
-                              ? "bg-purple-600 text-white shadow-xs"
-                              : "bg-muted/50 text-muted-foreground hover:text-foreground"
+                              ? "text-white shadow-xs border-transparent"
+                              : "glass neu text-muted-foreground hover:text-foreground border-white/60 dark:border-white/10"
                           )}
+                          style={
+                            selectedSlot === slot.key
+                              ? { background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }
+                              : {}
+                          }
                         >
                           {slot.label}
                         </button>
                       ))}
                     </div>
 
-                    {/* 橫向滑動 (Horizontal Scroll) 裝備卡片列表 */}
+                    {/* 橫向滑動裝備卡片列表 */}
                     <div className="flex gap-3 overflow-x-auto no-scrollbar py-1 px-0.5">
                       {slotSkins.map((skin) => {
                         const isUnlocked = unlockedSkins.includes(skin.id);
 
-                        // 判斷是否已裝備：
                         let isEquipped = false;
                         if (skin.category === "head") {
                           isEquipped = currentPreviewAnimal?.equipment?.head === skin.id;
@@ -516,7 +517,6 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                             ? coins >= skin.price
                             : styleTickets >= skin.price;
 
-                        // 裝備操作
                         const handleEquip = () => {
                           if (skin.category === "head" || skin.category === "neck") {
                             if (currentPreviewAnimal) {
@@ -527,7 +527,6 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                           }
                         };
 
-                        // 卸下操作
                         const handleUnequip = () => {
                           if (skin.category === "head" || skin.category === "neck") {
                             if (currentPreviewAnimal) {
@@ -538,7 +537,6 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                           }
                         };
 
-                        // 解鎖購買
                         const handleUnlock = () => {
                           buySkin(skin.id);
                         };
@@ -547,23 +545,26 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                           <div
                             key={skin.id}
                             className={cn(
-                              "flex flex-col justify-between rounded-3xl p-3.5 min-w-[150px] max-w-[150px] shrink-0",
-                              "border transition-all duration-200",
+                              "bouncy glass flex flex-col justify-between p-3.5 min-w-[150px] max-w-[150px] shrink-0 rounded-3xl",
+                              "border transition-all duration-200 shadow-xs",
                               isEquipped
-                                ? "bg-purple-50/90 dark:bg-purple-950/40 border-purple-400 ring-2 ring-purple-400/40 shadow-sm"
+                                ? "border-[var(--caramel)]! ring-2 ring-[var(--caramel)]/40 shadow-sm"
                                 : isUnlocked
-                                ? "bg-[#FAF6F0] dark:bg-zinc-800/80 border-amber-900/5 dark:border-white/5 shadow-xs"
-                                : "bg-muted/30 border-dashed border-border/70 opacity-75"
+                                ? "border-white/70 dark:border-white/10"
+                                : "border-dashed border-border opacity-70"
                             )}
                           >
                             <div className="flex items-start justify-between">
-                              <span className="text-3xl">{skin.previewIcon}</span>
+                              <span className="text-3xl drop-shadow-xs">{skin.previewIcon}</span>
                               {isEquipped ? (
-                                <span className="rounded-full bg-purple-500 text-white text-[9px] font-black px-1.5 py-0.5 flex items-center gap-0.5">
+                                <span
+                                  className="text-white text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow-xs"
+                                  style={{ background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }}
+                                >
                                   <Check className="h-2.5 w-2.5" /> 已裝備
                                 </span>
                               ) : !isUnlocked ? (
-                                <span className="rounded-full bg-black/10 dark:bg-white/10 text-muted-foreground text-[9px] font-black px-1.5 py-0.5 flex items-center gap-0.5">
+                                <span className="glass neu text-muted-foreground text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5">
                                   <Lock className="h-2.5 w-2.5" /> 未解鎖
                                 </span>
                               ) : null}
@@ -573,23 +574,24 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                               <div className="text-xs font-black text-foreground truncate">
                                 {skin.name}
                               </div>
-                              <div className="text-[10px] text-muted-foreground line-clamp-2 leading-tight mt-0.5">
+                              <div className="text-[10px] text-muted-foreground font-bold line-clamp-2 leading-tight mt-0.5">
                                 {skin.description}
                               </div>
                             </div>
 
-                            {/* 卡片按鈕 (三態：已裝備->卸下 / 已解鎖->裝備 / 未解鎖->價格解鎖) */}
+                            {/* 卡片按鈕 */}
                             {isEquipped ? (
                               <button
                                 onClick={handleUnequip}
-                                className="bouncy w-full py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 dark:bg-purple-900/60 dark:text-purple-200 text-xs font-black active:scale-95"
+                                className="neu bouncy w-full py-1.5 rounded-xl text-muted-foreground hover:text-foreground text-xs font-black active:scale-95"
                               >
                                 卸下
                               </button>
                             ) : isUnlocked ? (
                               <button
                                 onClick={handleEquip}
-                                className="bouncy w-full py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black shadow-xs active:scale-95"
+                                className="bouncy w-full py-1.5 rounded-xl text-white text-xs font-black shadow-xs active:scale-95"
+                                style={{ background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }}
                               >
                                 裝備
                               </button>
@@ -600,9 +602,14 @@ export const FarmShopModal: React.FC<FarmShopModalProps> = ({
                                 className={cn(
                                   "bouncy w-full py-1.5 rounded-xl text-[11px] font-black flex items-center justify-center gap-1 active:scale-95",
                                   canAfford
-                                    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-xs"
+                                    ? "text-white shadow-xs"
                                     : "bg-muted text-muted-foreground opacity-60 cursor-not-allowed"
                                 )}
+                                style={
+                                  canAfford
+                                    ? { background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }
+                                    : {}
+                                }
                               >
                                 {skin.currency === "coins" ? (
                                   <span>🪙 {skin.price}</span>
@@ -655,19 +662,18 @@ function BentoCardSeed({
   return (
     <div
       className={cn(
-        "flex flex-col justify-between rounded-3xl bg-[#FAF6F0] dark:bg-zinc-800/80 p-3.5 border border-amber-900/5 dark:border-white/5 shadow-xs",
-        "transition-transform hover:scale-[1.02]",
+        "bouncy glass flex flex-col justify-between p-3.5 rounded-3xl border border-white/60 dark:border-white/10 shadow-[var(--shadow-soft)] transition-all",
         isLocked && "opacity-60"
       )}
     >
       <div className="flex items-start justify-between">
-        <span className="text-2xl">{crop.icon}</span>
+        <span className="text-2xl drop-shadow-xs">{crop.icon}</span>
         {isLocked ? (
-          <span className="flex items-center gap-0.5 text-[9px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+          <span className="glass neu rounded-full flex items-center gap-0.5 text-[9px] font-bold text-muted-foreground px-2 py-0.5">
             <Lock className="h-2.5 w-2.5" /> Lv.{crop.unlockLevel}
           </span>
         ) : (
-          <span className="text-[9px] font-bold text-muted-foreground">
+          <span className="glass neu rounded-full text-[9px] font-black text-emerald-600 dark:text-emerald-400 px-2 py-0.5">
             {Math.round(crop.growDurationMs / 1000)}s 成熟
           </span>
         )}
@@ -675,7 +681,7 @@ function BentoCardSeed({
 
       <div className="my-2">
         <div className="text-xs font-black text-foreground">{crop.name}種子</div>
-        <div className="text-[10px] text-muted-foreground font-semibold">
+        <div className="text-[10px] text-muted-foreground font-bold">
           收成產量 x{crop.harvestYield} · +{crop.xpReward}XP
         </div>
       </div>
@@ -705,32 +711,35 @@ function BentoCardFeatured({
   return (
     <div
       className={cn(
-        "col-span-2 flex items-center justify-between rounded-3xl bg-gradient-to-r from-[#FAF6F0] to-[#FFF1F2] dark:from-zinc-800/90 dark:to-zinc-800/60 p-4",
-        "border border-rose-200/50 dark:border-rose-900/30 shadow-xs transition-transform hover:scale-[1.01]",
+        "bouncy glass col-span-2 flex items-center justify-between rounded-3xl p-4 border border-white/70 dark:border-white/10 shadow-[var(--shadow-soft)] relative overflow-hidden",
         isLocked && "opacity-60"
       )}
     >
-      <div className="flex items-center gap-3">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-rose-100/80 dark:bg-rose-950/40 text-3xl shadow-inner">
+      <div className="pointer-events-none absolute -right-6 -bottom-6 h-28 w-28 rounded-full bg-[var(--caramel)]/10 blur-xl" />
+      <div className="flex items-center gap-3 relative z-10">
+        <div className="glass neu flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-3xl shadow-xs">
           {crop.icon}
         </div>
         <div>
           <div className="flex items-center gap-1.5">
             <span className="text-sm font-black text-foreground">{crop.name}種子</span>
-            <span className="rounded-full bg-rose-500 text-white text-[9px] font-black px-2 py-0.5">
+            <span
+              className="text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-xs"
+              style={{ background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }}
+            >
               高收益首選
             </span>
           </div>
-          <div className="text-xs text-muted-foreground font-medium mt-0.5">
+          <div className="text-xs text-muted-foreground font-bold mt-0.5">
             收成產量 x{crop.harvestYield} · 成品每顆可賣 🪙{crop.sellPrice}
           </div>
-          <div className="text-[10px] text-muted-foreground font-semibold">
+          <div className="text-[10px] text-muted-foreground/80 font-semibold">
             生長時長：{Math.round(crop.growDurationMs / 1000 / 60)} 分鐘 · 獎勵 +{crop.xpReward} XP
           </div>
         </div>
       </div>
 
-      <div className="shrink-0 pl-3">
+      <div className="shrink-0 pl-3 relative z-10">
         <BuyButton
           price={crop.seedCost}
           canAfford={canAfford && !isLocked}
@@ -762,15 +771,19 @@ function BuyButton({
       disabled={!canAfford || isPurchased}
       onClick={onClick}
       className={cn(
-        "bouncy relative flex items-center justify-center gap-1.5 rounded-2xl py-1.5 px-3 text-xs font-black transition-all active:scale-95",
+        "bouncy min-h-[38px] relative flex items-center justify-center gap-1.5 py-1.5 px-3.5 rounded-xl text-xs font-black transition-all active:scale-95",
         isPurchased
           ? "bg-emerald-500 text-white shadow-xs"
           : canAfford
-          ? "bg-amber-500 hover:bg-amber-600 text-white shadow-xs"
+          ? "text-white shadow-xs"
           : "bg-muted text-muted-foreground opacity-60 cursor-not-allowed"
       )}
+      style={
+        !isPurchased && canAfford
+          ? { background: "linear-gradient(135deg, var(--caramel), var(--caramel-soft))" }
+          : {}
+      }
     >
-      {/* 購買成功微動效 */}
       <AnimatePresence mode="wait">
         {isPurchased ? (
           <motion.div

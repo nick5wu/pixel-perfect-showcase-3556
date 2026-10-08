@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Code2,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useUsTwo } from "@/lib/ustwo";
 import {
@@ -58,8 +59,6 @@ export function CloudModal({ open, onClose }: { open: boolean; onClose: () => vo
       setTestResult(null);
     }
   }, [open]);
-
-  if (!open) return null;
 
   const copyCode = () => {
     if (!coupleCode) return;
@@ -194,27 +193,49 @@ create policy "receipts_insert" on storage.objects for insert with check (bucket
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={onClose} />
-      <div className="pop-in relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[2rem] glass-strong p-6 shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3">
-          <div className="flex items-center gap-2">
-            <span
-              className="flex h-9 w-9 items-center justify-center rounded-2xl text-primary-foreground"
-              style={{ backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))" }}
-            >
-              <Cloud className="h-5 w-5" />
-            </span>
-            <div>
-              <h2 className="text-lg font-extrabold">雲端雙人同步設定</h2>
-              <p className="text-[11px] text-muted-foreground">Supabase Database & Realtime</p>
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 bg-[oklch(0.22_0.02_55/0.5)] backdrop-blur-md"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ scale: 0.94, opacity: 0, y: 16 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.94, opacity: 0, y: 16 }}
+            transition={{ type: "spring", damping: 28, stiffness: 300 }}
+            className="relative max-h-[90vh] w-full max-w-md overflow-y-auto no-scrollbar rounded-[2.5rem] glass-strong p-6 shadow-2xl"
+            style={{
+              paddingBottom: "max(env(safe-area-inset-bottom), 24px)",
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3">
+              <div className="flex items-center gap-2">
+                <span
+                  className="flex h-11 w-11 items-center justify-center rounded-2xl text-primary-foreground shadow-sm"
+                  style={{ backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))" }}
+                >
+                  <Cloud className="h-5 w-5" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-extrabold">雲端雙人同步設定</h2>
+                  <p className="text-[11px] text-muted-foreground">Supabase Database & Realtime</p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="bouncy flex h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
+                aria-label="關閉"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
-          </div>
-          <button onClick={onClose} className="bouncy flex h-8 w-8 items-center justify-center rounded-full neu">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
 
         {/* Status banner */}
         <div
@@ -462,7 +483,9 @@ alter publication supabase_realtime add table ...;`}
             </button>
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
+      )}
+    </AnimatePresence>
   );
 }
