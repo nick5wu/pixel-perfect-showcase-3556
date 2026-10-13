@@ -14,6 +14,7 @@ import {
   type UserId,
 } from "@/lib/ustwo";
 import { uploadReceiptPhoto, isSupabaseConfigured } from "@/lib/supabase";
+import { savePhotoBlob, useResolvedPhoto } from "@/lib/photoStorage";
 import { DatePicker } from "./DatePicker";
 import { cn, useBodyScrollLock } from "@/lib/utils";
 
@@ -121,6 +122,7 @@ export function AddModal({
   );
 
   const [photo, setPhoto] = useState<string | null>(isEdit ? (initialTxn.photo ?? null) : null);
+  const resolvedPhoto = useResolvedPhoto(photo);
   const [photoLoading, setPhotoLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -177,9 +179,11 @@ export function AddModal({
           return;
         }
       }
-      const b64 = await compressImage(file);
-      setPhoto(b64);
-      toast.success("照片已備妥 📷");
+      // 離線模式：寫入 IndexedDB，避免 LocalStorage 5MB 配額崩潰
+      const blob = await compressImageToBlob(file);
+      const idbUri = await savePhotoBlob(blob);
+      setPhoto(idbUri);
+      toast.success("照片已安全存入離線相簿 📷");
     } catch {
       toast.error("照片載入失敗，請再試一次");
     } finally {
@@ -487,7 +491,7 @@ export function AddModal({
           <div className="mt-3 flex justify-center">
             <div className="polaroid rotate-[-2deg] rounded-md">
               <img
-                src={photo}
+                src={resolvedPhoto || photo}
                 alt="選取的照片"
                 className="h-28 w-28 rounded-sm object-cover"
               />

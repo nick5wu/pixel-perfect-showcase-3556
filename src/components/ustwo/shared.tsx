@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
 import { Lock, Pencil, Trash2, X } from "lucide-react";
 import { PEOPLE, money, iconOf, useUsTwo, type Txn } from "@/lib/ustwo";
+import { useResolvedPhoto } from "@/lib/photoStorage";
 import { cn } from "@/lib/utils";
 
 export function Avatar({ who, size = "md" }: { who: "me" | "her"; size?: "sm" | "md" | "lg" }) {
@@ -32,6 +33,7 @@ export function SectionTitle({ zh, en }: { zh: string; en: string }) {
 }
 
 export function Lightbox({ src, onClose }: { src: string | null; onClose: () => void }) {
+  const resolvedSrc = useResolvedPhoto(src);
   if (!src) return null;
   return (
     <button
@@ -40,7 +42,7 @@ export function Lightbox({ src, onClose }: { src: string | null; onClose: () => 
       aria-label="Close photo"
     >
       <span className="polaroid pop-in block max-w-sm rotate-[-1.5deg] rounded-md">
-        <img src={src} alt="Memory" className="w-full rounded-sm object-cover" />
+        <img src={resolvedSrc || src} alt="Memory" className="w-full rounded-sm object-cover" />
         <span className="mt-2 block text-center text-sm text-muted-foreground">我們的小回憶 ✨</span>
       </span>
     </button>
@@ -84,6 +86,7 @@ export function TxnCard({
   const Icon = iconOf(cat);
   const tilt = index % 2 === 0 ? "rotate-1" : "-rotate-1";
   const [confirming, setConfirming] = useState(false);
+  const resolvedPhoto = useResolvedPhoto(t.photo);
 
   // Framer Motion 左右滑動位移監聽與閾值動態映射
   const x = useMotionValue(0);
@@ -194,7 +197,7 @@ export function TxnCard({
             className={cn("polaroid bouncy shrink-0 rounded-md hover:rotate-0", tilt)}
           >
             <img
-              src={t.photo}
+              src={resolvedPhoto || t.photo}
               alt={t.note}
               loading="lazy"
               className="h-11 w-11 rounded-sm object-cover"

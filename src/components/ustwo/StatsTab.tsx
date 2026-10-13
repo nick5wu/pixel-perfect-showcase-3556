@@ -1,10 +1,15 @@
 import { useMemo, useState } from "react";
-import { Lock, Sparkles, ShieldCheck } from "lucide-react";
+import { Lock, Sparkles, ShieldCheck, Calendar, Trophy, Award, Crown } from "lucide-react";
+import { toast } from "sonner";
 import { money, iconOf, toKey, useUsTwo, type Category, type Txn } from "@/lib/ustwo";
 import { Avatar, SectionTitle, EmptyNote, TxnCard, Lightbox, useLightbox } from "./shared";
+import { MonthlyRecapModal } from "./MonthlyRecapModal";
+import { PinModal } from "./PinModal";
+import { useVaultLock } from "@/lib/vaultLock";
 import { cn } from "@/lib/utils";
 
 type Mode = "joint" | "private";
+type Period = "today" | "week" | "month";
 
 function Donut({ slices }: { slices: { color: string; value: number }[] }) {
   const total = slices.reduce((s, x) => s + x.value, 0) || 1;
@@ -35,18 +40,30 @@ function Donut({ slices }: { slices: { color: string; value: number }[] }) {
 export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
   const { txns, visible, activeUser, getCat, people } = useUsTwo();
   const [mode, setMode] = useState<Mode>("joint");
+  const [period, setPeriod] = useState<Period>("today");
+  const [recapOpen, setRecapOpen] = useState(false);
+  const [pinModalOpen, setPinModalOpen] = useState(false);
+  const { hasPin, isUnlocked, lock } = useVaultLock();
   const lb = useLightbox();
 
+  const handleModeSwitch = (m: Mode) => {
+    if (m === "private" && hasPin && !isUnlocked) {
+      setPinModalOpen(true);
+      return;
+    }
+    setMode(m);
+  };
+
   // Joint: all public expense txns
-  // Private: ONLY current activeUser's private expense txns
-  const rows = useMemo(
-    () =>
-      txns.filter((t) =>
+  // Private: ONLY current activeUser's private expense txns (only if unlocked or no PIN)
+  const rows = useMemo(() => {
+    if (mode === "private" && hasPin && !isUnlocked) return [];
+    return txns.filter(
+      (t) =>
         t.kind === "expense" &&
         (mode === "joint" ? !t.isPrivate : t.isPrivate && t.payer === activeUser),
-      ),
-    [txns, mode, activeUser],
-  );
+    );
+  }, [txns, mode, activeUser, hasPin, isUnlocked]);
 
   const byCat = useMemo(() => {
     const m = new Map<Category, number>();
@@ -55,14 +72,48 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
   }, [rows]);
 
   const total = rows.reduce((s, t) => s + t.amount, 0);
-  const mine = rows.filter((t) => t.payer === "me").reduce((s, t) => s + t.amount, 0);
-  const hers = total - mine;
 
-  const today = toKey(new Date());
-  const todayPaid = { me: 0, her: 0 };
-  for (const t of visible) if (t.date === today && t.kind === "expense") todayPaid[t.payer] += t.amount;
-  const todayTotal = todayPaid.me + todayPaid.her;
-  const todayPct = todayTotal ? (todayPaid.me / todayTotal) * 100 : 50;
+  // Period-based payment duel calculations
+  const periodPaid = useMemo(() => {
+    const today = toKey(new Date());
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    const startOfWeekKey = toKey(startOfWeek);
+    const monthKey = today.slice(0, 7);
+
+    const paid = { me: 0, her: 0 };
+    for (const t of visible) {
+      if (t.kind !== "expense" || t.isPrivate) continue;
+      if (period === "today" && t.date === today) {
+        paid[t.payer] += t.amount;
+      } else if (period === "week" && t.date >= startOfWeekKey && t.date <= today) {
+        paid[t.payer] += t.amount;
+      } else if (period === "month" && t.date.startsWith(monthKey)) {
+        paid[t.payer] += t.amount;
+      }
+    }
+    return paid;
+  }, [visible, period]);
+
+  const periodTotal = periodPaid.me + periodPaid.her;
+  const periodPct = periodTotal ? Math.round((periodPaid.me / periodTotal) * 100) : 50;
+
+  const duelComment = useMemo(() => {
+    if (periodTotal === 0) {
+      return period === "today"
+        ? "今天還沒有人花錢，好棒！"
+        : period === "week"
+          ? "本週還沒有支出紀錄"
+          : "本月還沒有支出紀錄";
+    }
+    if (periodPaid.me === periodPaid.her) {
+      return "雙方出資平手，默契滿分 💖";
+    }
+    const winner = periodPaid.me > periodPaid.her ? people.me.zh : people.her.zh;
+    const diff = Math.abs(periodPaid.me - periodPaid.her);
+    return `${period === "today" ? "今天" : period === "week" ? "本週" : "本月"}由 ${winner} 多付了 ${money(diff)} 🌟`;
+  }, [periodTotal, periodPaid, period, people]);
 
   return (
     <div className="space-y-5">
@@ -71,14 +122,14 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
         {(
           [
             ["joint", "共同支出統計"],
-            ["private", "個人私房錢統計"],
+            ["private", hasPin && !isUnlocked ? "私房錢 (🔒已上鎖)" : "個人私房錢統計"],
           ] as [Mode, string][]
         ).map(([m, label]) => (
           <button
             key={m}
-            onClick={() => setMode(m)}
+            onClick={() => handleModeSwitch(m)}
             className={cn(
-              "bouncy rounded-3xl py-2.5 text-sm font-bold",
+              "bouncy rounded-3xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5",
               mode === m ? "text-primary-foreground" : "text-muted-foreground",
             )}
             style={
@@ -90,7 +141,8 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
                 : undefined
             }
           >
-            {label}
+            {m === "private" && hasPin && (isUnlocked ? "🔓" : "🔒")}
+            <span>{label}</span>
           </button>
         ))}
       </div>
@@ -98,9 +150,24 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
       {/* Privacy Notice in Private Mode */}
       {mode === "private" && (
         <section className="glass rounded-[1.75rem] p-4 text-xs">
-          <div className="flex items-center gap-2 text-primary font-bold">
-            <ShieldCheck className="h-4 w-4" />
-            <span>私密帳本隔離保護中</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-primary font-bold">
+              <ShieldCheck className="h-4 w-4" />
+              <span>私密帳本隔離保護中</span>
+            </div>
+            {hasPin && isUnlocked && (
+              <button
+                onClick={() => {
+                  lock();
+                  setMode("joint");
+                  toast.info("🔒 私密帳本已重新上鎖");
+                }}
+                className="bouncy flex items-center gap-1 rounded-xl neu px-2.5 py-1 text-[11px] font-bold text-muted-foreground active:scale-95"
+              >
+                <Lock className="h-3 w-3" />
+                立即上鎖
+              </button>
+            )}
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground leading-relaxed">
             這是 <span className="font-bold text-foreground">{people[activeUser].zh}</span> 的專屬秘密小帳本。另一半在首頁、日曆、總覽與圖表完全看不到這些紀錄，亦不計入共同預算。
@@ -108,32 +175,73 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
         </section>
       )}
 
-      {/* Today's duel (Only shown in joint mode) */}
+      {/* Period Duel (Joint mode) */}
       {mode === "joint" && (
         <section>
-          <SectionTitle zh="今日付款對決" en="Today's duel" />
+          <div className="mb-2 flex items-center justify-between">
+            <SectionTitle zh="情侶付款對決" en="Couple's duel" />
+            <div className="flex rounded-2xl neu p-1 gap-1 text-[11px]">
+              {(
+                [
+                  ["today", "今日"],
+                  ["week", "本週"],
+                  ["month", "本月"],
+                ] as [Period, string][]
+              ).map(([p, label]) => (
+                <button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  className={cn(
+                    "bouncy rounded-xl px-2.5 py-1 font-bold transition-all",
+                    period === p ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="glass rounded-[1.75rem] p-4">
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
               {(["me", "her"] as const).map((who, i) => (
                 <div key={who} className={cn("flex min-w-0 items-center gap-2.5", i === 1 && "order-3 flex-row-reverse text-right")}>
                   <Avatar who={who} />
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-muted-foreground">{who === "me" ? "我今天付了" : "另一半今天付了"}</p>
+                    <p className="text-[11px] font-semibold text-muted-foreground">
+                      {who === "me" ? "我付了" : "另一半付了"}
+                    </p>
                     <p className="truncate text-lg font-extrabold tabular-nums" style={{ color: people[who].color }}>
-                      {money(todayPaid[who])}
+                      {money(periodPaid[who])}
                     </p>
                   </div>
                 </div>
               ))}
               <span className="order-2 flex h-8 w-8 items-center justify-center rounded-full neu text-[10px] font-extrabold text-muted-foreground">VS</span>
             </div>
+
             <div className="mt-3 flex h-3 overflow-hidden rounded-full neu-inset">
-              <div className="transition-[width] duration-700" style={{ width: `${todayPct}%`, backgroundColor: people.me.color }} />
-              <div className="flex-1 transition-[width] duration-700" style={{ backgroundColor: todayTotal ? people.her.color : "transparent" }} />
+              <div
+                className="transition-[width] duration-700"
+                style={{ width: `${periodPct}%`, backgroundColor: people.me.color }}
+              />
+              <div
+                className="flex-1 transition-[width] duration-700"
+                style={{ backgroundColor: periodTotal ? people.her.color : "transparent" }}
+              />
             </div>
+
             <p className="mt-2 text-center text-[11px] font-semibold text-muted-foreground">
-              {todayTotal === 0 ? "今天還沒有人花錢，好棒！" : todayPaid.me === todayPaid.her ? "今天平手，默契滿分" : `今天${todayPaid.me > todayPaid.her ? "我" : "她"}多付了 ${money(Math.abs(todayPaid.me - todayPaid.her))}`}
+              {duelComment}
             </p>
+
+            <button
+              onClick={() => setRecapOpen(true)}
+              className="bouncy mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl neu py-2.5 text-xs font-bold text-foreground active:scale-95"
+            >
+              <Sparkles className="h-4 w-4 text-[var(--caramel)]" />
+              <span>查看情侶月度財務小報卡片 💌</span>
+            </button>
           </div>
         </section>
       )}
@@ -190,15 +298,15 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
               <div className="glass rounded-[1.75rem] p-4">
                 <div className="flex h-5 overflow-hidden rounded-full neu-inset">
                   <div
-                    style={{ width: `${(mine / (total || 1)) * 100}%`, backgroundColor: people.me.color }}
+                    style={{ width: `${(periodPaid.me / (periodTotal || 1)) * 100}%`, backgroundColor: people.me.color }}
                   />
                   <div
-                    style={{ width: `${(hers / (total || 1)) * 100}%`, backgroundColor: people.her.color }}
+                    style={{ width: `${(periodPaid.her / (periodTotal || 1)) * 100}%`, backgroundColor: people.her.color }}
                   />
                 </div>
                 <div className="mt-2 flex justify-between text-xs font-bold">
-                  <span>🐻 {people.me.zh} {money(mine)}</span>
-                  <span>🐰 {people.her.zh} {money(hers)}</span>
+                  <span>🐻 {people.me.zh} {money(periodPaid.me)}</span>
+                  <span>🐰 {people.her.zh} {money(periodPaid.her)}</span>
                 </div>
               </div>
             </section>
@@ -225,6 +333,25 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
       )}
 
       {lb.photo && <Lightbox src={lb.photo} onClose={lb.close} />}
+
+      {/* 4 位數 PIN 碼解鎖彈窗 */}
+      <PinModal
+        open={pinModalOpen}
+        mode="unlock"
+        title="解鎖私房錢帳本"
+        description="請輸入 4 位數 PIN 碼以解鎖個人私密花費"
+        onSuccess={() => {
+          setPinModalOpen(false);
+          setMode("private");
+        }}
+        onCancel={() => setPinModalOpen(false)}
+      />
+
+      {/* 情侶月度財務小報卡片 */}
+      <MonthlyRecapModal
+        open={recapOpen}
+        onClose={() => setRecapOpen(false)}
+      />
     </div>
   );
 }

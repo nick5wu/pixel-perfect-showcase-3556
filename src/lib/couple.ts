@@ -246,3 +246,88 @@ export async function updateCoupleMetaInCloud(
   const { error } = await client.from("couples").update(patch).eq("id", coupleId);
   return !error;
 }
+
+export interface FarmCloudRecord {
+  couple_id: string;
+  level: number;
+  xp: number;
+  coins: number;
+  style_tickets: number;
+  plots: any[];
+  animals: any[];
+  inventory: Record<string, number>;
+  unlocked_skins: string[];
+  equipped_skins: Record<string, string>;
+  last_action_by?: string;
+  last_action_text?: string;
+  updated_at?: string;
+}
+
+/** Save or update farm in Supabase */
+export async function saveFarmInCloud(
+  farmData: Partial<{
+    level: number;
+    xp: number;
+    coins: number;
+    styleTickets: number;
+    plots: any[];
+    animals: any[];
+    inventory: Record<string, number>;
+    unlockedSkins: string[];
+    equippedSkins: Record<string, string>;
+  }>,
+  coupleId: string,
+  lastActionBy?: string,
+  lastActionText?: string,
+) {
+  const client = getSupabase();
+  if (!client) return false;
+
+  const row: Record<string, any> = {
+    couple_id: coupleId,
+    ...(farmData.level !== undefined ? { level: farmData.level } : {}),
+    ...(farmData.xp !== undefined ? { xp: farmData.xp } : {}),
+    ...(farmData.coins !== undefined ? { coins: farmData.coins } : {}),
+    ...(farmData.styleTickets !== undefined ? { style_tickets: farmData.styleTickets } : {}),
+    ...(farmData.plots !== undefined ? { plots: farmData.plots } : {}),
+    ...(farmData.animals !== undefined ? { animals: farmData.animals } : {}),
+    ...(farmData.inventory !== undefined ? { inventory: farmData.inventory } : {}),
+    ...(farmData.unlockedSkins !== undefined ? { unlocked_skins: farmData.unlockedSkins } : {}),
+    ...(farmData.equippedSkins !== undefined ? { equipped_skins: farmData.equippedSkins } : {}),
+    ...(lastActionBy ? { last_action_by: lastActionBy } : {}),
+    ...(lastActionText ? { last_action_text: lastActionText } : {}),
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await client.from("farms").upsert(row);
+  if (error) console.warn("saveFarmInCloud error:", error.message);
+  return !error;
+}
+
+/** Fetch farm data for couple from Supabase */
+export async function fetchFarmFromCloud(coupleId: string) {
+  const client = getSupabase();
+  if (!client) return null;
+
+  try {
+    const { data, error } = await client.from("farms").select("*").eq("couple_id", coupleId).maybeSingle();
+    if (error || !data) return null;
+    return {
+      level: data.level,
+      xp: data.xp,
+      coins: data.coins,
+      styleTickets: data.style_tickets,
+      plots: data.plots,
+      animals: data.animals,
+      inventory: data.inventory,
+      unlockedSkins: data.unlocked_skins,
+      equippedSkins: data.equipped_skins,
+      lastActionBy: data.last_action_by,
+      lastActionText: data.last_action_text,
+    };
+  } catch (err) {
+    console.warn("fetchFarmFromCloud error:", err);
+    return null;
+  }
+}
+

@@ -15,6 +15,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+type FarmChangeListener = (actionText?: string) => void;
+let farmChangeListener: FarmChangeListener | null = null;
+
+export function setFarmChangeListener(listener: FarmChangeListener | null) {
+  farmChangeListener = listener;
+}
+
+export function notifyFarmChange(actionText?: string) {
+  if (farmChangeListener) {
+    farmChangeListener(actionText);
+  }
+}
+
 /* ============================================================================
  * 1. 常數與遊戲配置資料表 (Game Constants & Configurations)
  * ============================================================================ */
@@ -539,6 +552,16 @@ export interface FarmActions {
   /** 為指定動物穿戴或卸除插槽外觀 (head / neck) */
   equipAnimal: (animalId: string, slot: 'head' | 'neck', itemId: string) => void;
 
+  /** 生長加速甘霖 (用於記帳激勵，使所有作物與動物生產加速 boostDurationMs 毫秒) */
+  applyGrowthBoost: (boostDurationMs: number) => {
+    plotsBoosted: number;
+    animalsBoosted: number;
+    message: string;
+  };
+
+  /** 從雲端同步或 JSON 備份匯入農場存檔 */
+  setFarmFromRemote: (data: Partial<Omit<FarmState, 'equippedSkins'>> & { equippedSkins?: any }) => void;
+
   /** 重置農場為初始狀態 (用於測試或重新開始) */
   resetFarm: () => void;
 }
@@ -896,6 +919,8 @@ export const useFarmStore = create<FarmStore>()(
           plots: newPlots,
         });
 
+        notifyFarmChange(`播種了「${config.name}」🌱`);
+
         return { success: true, message: `成功播種 ${config.name}！預計 ${Math.round(config.growDurationMs / 1000)} 秒後成熟` };
       },
 
@@ -950,6 +975,8 @@ export const useFarmStore = create<FarmStore>()(
 
         // 收割給予 XP
         get().addXp(config.xpReward);
+
+        notifyFarmChange(`收成了「${config.name}」🌾 (獲得 +${config.harvestYield} 個)`);
 
         return {
           success: true,
@@ -1051,6 +1078,8 @@ export const useFarmStore = create<FarmStore>()(
           animals: newAnimals,
         });
 
+        notifyFarmChange(`餵食了「${config.name}」🥣`);
+
         return { success: true, message: `已餵食 ${config.name}！將於 ${Math.round(config.produceDurationMs / 1000)} 秒後產出 ${config.productName}` };
       },
 
@@ -1102,6 +1131,8 @@ export const useFarmStore = create<FarmStore>()(
 
         // 收集獎勵 XP
         get().addXp(config.xpReward);
+
+        notifyFarmChange(`收取了「${config.name}」的產物 ${config.productName} 🥚`);
 
         return {
           success: true,
@@ -1309,6 +1340,8 @@ export const useFarmStore = create<FarmStore>()(
           },
         });
 
+        notifyFarmChange(`換上了【${skin.name}】裝扮 🎀`);
+
         return { success: true, message: `已成功換上【${skin.name}】外觀！` };
       },
 
@@ -1320,6 +1353,7 @@ export const useFarmStore = create<FarmStore>()(
             [category]: '',
           },
         });
+        notifyFarmChange('卸下了裝扮 🎀');
       },
 
       equipAnimal: (animalId: string, slot: 'head' | 'neck', itemId: string) => {
@@ -1336,6 +1370,75 @@ export const useFarmStore = create<FarmStore>()(
           };
         });
         set({ animals: updated });
+        notifyFarmChange('替動物更換了造型配件 👒');
+      },
+
+      applyGrowthBoost: (boostDurationMs: number) => {
+        const { plots, animals } = get();
+        const now = Date.now();
+        let plotsBoosted = 0;
+        let animalsBoosted = 0;
+
+        const updatedPlots = plots.map((p) => {
+          if (p.type !== 'empty' && p.plantedAt !== null && !p.isReady) {
+            plotsBoosted++;
+            return {
+              ...p,
+              plantedAt: p.plantedAt - boostDurationMs,
+            };
+          }
+          return p;
+        });
+
+        const updatedAnimals = animals.map((a) => {
+          if (a.fedAt !== null && !a.isReadyToProduce) {
+            animalsBoosted++;
+            return {
+              ...a,
+              fedAt: a.fedAt - boostDurationMs,
+            };
+          }
+          return a;
+        });
+
+        set({
+          plots: updatedPlots,
+          animals: updatedAnimals,
+          lastUpdatedTimestamp: now,
+        });
+
+        get().updateGrowthState(now);
+
+        notifyFarmChange('使用了記帳甘霖生長加速 💧');
+
+        const totalBoosted = plotsBoosted + animalsBoosted;
+        const mins = Math.round(boostDurationMs / (60 * 1000));
+        return {
+          plotsBoosted,
+          animalsBoosted,
+          message:
+            totalBoosted > 0
+              ? `💧 甘霖降臨！${plotsBoosted} 處作物與 ${animalsBoosted} 隻動物已加速生長 ${mins} 分鐘！`
+              : `💧 甘霖已滋潤農田！目前無進行中的生長週期。`,
+        };
+      },
+
+      setFarmFromRemote: (data: Partial<Omit<FarmState, 'equippedSkins'>> & { equippedSkins?: any }) => {
+        set((state) => ({
+          ...state,
+          ...(data.level !== undefined ? { level: data.level } : {}),
+          ...(data.xp !== undefined ? { xp: data.xp } : {}),
+          ...(data.coins !== undefined ? { coins: data.coins } : {}),
+          ...(data.styleTickets !== undefined ? { styleTickets: data.styleTickets } : {}),
+          ...(data.unlockedFeatures !== undefined ? { unlockedFeatures: data.unlockedFeatures } : {}),
+          ...(data.plots !== undefined ? { plots: data.plots } : {}),
+          ...(data.animals !== undefined ? { animals: data.animals } : {}),
+          ...(data.inventory !== undefined ? { inventory: data.inventory } : {}),
+          ...(data.unlockedSkins !== undefined ? { unlockedSkins: data.unlockedSkins } : {}),
+          ...(data.equippedSkins !== undefined ? { equippedSkins: data.equippedSkins } : {}),
+          lastUpdatedTimestamp: Date.now(),
+        }));
+        get().updateGrowthState(Date.now());
       },
 
       /* ----------------------------------------------------------------------

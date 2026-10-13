@@ -1,8 +1,12 @@
 import { useState, useRef } from "react";
-import { Heart, Sparkles, Pencil, Check, X, Sun, Moon, Monitor, Download, Wallet, Cloud } from "lucide-react";
+import { Heart, Sparkles, Pencil, Check, X, Sun, Moon, Monitor, Download, Upload, Wallet, Cloud, FileJson, Lock, Unlock, KeyRound, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { money, toKey, useUsTwo, type UserId, type DarkMode } from "@/lib/ustwo";
+import { useFarmStore } from "@/store/useFarmStore";
+import { useVaultLock } from "@/lib/vaultLock";
+import { PinModal } from "./PinModal";
+import { BackupRestoreModal, type UsTwoBackupData } from "./BackupRestoreModal";
 import { Avatar, SectionTitle } from "./shared";
 import { WidgetPreview } from "./WidgetPreview";
 import { DatePicker } from "./DatePicker";
@@ -367,6 +371,145 @@ function BudgetEditor() {
   );
 }
 
+// ─── Vault PIN Lock Section ──────────────────────────────────────────────────
+
+function VaultPinSection() {
+  const { hasPin, isUnlocked, lock, removePin } = useVaultLock();
+  const [pinModal, setPinModal] = useState<{ open: boolean; mode: "unlock" | "setup" }>({
+    open: false,
+    mode: "setup",
+  });
+  const [confirmRemove, setConfirmRemove] = useState(false);
+
+  return (
+    <section className="glass rounded-[1.75rem] px-5 py-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          <span className="text-sm font-bold">私房錢防窺 PIN 碼</span>
+        </div>
+        <span
+          className={cn(
+            "rounded-full px-2.5 py-0.5 text-xs font-bold",
+            hasPin
+              ? isUnlocked
+                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300"
+                : "bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300"
+              : "bg-muted text-muted-foreground",
+          )}
+        >
+          {hasPin ? (isUnlocked ? "🔓 已解鎖 (使用中)" : "🔒 已上鎖保護") : "未啟用"}
+        </span>
+      </div>
+
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        {hasPin
+          ? "已啟用 4 碼 PIN 密碼保護。查看個人私房錢專區或切換身分時需驗證密碼，避免另一半意外看見驚喜禮物或個人秘密開銷。"
+          : "為同一設備上的個人花費設定 4 位數 PIN 碼。未解鎖前將自動隱蔽所有私房錢紀錄，守護驚喜與個人隱私。"}
+      </p>
+
+      {hasPin ? (
+        <div className="space-y-2 pt-1">
+          <div className="flex gap-2">
+            {isUnlocked ? (
+              <button
+                type="button"
+                onClick={() => {
+                  lock();
+                  toast.success("🔒 私房錢保險箱已立即上鎖！");
+                }}
+                className="bouncy flex min-h-[48px] h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl neu text-xs font-bold text-amber-800 dark:text-amber-200 active:scale-95"
+              >
+                <Lock className="h-4 w-4" />
+                立即上鎖
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setPinModal({ open: true, mode: "unlock" })}
+                className="bouncy flex min-h-[48px] h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl neu text-xs font-bold text-emerald-700 dark:text-emerald-300 active:scale-95"
+              >
+                <KeyRound className="h-4 w-4" />
+                解鎖保險箱
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setPinModal({ open: true, mode: "setup" })}
+              className="bouncy flex min-h-[48px] h-12 flex-1 items-center justify-center gap-1.5 rounded-2xl neu text-xs font-bold text-muted-foreground active:scale-95"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              修改密碼
+            </button>
+          </div>
+
+          {confirmRemove ? (
+            <div className="flex items-center gap-2 rounded-2xl bg-destructive/10 p-2.5">
+              <span className="flex-1 text-[11px] font-bold text-destructive">
+                確定關閉 PIN 密碼保護嗎？
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  removePin();
+                  setConfirmRemove(false);
+                  toast.success("已清除 PIN 碼保護 🔓");
+                }}
+                className="bouncy min-h-[36px] rounded-xl bg-destructive px-3 text-xs font-bold text-destructive-foreground active:scale-95"
+              >
+                確定關閉
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmRemove(false)}
+                className="bouncy min-h-[36px] rounded-xl neu px-3 text-xs font-bold text-muted-foreground active:scale-95"
+              >
+                取消
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirmRemove(true)}
+              className="w-full text-center text-[11px] font-semibold text-muted-foreground hover:text-destructive py-1 transition-colors"
+            >
+              關閉 / 清除 PIN 密碼保護
+            </button>
+          )}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setPinModal({ open: true, mode: "setup" })}
+          className="bouncy flex min-h-[48px] h-12 w-full items-center justify-center gap-2 rounded-2xl text-xs font-extrabold text-primary-foreground active:scale-95 shadow-md"
+          style={{
+            backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
+            boxShadow: "var(--shadow-soft)",
+          }}
+        >
+          <Lock className="h-4 w-4" />
+          啟用 4 位數 PIN 碼保護
+        </button>
+      )}
+
+      {/* Pin modal dialog */}
+      <PinModal
+        open={pinModal.open}
+        mode={pinModal.mode}
+        title={pinModal.mode === "setup" ? "設定私房錢防窺 PIN 碼" : "解鎖私密保險箱"}
+        description={
+          pinModal.mode === "setup"
+            ? "請設定 4 位數安全密碼（需輸入兩次確認）"
+            : "請輸入 4 位數 PIN 碼以解鎖私房錢帳本"
+        }
+        onSuccess={() => setPinModal({ open: false, mode: "setup" })}
+        onCancel={() => setPinModal({ open: false, mode: "setup" })}
+      />
+    </section>
+  );
+}
+
 // ─── CSV Export ───────────────────────────────────────────────────────────────
 
 function csvEscape(v: string | number | boolean): string {
@@ -375,8 +518,8 @@ function csvEscape(v: string | number | boolean): string {
   return s;
 }
 
-function ExportSection() {
-  const { txns, people, getCat } = useUsTwo();
+function ExportSection({ onImportClick }: { onImportClick: () => void }) {
+  const { txns, goals, categories, anniversary, budget, people, getCat } = useUsTwo();
 
   const exportCSV = () => {
     const rows = [
@@ -403,20 +546,74 @@ function ExportSection() {
     URL.revokeObjectURL(url);
   };
 
+  const exportJSON = () => {
+    const farmState = useFarmStore.getState();
+    const backup: UsTwoBackupData = {
+      version: "1.0",
+      appName: "UsTwo Ledger",
+      exportDate: new Date().toISOString(),
+      txns,
+      goals,
+      categories,
+      anniversary,
+      budget,
+      people,
+      farm: {
+        level: farmState.level,
+        xp: farmState.xp,
+        coins: farmState.coins,
+        styleTickets: farmState.styleTickets,
+        unlockedFeatures: farmState.unlockedFeatures,
+        plots: farmState.plots,
+        animals: farmState.animals,
+        inventory: farmState.inventory,
+        unlockedSkins: farmState.unlockedSkins,
+        equippedSkins: farmState.equippedSkins,
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `UsTwo小窩完整備份_${toKey(new Date())}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("已成功匯出完整小窩 JSON 備份檔 📦✨");
+  };
+
   return (
-    <section className="glass rounded-[1.75rem] px-5 py-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-bold">匯出帳本</p>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">匯出全部 {txns.length} 筆為 CSV（Excel 可讀）</p>
-        </div>
+    <section className="glass rounded-[1.75rem] px-5 py-4 space-y-3.5">
+      <div>
+        <p className="text-sm font-bold">資料備份與還原</p>
+        <p className="mt-0.5 text-[11px] text-muted-foreground">完整備份包含記帳明細、存錢夢想與小窩農場存檔</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
         <button
-          onClick={exportCSV}
-          className="bouncy flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-sm font-bold text-primary-foreground"
+          onClick={exportJSON}
+          className="bouncy flex items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-bold text-primary-foreground"
           style={{ backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))", boxShadow: "var(--shadow-soft)" }}
         >
           <Download className="h-4 w-4" />
-          下載 CSV
+          匯出完整 JSON
+        </button>
+        <button
+          onClick={onImportClick}
+          className="bouncy flex items-center justify-center gap-1.5 rounded-2xl neu py-2.5 text-xs font-bold text-foreground active:scale-95"
+        >
+          <Upload className="h-4 w-4 text-primary" />
+          匯入還原備份
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between pt-1 border-t border-border/30 text-xs">
+        <span className="text-[11px] text-muted-foreground">需要試算表格式？</span>
+        <button
+          onClick={exportCSV}
+          className="text-xs font-semibold text-primary underline hover:opacity-80"
+        >
+          下載 CSV 報表
         </button>
       </div>
     </section>
@@ -476,6 +673,32 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
   const [recap, setRecap] = useState<"month" | "year">("month");
   const [editingWho, setEditingWho] = useState<UserId | null>(null);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [backupModalData, setBackupModalData] = useState<UsTwoBackupData | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const parsed = JSON.parse(text);
+        if (!parsed || typeof parsed !== "object" || (!parsed.txns && !parsed.farm && !parsed.version)) {
+          toast.error("此檔案非有效的 UsTwo Ledger 備份檔 ⚠️");
+          return;
+        }
+        setBackupModalData(parsed);
+      } catch {
+        toast.error("無法解析 JSON 檔案，請確認檔案格式 ⚠️");
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const prefix = recap === "month" ? toKey(new Date()).slice(0, 7) : toKey(new Date()).slice(0, 4);
   const rows = visible.filter((t) => t.date.startsWith(prefix) && t.kind === "expense");
   const spent = rows.reduce((s, t) => s + t.amount, 0);
@@ -483,6 +706,14 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
 
   return (
     <div className="space-y-5">
+      {/* 隱藏的檔案上傳輸入框 */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={handleFileChange}
+      />
       {/* Cloud Sync section */}
       <CloudSection onOpenCloud={onOpenCloud} />
 
@@ -511,6 +742,9 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
       {/* Budget */}
       <BudgetEditor />
 
+      {/* Vault PIN Lock */}
+      <VaultPinSection />
+
       {/* Widget */}
       <section className="glass flex items-center justify-between rounded-[1.75rem] px-5 py-4">
         <span className="text-sm font-bold">桌面小工具預覽</span>
@@ -528,8 +762,8 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
       </section>
       {showWidget && <WidgetPreview />}
 
-      {/* Export */}
-      <ExportSection />
+      {/* Export & Import Backup */}
+      <ExportSection onImportClick={() => fileInputRef.current?.click()} />
 
       {/* Recap */}
       <section>
@@ -571,6 +805,13 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
           <p className="mt-4 text-xs text-muted-foreground">繼續一起存錢、一起吃好吃的，下個月見 🧡</p>
         </div>
       </section>
+
+      {/* Backup & Restore Modal */}
+      <BackupRestoreModal
+        open={Boolean(backupModalData)}
+        backupData={backupModalData}
+        onClose={() => setBackupModalData(null)}
+      />
     </div>
   );
 }

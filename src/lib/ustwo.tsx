@@ -26,6 +26,12 @@ import {
   deleteGoalInCloud,
   updateCoupleMetaInCloud,
 } from "./couple";
+import { deletePhotoBlob } from "./photoStorage";
+import { triggerTxnGamification, triggerGoalGamification } from "./gamificationBridge";
+import { syncFarmFromRemote } from "./farmSync";
+import { useFarmStore } from "@/store/useFarmStore";
+import { useVaultLock } from "./vaultLock";
+import { toast } from "sonner";
 
 export type UserId = "me" | "her";
 
@@ -200,11 +206,13 @@ type Store = {
   activeUser: UserId;
   setActiveUser: (u: UserId) => void;
   txns: Txn[];
+  setTxns: (u: Txn[] | ((p: Txn[]) => Txn[])) => void;
   addTxn: (t: Omit<Txn, "id">) => void;
   updateTxn: (id: string, patch: Partial<Omit<Txn, "id">>) => void;
   deleteTxn: (id: string) => void;
   visible: Txn[];
   goals: Goal[];
+  setGoals: (u: Goal[] | ((p: Goal[]) => Goal[])) => void;
   addToGoal: (id: string, amount: number) => void;
   addGoal: (g: Omit<Goal, "id" | "saved">) => void;
   removeGoal: (id: string) => void;
@@ -213,6 +221,7 @@ type Store = {
   people: Record<UserId, PersonProfile>;
   setPerson: (u: UserId, patch: Partial<PersonProfile>) => void;
   categories: CatDef[];
+  setCategories: (u: CatDef[] | ((p: CatDef[]) => CatDef[])) => void;
   getCat: (id: Category) => CatDef;
   addCategory: (c: Omit<CatDef, "id" | "custom">) => CatDef;
   removeCategory: (id: Category) => void;
@@ -397,6 +406,7 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
     }
 
     refreshFromCloud();
+    syncFarmFromRemote(coupleId);
 
     // Setup Supabase Realtime channel for live partner updates
     const client = getSupabase();
@@ -423,6 +433,31 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
         { event: "*", schema: "public", table: "couples", filter: `id=eq.${coupleId}` },
         () => {
           refreshFromCloud();
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "farms", filter: `couple_id=eq.${coupleId}` },
+        (payload: any) => {
+          if (payload?.new) {
+            const row = payload.new;
+            if (row.last_action_by !== activeUserRef.current) {
+              useFarmStore.getState().setFarmFromRemote({
+                level: row.level,
+                xp: row.xp,
+                coins: row.coins,
+                styleTickets: row.style_tickets,
+                plots: row.plots,
+                animals: row.animals,
+                inventory: row.inventory,
+                unlockedSkins: row.unlocked_skins,
+                equippedSkins: row.equipped_skins,
+              });
+              if (row.last_action_text) {
+                toast.info(row.last_action_text, { duration: 4000 });
+              }
+            }
+          }
         },
       )
       .subscribe((status) => {
@@ -536,6 +571,8 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
       if (coupleIdRef.current && isSupabaseConfigured()) {
         saveTxnInCloud(newTxn, coupleIdRef.current);
       }
+      // 觸發記帳 ➜ 農場數值激勵閉環 (甘霖加速 / XP / 金幣)
+      triggerTxnGamification(newTxn);
     },
     [setTxns],
   );
@@ -556,7 +593,13 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
 
   const deleteTxn = useCallback(
     (id: string) => {
-      setTxns((p) => p.filter((t) => t.id !== id));
+      setTxns((p) => {
+        const target = p.find((t) => t.id === id);
+        if (target?.photo?.startsWith("idb://")) {
+          deletePhotoBlob(target.photo).catch(console.warn);
+        }
+        return p.filter((t) => t.id !== id);
+      });
       if (coupleIdRef.current && isSupabaseConfigured()) {
         deleteTxnInCloud(id, coupleIdRef.current);
       }
@@ -566,16 +609,30 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
 
   const addToGoal = useCallback(
     (id: string, amount: number) => {
+      let targetGoal: Goal | null = null;
+      let completed = false;
+
       setGoals((p) => {
-        const next = p.map((g) =>
-          g.id === id ? { ...g, saved: Math.min(g.target, g.saved + amount) } : g,
-        );
+        const next = p.map((g) => {
+          if (g.id !== id) return g;
+          const wasCompleted = g.saved >= g.target;
+          const newSaved = Math.min(g.target, g.saved + amount);
+          const isNowCompleted = !wasCompleted && newSaved >= g.target;
+          const updated = { ...g, saved: newSaved };
+          targetGoal = updated;
+          if (isNowCompleted) completed = true;
+          return updated;
+        });
         const updated = next.find((g) => g.id === id);
         if (updated && coupleIdRef.current && isSupabaseConfigured()) {
           saveGoalInCloud(updated, coupleIdRef.current);
         }
         return next;
       });
+
+      if (targetGoal) {
+        triggerGoalGamification(targetGoal, amount, completed);
+      }
     },
     [setGoals],
   );
@@ -605,22 +662,27 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
   // STRICT PRIVACY:
   // - Private First: Active user sees their own private transactions AND all shared/public transactions.
   //   Partner NEVER sees private transactions belonging to the other person.
-  //   Condition: !t.isPrivate || t.payer === activeUser
-  const visible = useMemo(
-    () => txns.filter((t) => !t.isPrivate || t.payer === activeUser),
-    [txns, activeUser],
-  );
+  // - Vault PIN Lock: If user configured a 4-digit PIN and the vault is locked (!isUnlocked),
+  //   private transactions are securely masked from all general views until unlocked.
+  const { hasPin, isUnlocked } = useVaultLock();
+
+  const visible = useMemo(() => {
+    const showPrivate = !hasPin || isUnlocked;
+    return txns.filter((t) => !t.isPrivate || (showPrivate && t.payer === activeUser));
+  }, [txns, activeUser, hasPin, isUnlocked]);
 
   const value = useMemo<Store>(
     () => ({
       activeUser,
       setActiveUser,
       txns,
+      setTxns,
       addTxn,
       updateTxn,
       deleteTxn,
       visible,
       goals,
+      setGoals,
       addToGoal,
       addGoal,
       removeGoal,
@@ -629,6 +691,7 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
       people,
       setPerson: (u, patch) => setPeople((p) => ({ ...p, [u]: { ...p[u], ...patch } })),
       categories,
+      setCategories,
       getCat: (id) => categories.find((c) => c.id === id) ?? FALLBACK,
       addCategory: (c) => {
         const def: CatDef = { ...c, id: `c${Date.now()}`, custom: true };

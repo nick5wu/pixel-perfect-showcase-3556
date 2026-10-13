@@ -171,18 +171,37 @@ create table if not exists public.goals (
   created_at timestamptz not null default timezone('utc'::text, now())
 );
 
+create table if not exists public.farms (
+  couple_id text primary key references public.couples(id) on delete cascade,
+  level integer not null default 1,
+  xp integer not null default 0,
+  coins integer not null default 100,
+  style_tickets integer not null default 0,
+  plots jsonb not null default '[]'::jsonb,
+  animals jsonb not null default '[]'::jsonb,
+  inventory jsonb not null default '{}'::jsonb,
+  unlocked_skins jsonb not null default '[]'::jsonb,
+  equipped_skins jsonb not null default '{}'::jsonb,
+  last_action_by text,
+  last_action_text text,
+  updated_at timestamptz not null default timezone('utc'::text, now())
+);
+
 alter table public.couples enable row level security;
 alter table public.transactions enable row level security;
 alter table public.goals enable row level security;
+alter table public.farms enable row level security;
 
 create policy "couples_all" on public.couples for all using (true) with check (true);
 create policy "txns_all" on public.transactions for all using (true) with check (true);
 create policy "goals_all" on public.goals for all using (true) with check (true);
+create policy "farms_all" on public.farms for all using (true) with check (true);
 
 begin;
   alter publication supabase_realtime add table public.couples;
   alter publication supabase_realtime add table public.transactions;
   alter publication supabase_realtime add table public.goals;
+  alter publication supabase_realtime add table public.farms;
 commit;
 
 insert into storage.buckets (id, name, public) values ('receipts', 'receipts', true) on conflict do nothing;
