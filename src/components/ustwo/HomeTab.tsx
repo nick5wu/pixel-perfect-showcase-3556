@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { toKey, useUsTwo, type Txn } from "@/lib/ustwo";
 import { BudgetBanner } from "./BudgetBanner";
+import { ExpiringAlertWidget } from "./ExpiringAlertWidget";
+import { InventoryModal } from "./InventoryModal";
 import { EmptyNote, Lightbox, SectionTitle, TxnCard, useLightbox } from "./shared";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +27,7 @@ export function HomeTab({
   const { visible } = useUsTwo();
   const [expanded, setExpanded] = useState(false);
   const [cursor, setCursor] = useState(() => new Date(selected));
+  const [inventoryOpen, setInventoryOpen] = useState(false);
   const lb = useLightbox();
 
   const byDay = useMemo(() => {
@@ -63,6 +66,9 @@ export function HomeTab({
     <div className="space-y-5">
       {/* Budget progress banner — only shows when budget is set */}
       <BudgetBanner />
+
+      {/* Expiring Alert Banner Widget — automatically scans items <= 3 days or expired */}
+      <ExpiringAlertWidget onOpenInventory={() => setInventoryOpen(true)} />
 
       {/* Calendar */}
       <section className="glass rounded-[2rem] p-4 overscroll-contain">
@@ -158,7 +164,18 @@ export function HomeTab({
       </section>
 
       <section>
-        <SectionTitle zh={`${selected.slice(5)} 的花費`} en="Selected date" />
+        <div className="flex items-center justify-between">
+          <SectionTitle zh={`${selected.slice(5)} 的花費`} en="Selected date" />
+          <button
+            type="button"
+            onClick={() => setInventoryOpen(true)}
+            className="bouncy mb-2 flex min-h-[38px] items-center gap-1.5 rounded-2xl neu px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95 shadow-xs"
+            title="開啟生活庫存管理"
+          >
+            <span>❄️</span>
+            <span>生活庫存</span>
+          </button>
+        </div>
         <div className="space-y-2.5">
           {dayTxns.length ? (
             dayTxns.map((t, i) => (
@@ -171,6 +188,7 @@ export function HomeTab({
       </section>
 
       <Lightbox src={lb.photo} onClose={lb.close} />
+      <InventoryModal open={inventoryOpen} onClose={() => setInventoryOpen(false)} />
     </div>
   );
 }

@@ -1,16 +1,18 @@
 import { useState, useRef } from "react";
-import { Heart, Sparkles, Pencil, Check, X, Sun, Moon, Monitor, Download, Upload, Wallet, Cloud, FileJson, Lock, Unlock, KeyRound, ShieldCheck, Tag, CalendarDays, Palette, User } from "lucide-react";
+import { Heart, Sparkles, Pencil, Check, X, Sun, Moon, Monitor, Download, Upload, Wallet, Cloud, FileJson, Lock, Unlock, KeyRound, ShieldCheck, Tag, CalendarDays, Palette, User, Refrigerator, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { money, toKey, useUsTwo, THEMES, type UserId, type DarkMode } from "@/lib/ustwo";
 import { useFarmStore } from "@/store/useFarmStore";
 import { useVaultLock } from "@/lib/vaultLock";
+import { useInventoryStore } from "@/store/useInventoryStore";
 import { PinModal } from "./PinModal";
 import { BackupRestoreModal, type UsTwoBackupData } from "./BackupRestoreModal";
 import { CategorySettingsModal } from "./CategorySettingsModal";
 import { FixedExpenseModal } from "./FixedExpenseModal";
 import { ThemeSettingsModal } from "./ThemeSettingsModal";
 import { AvatarSettingsModal } from "./AvatarSettingsModal";
+import { InventoryModal } from "./InventoryModal";
 import { Avatar, SectionTitle } from "./shared";
 import { WidgetPreview } from "./WidgetPreview";
 import { DatePicker } from "./DatePicker";
@@ -793,7 +795,9 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
   const [openFixedExpenses, setOpenFixedExpenses] = useState(false);
   const [openThemeSettings, setOpenThemeSettings] = useState(false);
   const [openAvatarSettings, setOpenAvatarSettings] = useState(false);
+  const [openInventory, setOpenInventory] = useState(false);
   const [avatarInitialUser, setAvatarInitialUser] = useState<UserId>("me");
+  const { items: inventoryItems } = useInventoryStore();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [backupModalData, setBackupModalData] = useState<UsTwoBackupData | null>(null);
@@ -922,6 +926,30 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
         </div>
       </section>
 
+      {/* 模組三：生活與庫存管理 (冷藏 · 冷凍 · 常溫與賞味期限) */}
+      <section className="glass rounded-[2rem] p-5 space-y-3">
+        <SectionTitle zh="生活庫存管理" en="Inventory & Expiry" />
+        <button
+          onClick={() => setOpenInventory(true)}
+          className="bouncy w-full flex items-center justify-between rounded-3xl neu p-4 text-left transition-all active:scale-95 hover:shadow-md"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-500/15 text-teal-700 dark:text-teal-400">
+              <Refrigerator className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-foreground">生活庫存與賞味期限</p>
+              <p className="text-[11px] font-semibold text-muted-foreground mt-0.5">
+                食材冷藏冷凍 · 剩餘天數紅黃綠燈提示 ({inventoryItems.filter((i) => !i.isConsumed).length} 項保存中)
+              </p>
+            </div>
+          </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full neu">
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </div>
+        </button>
+      </section>
+
       {/* Vault PIN Lock */}
       <VaultPinSection />
 
@@ -1016,6 +1044,12 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
         open={openAvatarSettings}
         initialUserId={avatarInitialUser}
         onClose={() => setOpenAvatarSettings(false)}
+      />
+
+      {/* Inventory Modal */}
+      <InventoryModal
+        open={openInventory}
+        onClose={() => setOpenInventory(false)}
       />
     </div>
   );
