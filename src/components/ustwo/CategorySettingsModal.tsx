@@ -239,7 +239,7 @@ export function CategorySettingsModal({
                       setExpandedGroupId(null);
                     }}
                     className={cn(
-                      "bouncy min-h-[44px] rounded-full py-2 text-xs font-black transition-all",
+                      "bouncy min-h-[48px] rounded-full py-2.5 text-xs font-black transition-all flex items-center justify-center",
                       kind === k ? "text-primary-foreground shadow-md" : "text-muted-foreground",
                     )}
                     style={
@@ -257,8 +257,8 @@ export function CategorySettingsModal({
               </div>
             </div>
 
-            {/* Categories List Scroll Area */}
-            <div className="flex-1 overflow-y-auto px-6 py-3 space-y-3 no-scrollbar overscroll-contain">
+            {/* Categories List Scroll Area (pb-12 for Android Edge-to-Edge) */}
+            <div className="flex-1 overflow-y-auto px-6 py-3 pb-12 space-y-3 no-scrollbar overscroll-contain">
               {filteredGroups.map((group) => {
                 const isExpanded = expandedGroupId === group.id;
                 const isAddingSub = addingSubGroupId === group.id;
@@ -293,12 +293,12 @@ export function CategorySettingsModal({
                         </p>
                       </div>
 
-                      {/* Header Actions */}
-                      <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      {/* Header Actions (>= 48px touch targets) */}
+                      <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => handleOpenEditGroup(group)}
                           aria-label={`編輯大類別 ${group.zh}`}
-                          className="bouncy flex min-h-[40px] min-w-[40px] items-center justify-center rounded-xl neu text-muted-foreground hover:text-foreground active:scale-95"
+                          className="bouncy flex min-h-[48px] min-w-[48px] items-center justify-center rounded-2xl neu text-muted-foreground hover:text-foreground active:scale-95"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
@@ -310,103 +310,107 @@ export function CategorySettingsModal({
                               }
                             }}
                             aria-label={`刪除大類別 ${group.zh}`}
-                            className="bouncy flex min-h-[40px] min-w-[40px] items-center justify-center rounded-xl neu text-destructive hover:bg-destructive/10 active:scale-95"
+                            className="bouncy flex min-h-[48px] min-w-[48px] items-center justify-center rounded-2xl neu text-destructive hover:bg-destructive/10 active:scale-95"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         )}
                         <button
                           onClick={() => toggleExpand(group.id)}
-                          aria-label="展開收合"
-                          className="bouncy flex min-h-[40px] min-w-[40px] items-center justify-center rounded-xl text-muted-foreground active:scale-95"
+                          aria-label={isExpanded ? "收合子項目" : "展開子項目"}
+                          className="bouncy flex min-h-[48px] min-w-[48px] items-center justify-center rounded-2xl text-muted-foreground active:scale-95"
                         >
-                          {isExpanded ? (
-                            <ChevronUp className="h-5 w-5" />
-                          ) : (
+                          <motion.div
+                            animate={{ rotate: isExpanded ? 180 : 0 }}
+                            transition={{ type: "spring", damping: 22, stiffness: 300 }}
+                            className="flex items-center justify-center"
+                          >
                             <ChevronDown className="h-5 w-5" />
-                          )}
+                          </motion.div>
                         </button>
                       </div>
                     </div>
 
-                    {/* Subcategories Accordion Content */}
-                    <AnimatePresence>
+                    {/* Subcategories Accordion Content (overflow-hidden without margin collapse) */}
+                    <AnimatePresence initial={false}>
                       {isExpanded && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.22 }}
+                          transition={{ type: "spring", damping: 26, stiffness: 320 }}
                           className="overflow-hidden"
                         >
-                          <div className="neu-inset mt-3.5 rounded-2xl p-3 space-y-3">
-                            <div className="flex items-center justify-between px-1">
-                              <span className="text-xs font-bold text-muted-foreground">
-                                子類別項目 ({group.subCategories.length})
-                              </span>
-                              {!isAddingSub && (
-                                <button
-                                  onClick={() => {
-                                    setAddingSubGroupId(group.id);
-                                    setNewSubName("");
-                                  }}
-                                  className="bouncy flex items-center gap-1 text-xs font-bold text-primary active:scale-95"
-                                >
-                                  <Plus className="h-3.5 w-3.5" />
-                                  新增子項
-                                </button>
+                          <div className="pt-3">
+                            <div className="neu-inset rounded-2xl p-3 space-y-3">
+                              <div className="flex items-center justify-between px-1">
+                                <span className="text-xs font-bold text-muted-foreground">
+                                  子類別項目 ({group.subCategories.length})
+                                </span>
+                                {!isAddingSub && (
+                                  <button
+                                    onClick={() => {
+                                      setAddingSubGroupId(group.id);
+                                      setNewSubName("");
+                                    }}
+                                    className="bouncy flex min-h-[48px] px-3 items-center gap-1.5 text-xs font-bold text-primary active:scale-95"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                    <span>新增子項</span>
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Subcategories Chips Grid */}
+                              <div className="flex flex-wrap gap-2">
+                                {group.subCategories.map((sub) => (
+                                  <div
+                                    key={sub.id}
+                                    className="group flex items-center gap-1.5 rounded-full bg-card/90 px-3 py-1.5 text-xs font-semibold text-foreground shadow-xs border border-white/60 dark:border-white/10"
+                                  >
+                                    <span>{sub.zh}</span>
+                                    {group.subCategories.length > 1 && (
+                                      <button
+                                        onClick={() => removeSubCategory(group.id, sub.id)}
+                                        aria-label={`刪除子類別 ${sub.zh}`}
+                                        className="bouncy flex min-h-[36px] min-w-[36px] items-center justify-center -mr-1.5 rounded-full text-muted-foreground hover:bg-destructive hover:text-destructive-foreground active:scale-90"
+                                      >
+                                        <X className="h-3 w-3" />
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Inline Add Subcategory input */}
+                              {isAddingSub && (
+                                <div className="flex items-center gap-2 pt-1">
+                                  <input
+                                    autoFocus
+                                    value={newSubName}
+                                    onChange={(e) => setNewSubName(e.target.value.slice(0, 8))}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") handleCreateSub(group.id);
+                                      if (e.key === "Escape") setAddingSubGroupId(null);
+                                    }}
+                                    placeholder="例如：下午茶、宵夜"
+                                    className="h-11 flex-1 rounded-xl bg-background/90 px-3 text-xs font-medium outline-none border border-border focus:border-primary"
+                                  />
+                                  <button
+                                    onClick={() => handleCreateSub(group.id)}
+                                    className="bouncy flex min-h-[44px] px-3.5 items-center justify-center rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow active:scale-95"
+                                  >
+                                    儲存
+                                  </button>
+                                  <button
+                                    onClick={() => setAddingSubGroupId(null)}
+                                    className="bouncy flex min-h-[44px] px-3 items-center justify-center rounded-xl neu text-xs font-bold text-muted-foreground active:scale-95"
+                                  >
+                                    取消
+                                  </button>
+                                </div>
                               )}
                             </div>
-
-                            {/* Subcategories Chips Grid */}
-                            <div className="flex flex-wrap gap-2">
-                              {group.subCategories.map((sub) => (
-                                <div
-                                  key={sub.id}
-                                  className="group flex items-center gap-1.5 rounded-full bg-card/90 px-3 py-1.5 text-xs font-semibold text-foreground shadow-xs border border-white/60 dark:border-white/10"
-                                >
-                                  <span>{sub.zh}</span>
-                                  {group.subCategories.length > 1 && (
-                                    <button
-                                      onClick={() => removeSubCategory(group.id, sub.id)}
-                                      aria-label={`刪除子類別 ${sub.zh}`}
-                                      className="bouncy flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive hover:text-destructive-foreground active:scale-90"
-                                    >
-                                      <X className="h-2.5 w-2.5" />
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* Inline Add Subcategory input */}
-                            {isAddingSub && (
-                              <div className="flex items-center gap-2 pt-1">
-                                <input
-                                  autoFocus
-                                  value={newSubName}
-                                  onChange={(e) => setNewSubName(e.target.value.slice(0, 8))}
-                                  onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleCreateSub(group.id);
-                                    if (e.key === "Escape") setAddingSubGroupId(null);
-                                  }}
-                                  placeholder="例如：下午茶、宵夜"
-                                  className="h-10 flex-1 rounded-xl bg-background/90 px-3 text-xs font-medium outline-none border border-border focus:border-primary"
-                                />
-                                <button
-                                  onClick={() => handleCreateSub(group.id)}
-                                  className="bouncy flex h-10 px-3 items-center justify-center rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow active:scale-95"
-                                >
-                                  儲存
-                                </button>
-                                <button
-                                  onClick={() => setAddingSubGroupId(null)}
-                                  className="bouncy flex h-10 px-2.5 items-center justify-center rounded-xl neu text-xs font-bold text-muted-foreground active:scale-95"
-                                >
-                                  取消
-                                </button>
-                              </div>
-                            )}
                           </div>
                         </motion.div>
                       )}
@@ -453,9 +457,10 @@ export function CategorySettingsModal({
                     </h4>
                     <button
                       onClick={() => setShowGroupDialog(false)}
-                      className="bouncy flex h-9 w-9 items-center justify-center rounded-full neu active:scale-95"
+                      aria-label="關閉"
+                      className="bouncy flex min-h-[48px] min-w-[48px] items-center justify-center rounded-full neu active:scale-95"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4.5 w-4.5" />
                     </button>
                   </div>
 
@@ -471,7 +476,7 @@ export function CategorySettingsModal({
                     />
                   </div>
 
-                  {/* Tint Color Picker */}
+                  {/* Tint Color Picker (>= 48px touch target) */}
                   <div>
                     <label className="text-xs font-bold text-muted-foreground px-1 mb-1.5 block">
                       代表色系
@@ -482,29 +487,33 @@ export function CategorySettingsModal({
                           key={t}
                           onClick={() => setGroupTint(t)}
                           aria-label="選擇色票"
-                          className="bouncy flex h-8 w-8 items-center justify-center rounded-full active:scale-95"
-                          style={{
-                            backgroundColor: `color-mix(in oklch, ${t} 45%, white)`,
-                            boxShadow: groupTint === t ? `0 0 0 2.5px ${t}` : "none",
-                          }}
+                          className="bouncy flex min-h-[48px] min-w-[48px] items-center justify-center rounded-full active:scale-95"
                         >
-                          {groupTint === t && (
-                            <Check
-                              className="h-3.5 w-3.5"
-                              style={{ color: `color-mix(in oklch, ${t} 70%, black)` }}
-                            />
-                          )}
+                          <span
+                            className="flex h-8 w-8 items-center justify-center rounded-full transition-all"
+                            style={{
+                              backgroundColor: `color-mix(in oklch, ${t} 45%, white)`,
+                              boxShadow: groupTint === t ? `0 0 0 2.5px ${t}` : "none",
+                            }}
+                          >
+                            {groupTint === t && (
+                              <Check
+                                className="h-3.5 w-3.5"
+                                style={{ color: `color-mix(in oklch, ${t} 70%, black)` }}
+                              />
+                            )}
+                          </span>
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* Icon Picker */}
+                  {/* Icon Picker (>= 48px touch target) */}
                   <div>
                     <label className="text-xs font-bold text-muted-foreground px-1 mb-1.5 block">
                       專屬圖示
                     </label>
-                    <div className="grid max-h-36 grid-cols-7 gap-1.5 overflow-y-auto no-scrollbar p-1 neu-inset rounded-2xl">
+                    <div className="grid max-h-36 grid-cols-7 gap-1 overflow-y-auto no-scrollbar p-1 neu-inset rounded-2xl">
                       {Object.entries(ICONS).map(([key, IconComp]) => {
                         const isSelected = groupIcon === key;
                         return (
@@ -513,12 +522,12 @@ export function CategorySettingsModal({
                             onClick={() => setGroupIcon(key)}
                             aria-label={key}
                             className={cn(
-                              "bouncy flex h-10 w-10 items-center justify-center rounded-xl transition-all active:scale-90",
+                              "bouncy flex min-h-[48px] min-w-[48px] items-center justify-center rounded-2xl transition-all active:scale-90",
                               isSelected ? "bg-white dark:bg-card shadow-sm" : "hover:bg-muted/40",
                             )}
                           >
                             <IconComp
-                              className="h-4.5 w-4.5 stroke-[2.2]"
+                              className="h-5 w-5 stroke-[2.2]"
                               style={{
                                 color: isSelected
                                   ? `color-mix(in oklch, ${groupTint} 75%, black)`

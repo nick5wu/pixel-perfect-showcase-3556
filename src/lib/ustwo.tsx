@@ -311,38 +311,75 @@ const FALLBACK: CatDef = { id: "?", zh: "其他", kind: "expense", icon: "sparkl
 export const iconOf = (c: CatDef): LucideIcon => ICONS[c.icon] ?? Sparkles;
 
 /**
- * 智慧解析大類別與子類別，具備 100% 舊版鍵值容錯轉譯
+ * 智慧解析大類別與子類別，具備 100% 舊版鍵值防呆轉譯與向後相容
  */
 export function resolveCategory(
   groups: CategoryGroup[],
-  catId: string,
+  catId?: string,
   subId?: string,
+  legacyCategories?: CatDef[],
 ): { group: CategoryGroup; sub?: SubCategory | undefined } {
+  const safeGroups = groups && groups.length > 0 ? groups : DEFAULT_CATEGORY_GROUPS;
+
+  if (!catId) {
+    const fallbackGroup = safeGroups[0]!;
+    return { group: fallbackGroup };
+  }
+
   // 1. Direct match on group
-  const direct = groups.find((g) => g.id === catId);
+  const direct = safeGroups.find((g) => g.id === catId);
   if (direct) {
     const matchedSub = subId ? direct.subCategories.find((s) => s.id === subId) : undefined;
     return { group: direct, sub: matchedSub };
   }
 
-  // 2. Backward compatibility: catId might be a legacy subcategory ID like "breakfast"
-  for (const g of groups) {
-    const s = g.subCategories.find((sub) => sub.id === catId);
+  // 2. Direct match on any subCategory ID across groups (e.g. legacy flat categories like "breakfast" or "transit")
+  for (const g of safeGroups) {
+    const s = g.subCategories.find((sub) => sub.id === catId || (subId && sub.id === subId));
     if (s) {
       return { group: g, sub: s };
     }
   }
 
-  // 3. Fallback
+  // 3. Backward compatibility: legacy default categories (e.g. "otherin", "snack", etc.)
+  const defaultCatMatch = DEFAULT_CATS.find((c) => c.id === catId);
+  if (defaultCatMatch) {
+    if (defaultCatMatch.kind === "income") {
+      const incomeGroup = safeGroups.find((g) => g.id === "income_other" || g.kind === "income") || safeGroups[0]!;
+      return {
+        group: incomeGroup,
+        sub: { id: defaultCatMatch.id, zh: defaultCatMatch.zh, icon: defaultCatMatch.icon },
+      };
+    }
+    const matchingKindGroup = safeGroups.find((g) => g.kind === defaultCatMatch.kind) || safeGroups[0]!;
+    return {
+      group: matchingKindGroup,
+      sub: { id: defaultCatMatch.id, zh: defaultCatMatch.zh, icon: defaultCatMatch.icon },
+    };
+  }
+
+  // 4. Backward compatibility: user's custom categories from older versions (stored in LS / categories)
+  if (legacyCategories && legacyCategories.length > 0) {
+    const userCustomCat = legacyCategories.find((c) => c.id === catId);
+    if (userCustomCat) {
+      const matchingKindGroup = safeGroups.find((g) => g.kind === userCustomCat.kind) || safeGroups[0]!;
+      return {
+        group: {
+          ...matchingKindGroup,
+          zh: userCustomCat.zh,
+          icon: userCustomCat.icon || matchingKindGroup.icon,
+          tint: userCustomCat.tint || matchingKindGroup.tint,
+        },
+        sub: { id: userCustomCat.id, zh: userCustomCat.zh, icon: userCustomCat.icon },
+      };
+    }
+  }
+
+  // 5. Safe Fallback: never crash or return blank
+  const safeDefaultGroup = safeGroups.find((g) => g.id === "other") || safeGroups[0]!;
   return {
-    group: groups[0] || {
-      id: "other",
-      zh: "其他",
-      kind: "expense",
-      icon: "sparkles",
-      tint: tint(1),
-      subCategories: [],
-    },
+    group: safeDefaultGroup,
+    sub: subId ? { id: subId, zh: subId, icon: "sparkles" } : undefined,
   };
 }
 
@@ -498,7 +535,7 @@ type Store = {
   addSubCategory: (groupId: string, sub: SubCategory) => void;
   removeSubCategory: (groupId: string, subId: string) => void;
   getCatGroup: (id: string) => CategoryGroup;
-  resolveCat: (catId: string, subId?: string) => { group: CategoryGroup; sub?: SubCategory | undefined };
+  resolveCat: (catId?: string, subId?: string) => { group: CategoryGroup; sub?: SubCategory | undefined };
 
   // 固定支出與訂閱系統
   fixedExpenses: FixedExpense[];
@@ -1006,9 +1043,12 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
     return categoryGroups.find((g) => g.id === id) ?? categoryGroups[0] ?? DEFAULT_CATEGORY_GROUPS[0]!;
   }, [categoryGroups]);
 
-  const resolveCat = useCallback((catId: string, subId?: string) => {
-    return resolveCategory(categoryGroups, catId, subId);
-  }, [categoryGroups]);
+  const resolveCat = useCallback(
+    (catId?: string, subId?: string) => {
+      return resolveCategory(categoryGroups, catId, subId, categories);
+    },
+    [categoryGroups, categories],
+  );
 
   // ─── Fixed Expenses Handlers ────────────────────────────────────────────────
   const addFixedExpense = useCallback((item: Omit<FixedExpense, "id" | "createdAt">) => {
@@ -1062,7 +1102,8 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
     for (const fix of updatedFixed) {
       if (!fix.active) continue;
 
-      const targetBillingDay = Math.min(fix.billingDay, daysInCurrentMonth);
+      const rawBillingDay = Math.floor(Number(fix.billingDay)) || 1;
+      const targetBillingDay = Math.min(Math.max(1, rawBillingDay), daysInCurrentMonth);
       if (currentDay < targetBillingDay) continue;
       if (fix.lastAutoGeneratedMonth === currentMonthKey) continue;
 
@@ -1158,7 +1199,7 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
       categories,
       setCategories,
       getCat: (id) => {
-        const res = resolveCategory(categoryGroups, id);
+        const res = resolveCategory(categoryGroups, id, undefined, categories);
         if (res.sub) {
           return {
             id: res.sub.id,

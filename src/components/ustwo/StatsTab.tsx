@@ -38,7 +38,7 @@ function Donut({ slices }: { slices: { color: string; value: number }[] }) {
 }
 
 export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
-  const { txns, visible, activeUser, getCat, people } = useUsTwo();
+  const { txns, visible, activeUser, getCat, resolveCat, people } = useUsTwo();
   const [mode, setMode] = useState<Mode>("joint");
   const [period, setPeriod] = useState<Period>("today");
   const [recapOpen, setRecapOpen] = useState(false);
@@ -67,9 +67,14 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
 
   const byCat = useMemo(() => {
     const m = new Map<Category, number>();
-    for (const t of rows) m.set(t.category, (m.get(t.category) ?? 0) + t.amount);
+    for (const t of rows) {
+      // 依解析後的大類別群組進行歸納，完美整併新舊單複層資料
+      const resolved = resolveCat(t.category, t.subCategory);
+      const catKey = resolved.group.id;
+      m.set(catKey, (m.get(catKey) ?? 0) + t.amount);
+    }
     return [...m.entries()].sort((a, b) => b[1] - a[1]);
-  }, [rows]);
+  }, [rows, resolveCat]);
 
   const total = rows.reduce((s, t) => s + t.amount, 0);
 
