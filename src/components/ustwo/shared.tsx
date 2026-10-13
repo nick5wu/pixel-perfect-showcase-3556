@@ -5,20 +5,41 @@ import { PEOPLE, money, iconOf, ICONS, useUsTwo, type Txn } from "@/lib/ustwo";
 import { useResolvedPhoto } from "@/lib/photoStorage";
 import { cn } from "@/lib/utils";
 
-export function Avatar({ who, size = "md" }: { who: "me" | "her"; size?: "sm" | "md" | "lg" }) {
+export function Avatar({
+  who,
+  size = "md",
+  className,
+}: {
+  who: "me" | "her";
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  className?: string;
+}) {
   const { people } = useUsTwo();
-  const p = people[who];
+  const p = people?.[who] ?? PEOPLE[who];
+  const isCustom = p?.avatarType === "custom" && Boolean(p?.avatarUrl);
+
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center rounded-full border border-white/70 shadow-[var(--shadow-soft)]",
-        size === "sm" && "h-7 w-7 text-sm",
+        "relative inline-flex shrink-0 items-center justify-center rounded-full overflow-hidden border border-white/80 dark:border-white/20 shadow-[var(--shadow-soft)] select-none",
+        size === "xs" && "h-5 w-5 text-[10px]",
+        size === "sm" && "h-7 w-7 text-xs",
         size === "md" && "h-10 w-10 text-lg",
         size === "lg" && "h-14 w-14 text-2xl",
+        size === "xl" && "h-20 w-20 text-4xl",
+        className,
       )}
-      style={{ backgroundColor: `color-mix(in oklch, ${p.color} 22%, white)` }}
+      style={{ backgroundColor: `color-mix(in oklch, ${p?.color || "var(--caramel)"} 22%, white)` }}
     >
-      {p.emoji}
+      {isCustom ? (
+        <img
+          src={p.avatarUrl}
+          alt={p?.zh || who}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <span>{p?.emoji || (who === "me" ? "🐻" : "🐰")}</span>
+      )}
     </span>
   );
 }
@@ -190,9 +211,11 @@ export function TxnCard({
               </span>
             ) : null}
           </div>
-          <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap truncate">
-            <span>{people[t.payer].emoji}</span>
-            <span>{people[t.payer].zh}付的 · {displayCatLabel}</span>
+          <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap truncate">
+            <Avatar who={t.payer} size="xs" />
+            <span className="font-semibold text-foreground/80">{people[t.payer]?.zh || t.payer}付的</span>
+            <span className="opacity-50">·</span>
+            <span>{displayCatLabel}</span>
           </p>
         </div>
 

@@ -18,8 +18,8 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
-  --font-sans: "Baloo 2", "Noto Sans TC", ui-rounded, system-ui, sans-serif;
-  --font-display: "Baloo 2", "Noto Sans TC", ui-rounded, system-ui, sans-serif;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+  --font-display: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -62,7 +62,8 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-:root {
+:root,
+[data-theme="oatmilk"] {
   --radius: 1.15rem;
 
   --cream: oklch(0.973 0.011 79);
@@ -129,7 +130,9 @@
   --shadow-pop: 0 18px 40px -14px oklch(0.55 0.12 45 / 0.45);
 }
 
-.dark {
+.dark,
+[data-theme="oatmilk"].dark,
+[data-theme="oatmilk"] .dark {
   --cream: oklch(0.22 0.016 55);
   --ivory: oklch(0.27 0.018 55);
   --caramel: oklch(0.742 0.163 47);
@@ -176,6 +179,200 @@
   --planner-paper: var(--popover);
   --planner-wash: var(--accent);
   --planner-shadow: var(--shadow-soft);
+}
+
+/* ─── Walnut Theme (暖陽胡桃) ─── */
+[data-theme="walnut"] {
+  --cream: oklch(0.965 0.018 70);
+  --ivory: oklch(0.93 0.025 65);
+  --caramel: oklch(0.68 0.185 42);
+  --caramel-soft: oklch(0.75 0.14 48);
+  --biscuit: oklch(0.58 0.09 50);
+  --mine: oklch(0.68 0.185 42);
+  --hers: oklch(0.70 0.13 25);
+
+  --background: var(--cream);
+  --foreground: oklch(0.32 0.04 45);
+  --card: oklch(0.992 0.008 72);
+  --card-foreground: oklch(0.32 0.04 45);
+  --popover: oklch(0.985 0.01 72);
+  --popover-foreground: oklch(0.32 0.04 45);
+  --primary: var(--caramel);
+  --primary-foreground: oklch(0.99 0.008 80);
+  --secondary: var(--ivory);
+  --secondary-foreground: oklch(0.40 0.05 45);
+  --muted: oklch(0.94 0.02 70);
+  --muted-foreground: oklch(0.55 0.04 50);
+  --accent: oklch(0.91 0.04 65);
+  --accent-foreground: oklch(0.36 0.05 45);
+  --destructive: oklch(0.6 0.18 22);
+  --destructive-foreground: oklch(0.99 0.008 80);
+  --border: oklch(0.89 0.028 65);
+  --input: oklch(0.89 0.028 65);
+  --ring: var(--caramel);
+}
+
+[data-theme="walnut"].dark,
+[data-theme="walnut"] .dark {
+  --cream: oklch(0.21 0.022 45);
+  --ivory: oklch(0.26 0.025 45);
+  --caramel: oklch(0.70 0.18 45);
+  --caramel-soft: oklch(0.76 0.13 48);
+  --biscuit: oklch(0.55 0.07 50);
+  --mine: oklch(0.70 0.18 45);
+  --hers: oklch(0.70 0.13 25);
+  --background: var(--cream);
+  --foreground: oklch(0.93 0.015 70);
+  --card: oklch(0.26 0.025 45);
+  --card-foreground: oklch(0.93 0.015 70);
+  --popover: oklch(0.26 0.025 45);
+  --popover-foreground: oklch(0.93 0.015 70);
+  --primary: var(--caramel);
+  --primary-foreground: oklch(0.99 0.008 80);
+  --secondary: oklch(0.30 0.025 45);
+  --secondary-foreground: oklch(0.88 0.015 70);
+  --muted: oklch(0.29 0.02 45);
+  --muted-foreground: oklch(0.68 0.025 65);
+  --accent: oklch(0.33 0.03 45);
+  --accent-foreground: oklch(0.90 0.015 70);
+  --destructive: oklch(0.62 0.20 24);
+  --destructive-foreground: oklch(0.99 0.008 80);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 13%);
+  --ring: var(--caramel);
+}
+
+/* ─── Wisteria Theme (浪漫紫藤) ─── */
+[data-theme="wisteria"] {
+  --cream: oklch(0.972 0.012 305);
+  --ivory: oklch(0.935 0.02 305);
+  --caramel: oklch(0.66 0.16 300);
+  --caramel-soft: oklch(0.74 0.12 302);
+  --biscuit: oklch(0.60 0.08 300);
+  --mine: oklch(0.66 0.16 300);
+  --hers: oklch(0.72 0.13 325);
+
+  --background: var(--cream);
+  --foreground: oklch(0.32 0.038 295);
+  --card: oklch(0.995 0.006 305);
+  --card-foreground: oklch(0.32 0.038 295);
+  --popover: oklch(0.985 0.008 305);
+  --popover-foreground: oklch(0.32 0.038 295);
+  --primary: var(--caramel);
+  --primary-foreground: oklch(0.99 0.008 300);
+  --secondary: var(--ivory);
+  --secondary-foreground: oklch(0.40 0.045 295);
+  --muted: oklch(0.945 0.015 305);
+  --muted-foreground: oklch(0.55 0.035 295);
+  --accent: oklch(0.915 0.035 300);
+  --accent-foreground: oklch(0.36 0.045 295);
+  --destructive: oklch(0.6 0.18 22);
+  --destructive-foreground: oklch(0.99 0.008 80);
+  --border: oklch(0.90 0.022 300);
+  --input: oklch(0.90 0.022 300);
+  --ring: var(--caramel);
+}
+
+[data-theme="wisteria"].dark,
+[data-theme="wisteria"] .dark {
+  --cream: oklch(0.21 0.02 295);
+  --ivory: oklch(0.26 0.025 295);
+  --caramel: oklch(0.72 0.16 300);
+  --caramel-soft: oklch(0.78 0.12 300);
+  --biscuit: oklch(0.55 0.07 295);
+  --mine: oklch(0.72 0.16 300);
+  --hers: oklch(0.72 0.13 325);
+  --background: var(--cream);
+  --foreground: oklch(0.93 0.012 300);
+  --card: oklch(0.26 0.025 295);
+  --card-foreground: oklch(0.93 0.012 300);
+  --popover: oklch(0.26 0.025 295);
+  --popover-foreground: oklch(0.93 0.012 300);
+  --primary: var(--caramel);
+  --primary-foreground: oklch(0.99 0.008 300);
+  --secondary: oklch(0.30 0.025 295);
+  --secondary-foreground: oklch(0.88 0.015 300);
+  --muted: oklch(0.29 0.02 295);
+  --muted-foreground: oklch(0.68 0.022 295);
+  --accent: oklch(0.33 0.03 295);
+  --accent-foreground: oklch(0.90 0.015 300);
+  --destructive: oklch(0.62 0.20 24);
+  --destructive-foreground: oklch(0.99 0.008 80);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 13%);
+  --ring: var(--caramel);
+}
+
+/* ─── OceanGlass Theme (琉璃海風) ─── */
+[data-theme="oceanglass"] {
+  --cream: oklch(0.972 0.012 225);
+  --ivory: oklch(0.935 0.02 225);
+  --caramel: oklch(0.65 0.135 225);
+  --caramel-soft: oklch(0.73 0.105 225);
+  --biscuit: oklch(0.58 0.075 225);
+  --mine: oklch(0.65 0.135 225);
+  --hers: oklch(0.70 0.12 195);
+
+  --background: var(--cream);
+  --foreground: oklch(0.32 0.032 230);
+  --card: oklch(0.995 0.006 225);
+  --card-foreground: oklch(0.32 0.032 230);
+  --popover: oklch(0.985 0.008 225);
+  --popover-foreground: oklch(0.32 0.032 230);
+  --primary: var(--caramel);
+  --primary-foreground: oklch(0.99 0.008 225);
+  --secondary: var(--ivory);
+  --secondary-foreground: oklch(0.40 0.04 230);
+  --muted: oklch(0.945 0.014 225);
+  --muted-foreground: oklch(0.55 0.032 230);
+  --accent: oklch(0.915 0.032 225);
+  --accent-foreground: oklch(0.36 0.04 230);
+  --destructive: oklch(0.6 0.18 22);
+  --destructive-foreground: oklch(0.99 0.008 80);
+  --border: oklch(0.90 0.02 225);
+  --input: oklch(0.90 0.02 225);
+  --ring: var(--caramel);
+}
+
+[data-theme="oceanglass"].dark,
+[data-theme="oceanglass"] .dark {
+  --cream: oklch(0.21 0.02 230);
+  --ivory: oklch(0.26 0.025 230);
+  --caramel: oklch(0.70 0.14 225);
+  --caramel-soft: oklch(0.76 0.11 225);
+  --biscuit: oklch(0.55 0.07 230);
+  --mine: oklch(0.70 0.14 225);
+  --hers: oklch(0.70 0.12 195);
+  --background: var(--cream);
+  --foreground: oklch(0.93 0.012 225);
+  --card: oklch(0.26 0.025 230);
+  --card-foreground: oklch(0.93 0.012 225);
+  --popover: oklch(0.26 0.025 230);
+  --popover-foreground: oklch(0.93 0.012 225);
+  --primary: var(--caramel);
+  --primary-foreground: oklch(0.99 0.008 225);
+  --secondary: oklch(0.30 0.025 230);
+  --secondary-foreground: oklch(0.88 0.015 225);
+  --muted: oklch(0.29 0.02 230);
+  --muted-foreground: oklch(0.68 0.022 225);
+  --accent: oklch(0.33 0.03 230);
+  --accent-foreground: oklch(0.90 0.015 225);
+  --destructive: oklch(0.62 0.20 24);
+  --destructive-foreground: oklch(0.99 0.008 80);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 13%);
+  --ring: var(--caramel);
+}
+
+/* ─── Global Native Typography & Transitions ─── */
+html {
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+  transition: background-color 0.35s ease, color 0.35s ease;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* One continuous paper surface for every planner date popup. */

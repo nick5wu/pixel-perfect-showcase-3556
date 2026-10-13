@@ -408,16 +408,118 @@ export type Goal = {
   saved: number;
 };
 
+export type ThemeId = "oatmilk" | "walnut" | "wisteria" | "oceanglass";
+
+export type ThemeDef = {
+  id: ThemeId;
+  zh: string;
+  en: string;
+  desc: string;
+  tag: string;
+  previewColors: {
+    primary: string;
+    background: string;
+    surface: string;
+  };
+};
+
+export const THEMES: ThemeDef[] = [
+  {
+    id: "oatmilk",
+    zh: "燕麥奶",
+    en: "Oat Milk",
+    desc: "溫暖奶油底色與深焙咖啡文字，經典手帳觸感",
+    tag: "預設推薦",
+    previewColors: {
+      primary: "#c67a3c",
+      background: "#fbf6f0",
+      surface: "#ffffff",
+    },
+  },
+  {
+    id: "walnut",
+    zh: "暖陽胡桃",
+    en: "Walnut Clay",
+    desc: "暖陽陶土與木質調，充滿生活溫馨厚實感",
+    tag: "木質溫暖",
+    previewColors: {
+      primary: "#c85a28",
+      background: "#fcf4ec",
+      surface: "#ffffff",
+    },
+  },
+  {
+    id: "wisteria",
+    zh: "浪漫紫藤",
+    en: "Wisteria",
+    desc: "淡雅法式紫羅蘭與柔霧薰衣草，輕柔甜美",
+    tag: "淡雅花香",
+    previewColors: {
+      primary: "#9a6ab5",
+      background: "#f8f3fa",
+      surface: "#ffffff",
+    },
+  },
+  {
+    id: "oceanglass",
+    zh: "琉璃海風",
+    en: "Ocean Glass",
+    desc: "清澈晨曦微風與淺海霧藍，清爽沉靜",
+    tag: "透澈寧靜",
+    previewColors: {
+      primary: "#3c8fb2",
+      background: "#f2f7fa",
+      surface: "#ffffff",
+    },
+  },
+];
+
+export type AvatarPreset = {
+  id: string;
+  name: string;
+  emoji: string;
+  color: string;
+  desc: string;
+};
+
+export const AVATAR_PRESETS: AvatarPreset[] = [
+  { id: "bear_tsung", name: "宗恩 (小熊)", emoji: "🐻", color: "oklch(0.742 0.163 47)", desc: "溫暖守護 · 咖啡愛好者" },
+  { id: "rabbit_jung", name: "蓉蓉 (兔兔)", emoji: "🐰", color: "oklch(0.72 0.117 20)", desc: "甜美元氣 · 甜點烘焙師" },
+  { id: "cat_mimi", name: "傲嬌貓咪", emoji: "🐱", color: "oklch(0.75 0.12 70)", desc: "古靈精怪 · 撒嬌專家" },
+  { id: "puppy_chai", name: "陽光柴柴", emoji: "🐶", color: "oklch(0.76 0.14 55)", desc: "熱情忠誠 · 戶外探險家" },
+  { id: "panda_lazy", name: "療癒熊貓", emoji: "🐼", color: "oklch(0.65 0.08 140)", desc: "慵懶隨和 · 幸福乾飯人" },
+  { id: "fox_smart", name: "機靈小狐", emoji: "🦊", color: "oklch(0.71 0.17 40)", desc: "聰明機敏 · 點子王" },
+  { id: "koala_cozy", name: "無尾熊", emoji: "🐨", color: "oklch(0.70 0.09 210)", desc: "黏人溫柔 · 抱抱狂魔" },
+  { id: "penguin_cute", name: "憨憨企鵝", emoji: "🐧", color: "oklch(0.68 0.12 250)", desc: "穩重可靠 · 冬日小暖爐" },
+];
+
 export type PersonProfile = {
   name: string;
   zh: string;
   emoji: string;
   color: string;
+  avatarType?: "preset" | "custom" | undefined;
+  avatarPresetId?: string | undefined;
+  avatarUrl?: string | undefined;
 };
 
 export const DEFAULT_PEOPLE: Record<UserId, PersonProfile> = {
-  me: { name: "Me", zh: "我", emoji: "🐻", color: "var(--mine)" },
-  her: { name: "Her", zh: "她", emoji: "🐰", color: "var(--hers)" },
+  me: {
+    name: "Me",
+    zh: "宗恩",
+    emoji: "🐻",
+    color: "var(--mine)",
+    avatarType: "preset",
+    avatarPresetId: "bear_tsung",
+  },
+  her: {
+    name: "Her",
+    zh: "蓉蓉",
+    emoji: "🐰",
+    color: "var(--hers)",
+    avatarType: "preset",
+    avatarPresetId: "rabbit_jung",
+  },
 };
 
 export let PEOPLE: Record<UserId, PersonProfile> = { ...DEFAULT_PEOPLE };
@@ -476,6 +578,7 @@ const LS = {
   people: "ustwo:people",
   budget: "ustwo:budget",
   darkMode: "ustwo:darkMode",
+  theme: "ustwo:theme",
   activeUser: "ustwo:active_user",
 } as const;
 
@@ -550,6 +653,10 @@ type Store = {
   setBudget: (n: number) => void;
   darkMode: DarkMode;
   setDarkMode: (m: DarkMode) => void;
+  theme: ThemeId;
+  setTheme: (t: ThemeId) => void;
+  currentTheme: ThemeId;
+  setCurrentTheme: (t: ThemeId) => void;
 
   // Cloud & Pairing fields
   cloudStatus: CloudStatus;
@@ -577,6 +684,7 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
   const [people, setPeopleRaw] = useState<Record<UserId, PersonProfile>>(() => lsGet(LS.people, DEFAULT_PEOPLE));
   const [budget, setBudgetRaw] = useState<number>(() => lsGet(LS.budget, 0));
   const [darkMode, setDarkModeRaw] = useState<DarkMode>(() => lsGet(LS.darkMode, "system") as DarkMode);
+  const [theme, setThemeRaw] = useState<ThemeId>(() => lsGet(LS.theme, "oatmilk") as ThemeId);
 
   // Nested Categories State
   const [categoryGroups, setCategoryGroupsRaw] = useState<CategoryGroup[]>(() =>
@@ -706,6 +814,17 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
     }
     return undefined;
   }, [darkMode]);
+
+  // Apply theme to <html> element
+  const setTheme = useCallback((t: ThemeId) => {
+    setThemeRaw(t);
+    lsSet(LS.theme, t);
+    document.documentElement.setAttribute("data-theme", t);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   // ─── Cloud sync logic ────────────────────────────────────────────────────────
 
@@ -1248,6 +1367,10 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
       setBudget,
       darkMode,
       setDarkMode,
+      theme,
+      setTheme,
+      currentTheme: theme,
+      setCurrentTheme: setTheme,
 
       cloudStatus,
       coupleId,
@@ -1297,6 +1420,8 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
       setBudget,
       darkMode,
       setDarkMode,
+      theme,
+      setTheme,
       cloudStatus,
       coupleId,
       coupleCode,

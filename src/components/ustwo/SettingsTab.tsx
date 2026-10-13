@@ -1,14 +1,16 @@
 import { useState, useRef } from "react";
-import { Heart, Sparkles, Pencil, Check, X, Sun, Moon, Monitor, Download, Upload, Wallet, Cloud, FileJson, Lock, Unlock, KeyRound, ShieldCheck, Tag, CalendarDays } from "lucide-react";
+import { Heart, Sparkles, Pencil, Check, X, Sun, Moon, Monitor, Download, Upload, Wallet, Cloud, FileJson, Lock, Unlock, KeyRound, ShieldCheck, Tag, CalendarDays, Palette, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { money, toKey, useUsTwo, type UserId, type DarkMode } from "@/lib/ustwo";
+import { money, toKey, useUsTwo, THEMES, type UserId, type DarkMode } from "@/lib/ustwo";
 import { useFarmStore } from "@/store/useFarmStore";
 import { useVaultLock } from "@/lib/vaultLock";
 import { PinModal } from "./PinModal";
 import { BackupRestoreModal, type UsTwoBackupData } from "./BackupRestoreModal";
 import { CategorySettingsModal } from "./CategorySettingsModal";
 import { FixedExpenseModal } from "./FixedExpenseModal";
+import { ThemeSettingsModal } from "./ThemeSettingsModal";
+import { AvatarSettingsModal } from "./AvatarSettingsModal";
 import { Avatar, SectionTitle } from "./shared";
 import { WidgetPreview } from "./WidgetPreview";
 import { DatePicker } from "./DatePicker";
@@ -198,36 +200,57 @@ function NicknameModalInner({
   );
 }
 
-// ─── Person card (Stable layout, opens modal on click) ─────────────────────────
+// ─── Person card (Stable layout with Avatar & actions) ─────────────────────────
 
-function PersonCard({ who, onEdit }: { who: UserId; onEdit: () => void }) {
+function PersonCard({
+  who,
+  onEditNickname,
+  onEditAvatar,
+}: {
+  who: UserId;
+  onEditNickname: () => void;
+  onEditAvatar: () => void;
+}) {
   const { people } = useUsTwo();
   const p = people[who];
 
   return (
-    <div
-      onClick={onEdit}
-      role="button"
-      tabIndex={0}
-      className="glass bouncy flex-1 cursor-pointer rounded-[1.75rem] p-4 text-center transition-all hover:shadow-md"
-    >
-      <div
-        className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/70 text-2xl shadow-[var(--shadow-soft)]"
-        style={{ backgroundColor: `color-mix(in oklch, ${p.color} 22%, white)` }}
-      >
-        {p.emoji}
-        <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow">
-          <Pencil className="h-2.5 w-2.5" />
-        </span>
+    <div className="glass flex-1 rounded-[1.75rem] p-4 text-center transition-all shadow-sm border border-white/60 dark:border-white/10 flex flex-col justify-between">
+      <div>
+        <div
+          onClick={onEditAvatar}
+          role="button"
+          tabIndex={0}
+          className="bouncy group relative mx-auto flex h-16 w-16 cursor-pointer items-center justify-center rounded-full active:scale-95"
+          title="更換頭像"
+        >
+          <Avatar who={who} size="lg" />
+          <span className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow ring-2 ring-card">
+            <Pencil className="h-3 w-3" />
+          </span>
+        </div>
+
+        <div className="mt-3">
+          <p className="truncate text-sm font-extrabold text-foreground">{p.zh}</p>
+          <p className="truncate text-xs font-semibold text-muted-foreground">{p.name}</p>
+        </div>
       </div>
-      <div className="mt-3">
-        <p className="truncate text-sm font-bold">{p.zh}</p>
-        <p className="truncate text-xs font-medium text-muted-foreground">{p.name}</p>
-      </div>
-      <div className="mt-2.5">
-        <span className="inline-flex items-center gap-1 rounded-full neu px-2.5 py-0.5 text-[10px] font-bold text-muted-foreground">
-          點擊修改
-        </span>
+
+      <div className="mt-3 flex items-center justify-center gap-1.5">
+        <button
+          type="button"
+          onClick={onEditAvatar}
+          className="bouncy flex min-h-[38px] flex-1 items-center justify-center rounded-xl bg-secondary px-2 py-1 text-[11px] font-bold text-secondary-foreground transition-all active:scale-95"
+        >
+          更換頭像
+        </button>
+        <button
+          type="button"
+          onClick={onEditNickname}
+          className="bouncy flex min-h-[38px] flex-1 items-center justify-center rounded-xl neu px-2 py-1 text-[11px] font-bold text-muted-foreground transition-all active:scale-95"
+        >
+          暱稱
+        </button>
       </div>
     </div>
   );
@@ -280,7 +303,7 @@ function AnniversaryEdit() {
   );
 }
 
-// ─── Dark mode toggle ─────────────────────────────────────────────────────────
+// ─── Appearance & Themes section ─────────────────────────────────────────────
 
 const DARK_OPTIONS: { value: DarkMode; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "淺色", icon: Sun },
@@ -288,32 +311,112 @@ const DARK_OPTIONS: { value: DarkMode; label: string; icon: typeof Sun }[] = [
   { value: "system", label: "跟系統", icon: Monitor },
 ];
 
-function DarkModeToggle() {
-  const { darkMode, setDarkMode } = useUsTwo();
+function AppearanceSection({
+  onOpenThemeSettings,
+  onOpenAvatarSettings,
+}: {
+  onOpenThemeSettings: () => void;
+  onOpenAvatarSettings: () => void;
+}) {
+  const { darkMode, setDarkMode, currentTheme } = useUsTwo();
+  const themeDef = THEMES.find((t) => t.id === currentTheme) || THEMES[0]!;
+
   return (
-    <section className="glass rounded-[1.75rem] px-5 py-4">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-bold">外觀主題</span>
+    <section className="glass rounded-[2rem] p-5 space-y-3.5">
+      <SectionTitle zh="個人化與外觀" en="Themes & Appearance" />
+
+      {/* Grid with Theme Card & Avatar Card */}
+      <div className="grid grid-cols-2 gap-3">
+        {/* Theme Settings Card */}
+        <button
+          type="button"
+          onClick={onOpenThemeSettings}
+          className="bouncy flex flex-col justify-between rounded-3xl neu p-4 text-left transition-all active:scale-95 hover:shadow-md min-h-[140px] cursor-pointer"
+        >
+          <div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/15 text-primary mb-2.5">
+              <Palette className="h-5 w-5" />
+            </div>
+            <p className="text-sm font-black text-foreground">主題風格</p>
+            <p className="text-[11px] font-semibold text-muted-foreground mt-0.5">
+              {themeDef.zh} · {themeDef.tag}
+            </p>
+          </div>
+
+          {/* 3 color swatches */}
+          <div className="flex items-center gap-1.5 pt-2 border-t border-border/30">
+            <div
+              className="h-4.5 w-4.5 rounded-full border border-card shadow-xs"
+              style={{ backgroundColor: themeDef.previewColors.primary }}
+              title="主色調"
+            />
+            <div
+              className="h-4.5 w-4.5 rounded-full border border-card shadow-xs"
+              style={{ backgroundColor: themeDef.previewColors.background }}
+              title="背景色"
+            />
+            <div
+              className="h-4.5 w-4.5 rounded-full border border-card shadow-xs"
+              style={{ backgroundColor: themeDef.previewColors.surface }}
+              title="卡片色"
+            />
+            <span className="text-[10px] font-bold text-primary ml-auto">切換</span>
+          </div>
+        </button>
+
+        {/* Avatar Settings Card */}
+        <button
+          type="button"
+          onClick={onOpenAvatarSettings}
+          className="bouncy flex flex-col justify-between rounded-3xl neu p-4 text-left transition-all active:scale-95 hover:shadow-md min-h-[140px] cursor-pointer"
+        >
+          <div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-700 dark:text-amber-400 mb-2.5">
+              <User className="h-5 w-5" />
+            </div>
+            <p className="text-sm font-black text-foreground">雙人頭像</p>
+            <p className="text-[11px] font-semibold text-muted-foreground mt-0.5">
+              自訂相片 / Q 版動物
+            </p>
+          </div>
+
+          {/* Avatar previews */}
+          <div className="flex items-center -space-x-1.5 pt-2 border-t border-border/30">
+            <Avatar who="me" size="sm" />
+            <Avatar who="her" size="sm" />
+            <span className="text-[10px] font-bold text-primary ml-auto pl-2">設定</span>
+          </div>
+        </button>
       </div>
-      <div className="glass mt-3 grid grid-cols-3 gap-1 rounded-full p-1">
-        {DARK_OPTIONS.map(({ value, label, icon: Icon }) => (
-          <button
-            key={value}
-            onClick={() => setDarkMode(value)}
-            className={cn(
-              "bouncy flex items-center justify-center gap-1.5 rounded-full py-2 text-xs font-bold",
-              darkMode === value ? "text-primary-foreground" : "text-muted-foreground",
-            )}
-            style={
-              darkMode === value
-                ? { backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))", boxShadow: "var(--shadow-soft)" }
-                : undefined
-            }
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
-          </button>
-        ))}
+
+      {/* Dark mode pills */}
+      <div className="pt-1">
+        <div className="glass flex items-center justify-between rounded-2xl p-1.5">
+          <span className="px-3 text-xs font-bold text-muted-foreground">深淺模式</span>
+          <div className="flex items-center gap-1">
+            {DARK_OPTIONS.map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                onClick={() => setDarkMode(value)}
+                className={cn(
+                  "bouncy flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all",
+                  darkMode === value ? "text-primary-foreground" : "text-muted-foreground"
+                )}
+                style={
+                  darkMode === value
+                    ? {
+                        backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
+                        boxShadow: "var(--shadow-soft)",
+                      }
+                    : undefined
+                }
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -688,6 +791,9 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
   const [editingWho, setEditingWho] = useState<UserId | null>(null);
   const [openCategorySettings, setOpenCategorySettings] = useState(false);
   const [openFixedExpenses, setOpenFixedExpenses] = useState(false);
+  const [openThemeSettings, setOpenThemeSettings] = useState(false);
+  const [openAvatarSettings, setOpenAvatarSettings] = useState(false);
+  const [avatarInitialUser, setAvatarInitialUser] = useState<UserId>("me");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [backupModalData, setBackupModalData] = useState<UsTwoBackupData | null>(null);
@@ -737,8 +843,22 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
       <section className="glass rounded-[2rem] p-5">
         <SectionTitle zh="我們倆" en="Partner profiles" />
         <div className="flex gap-3">
-          <PersonCard who="me" onEdit={() => setEditingWho("me")} />
-          <PersonCard who="her" onEdit={() => setEditingWho("her")} />
+          <PersonCard
+            who="me"
+            onEditNickname={() => setEditingWho("me")}
+            onEditAvatar={() => {
+              setAvatarInitialUser("me");
+              setOpenAvatarSettings(true);
+            }}
+          />
+          <PersonCard
+            who="her"
+            onEditNickname={() => setEditingWho("her")}
+            onEditAvatar={() => {
+              setAvatarInitialUser("her");
+              setOpenAvatarSettings(true);
+            }}
+          />
         </div>
       </section>
 
@@ -752,8 +872,14 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
       {/* Anniversary */}
       <AnniversaryEdit />
 
-      {/* Dark mode */}
-      <DarkModeToggle />
+      {/* Personalization & Appearance (Themes, Avatars, Dark mode) */}
+      <AppearanceSection
+        onOpenThemeSettings={() => setOpenThemeSettings(true)}
+        onOpenAvatarSettings={() => {
+          setAvatarInitialUser("me");
+          setOpenAvatarSettings(true);
+        }}
+      />
 
       {/* Budget */}
       <BudgetEditor />
@@ -877,6 +1003,19 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
       <FixedExpenseModal
         open={openFixedExpenses}
         onClose={() => setOpenFixedExpenses(false)}
+      />
+
+      {/* Theme Settings Modal */}
+      <ThemeSettingsModal
+        open={openThemeSettings}
+        onClose={() => setOpenThemeSettings(false)}
+      />
+
+      {/* Avatar Settings Modal */}
+      <AvatarSettingsModal
+        open={openAvatarSettings}
+        initialUserId={avatarInitialUser}
+        onClose={() => setOpenAvatarSettings(false)}
       />
     </div>
   );

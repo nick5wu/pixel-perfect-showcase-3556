@@ -211,10 +211,12 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
               {(["me", "her"] as const).map((who, i) => (
                 <div key={who} className={cn("flex min-w-0 items-center gap-2.5", i === 1 && "order-3 flex-row-reverse text-right")}>
-                  <Avatar who={who} />
+                  <div className="relative shrink-0">
+                    <Avatar who={who} size="md" />
+                  </div>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-muted-foreground">
-                      {who === "me" ? "我付了" : "另一半付了"}
+                    <p className="text-[11px] font-bold text-muted-foreground truncate">
+                      {people[who]?.zh || (who === "me" ? "我" : "對方")} 付了
                     </p>
                     <p className="truncate text-lg font-extrabold tabular-nums" style={{ color: people[who].color }}>
                       {money(periodPaid[who])}
