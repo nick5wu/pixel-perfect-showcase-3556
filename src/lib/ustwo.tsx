@@ -433,7 +433,7 @@ export const THEMES: ThemeDef[] = [
     previewColors: {
       primary: "#c67a3c",
       background: "#fbf6f0",
-      surface: "#ffffff",
+      surface: "#FAF8F5",
     },
   },
   {
@@ -445,7 +445,7 @@ export const THEMES: ThemeDef[] = [
     previewColors: {
       primary: "#c85a28",
       background: "#fcf4ec",
-      surface: "#ffffff",
+      surface: "#FAF6F0",
     },
   },
   {
@@ -457,7 +457,7 @@ export const THEMES: ThemeDef[] = [
     previewColors: {
       primary: "#9a6ab5",
       background: "#f8f3fa",
-      surface: "#ffffff",
+      surface: "#F8F5FA",
     },
   },
   {
@@ -469,7 +469,7 @@ export const THEMES: ThemeDef[] = [
     previewColors: {
       primary: "#3c8fb2",
       background: "#f2f7fa",
-      surface: "#ffffff",
+      surface: "#F4F8FA",
     },
   },
 ];
@@ -815,16 +815,42 @@ export function UsTwoProvider({ children }: { children: ReactNode }) {
     return undefined;
   }, [darkMode]);
 
-  // Apply theme to <html> element
-  const setTheme = useCallback((t: ThemeId) => {
-    setThemeRaw(t);
-    lsSet(LS.theme, t);
-    document.documentElement.setAttribute("data-theme", t);
+  // Apply theme to <html> element and synchronize dynamic PWA theme-color
+  const syncThemeColor = useCallback((t: ThemeId, dark: DarkMode) => {
+    if (typeof document === "undefined") return;
+    const isDark =
+      dark === "dark" ||
+      (dark === "system" &&
+        typeof window !== "undefined" &&
+        window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+    const themeDef = THEMES.find((item) => item.id === t) || THEMES[0]!;
+    const targetColor = isDark ? "#221e1a" : themeDef.previewColors.background;
+
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute("content", targetColor);
+    }
   }, []);
 
+  const setTheme = useCallback(
+    (t: ThemeId) => {
+      setThemeRaw(t);
+      lsSet(LS.theme, t);
+      if (typeof document !== "undefined") {
+        document.documentElement.setAttribute("data-theme", t);
+      }
+      syncThemeColor(t, darkMode);
+    },
+    [syncThemeColor, darkMode],
+  );
+
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+    if (typeof document !== "undefined") {
+      document.documentElement.setAttribute("data-theme", theme);
+    }
+    syncThemeColor(theme, darkMode);
+  }, [theme, darkMode, syncThemeColor]);
 
   // ─── Cloud sync logic ────────────────────────────────────────────────────────
 

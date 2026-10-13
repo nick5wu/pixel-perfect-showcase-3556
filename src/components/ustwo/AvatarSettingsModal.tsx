@@ -19,6 +19,7 @@ export function AvatarSettingsModal({
   const { people, setPerson } = useUsTwo();
   const [selectedUser, setSelectedUser] = useState<UserId>(initialUserId);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [previewImgError, setPreviewImgError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const currentProfile = people[selectedUser];
@@ -37,6 +38,7 @@ export function AvatarSettingsModal({
     setIsProcessing(true);
     try {
       const base64 = await compressImage(file, 380);
+      setPreviewImgError(false);
       setPerson(selectedUser, {
         avatarType: "custom",
         avatarUrl: base64,
@@ -148,7 +150,10 @@ export function AvatarSettingsModal({
                     <button
                       key={uid}
                       type="button"
-                      onClick={() => setSelectedUser(uid)}
+                      onClick={() => {
+                        setSelectedUser(uid);
+                        setPreviewImgError(false);
+                      }}
                       className={cn(
                         "bouncy flex min-h-[48px] items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all",
                         isActive
@@ -184,15 +189,16 @@ export function AvatarSettingsModal({
                       backgroundColor: `color-mix(in oklch, ${currentProfile.color} 24%, white)`,
                     }}
                   >
-                    {isCustomAvatar ? (
+                    {isCustomAvatar && !previewImgError ? (
                       <img
                         src={currentProfile.avatarUrl}
                         alt={currentProfile.zh}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover aspect-square"
+                        onError={() => setPreviewImgError(true)}
                       />
                     ) : (
                       <span className="text-5xl select-none">
-                        {currentProfile.emoji}
+                        {currentProfile.emoji || (selectedUser === "her" ? "🐰" : "🐻")}
                       </span>
                     )}
                   </div>

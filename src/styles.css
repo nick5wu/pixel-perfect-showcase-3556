@@ -365,14 +365,33 @@
 }
 
 /* ─── Global Native Typography & Transitions ─── */
+html,
+body,
+button,
+input,
+select,
+textarea {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
+}
+
 html {
   transition: background-color 0.35s ease, color 0.35s ease;
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", sans-serif;
   transition: background-color 0.35s ease, color 0.35s ease;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Smooth transition for surfaces and cards when theme shifts */
+.glass,
+.glass-strong,
+.clay-card,
+.clay-card-interactive,
+[class*="bg-card"],
+[class*="bg-background"],
+[class*="border-border"] {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* One continuous paper surface for every planner date popup. */

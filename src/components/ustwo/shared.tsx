@@ -10,13 +10,20 @@ export function Avatar({
   size = "md",
   className,
 }: {
-  who: "me" | "her";
+  who?: "me" | "her" | string;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
 }) {
   const { people } = useUsTwo();
-  const p = people?.[who] ?? PEOPLE[who];
-  const isCustom = p?.avatarType === "custom" && Boolean(p?.avatarUrl);
+  const [imgError, setImgError] = useState(false);
+
+  // Safe fallback: handles legacy or unknown payer strings without throwing
+  const safeWho: "me" | "her" = who === "her" ? "her" : "me";
+  const p = (who && (people as any)?.[who]) ?? people?.[safeWho] ?? PEOPLE[safeWho];
+
+  const hasCustomUrl = Boolean(p?.avatarType === "custom" && p?.avatarUrl && !imgError);
+  const fallbackEmoji = p?.emoji || (safeWho === "her" ? "🐰" : "🐻");
+  const fallbackInitial = p?.zh?.[0] || p?.name?.[0] || (safeWho === "her" ? "蓉" : "宗");
 
   return (
     <span
@@ -31,14 +38,18 @@ export function Avatar({
       )}
       style={{ backgroundColor: `color-mix(in oklch, ${p?.color || "var(--caramel)"} 22%, white)` }}
     >
-      {isCustom ? (
+      {hasCustomUrl ? (
         <img
           src={p.avatarUrl}
-          alt={p?.zh || who}
-          className="h-full w-full object-cover"
+          alt={p?.zh || safeWho}
+          className="h-full w-full object-cover aspect-square"
+          onError={() => setImgError(true)}
+          loading="lazy"
         />
+      ) : fallbackEmoji ? (
+        <span>{fallbackEmoji}</span>
       ) : (
-        <span>{p?.emoji || (who === "me" ? "🐻" : "🐰")}</span>
+        <span className="font-black text-foreground">{fallbackInitial}</span>
       )}
     </span>
   );
@@ -213,8 +224,10 @@ export function TxnCard({
           </div>
           <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground whitespace-nowrap truncate">
             <Avatar who={t.payer} size="xs" />
-            <span className="font-semibold text-foreground/80">{people[t.payer]?.zh || t.payer}付的</span>
-            <span className="opacity-50">·</span>
+            <span className="font-semibold text-foreground/85">
+              {((t.payer && (people as any)?.[t.payer]) || people?.[t.payer === "her" ? "her" : "me"] || PEOPLE.me)?.zh || t.payer || "我"}付的
+            </span>
+            <span className="opacity-40">·</span>
             <span>{displayCatLabel}</span>
           </p>
         </div>

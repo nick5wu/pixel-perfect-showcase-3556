@@ -115,8 +115,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="zh-TW" suppressHydrationWarning>
       <head>
+        {/* Anti-FOUC Theme & Dark Mode Synchronous Initialization Script */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('ustwo:theme')||'oatmilk';document.documentElement.setAttribute('data-theme',t);var d=localStorage.getItem('ustwo:dark')||'system';if(d==='dark'||(d==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}else{document.documentElement.classList.remove('dark');}}catch(e){}})();`,
+          }}
+        />
         <HeadContent />
       </head>
       <body>
