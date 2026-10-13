@@ -21,7 +21,7 @@ import {
   type InventoryItem,
   type InventoryCategory,
 } from "@/store/useInventoryStore";
-import { savePhotoBlob, useResolvedPhoto } from "@/lib/photoStorage";
+import { savePhotoBlob, deletePhotoBlob, useResolvedPhoto } from "@/lib/photoStorage";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -129,6 +129,27 @@ export function InventoryModal({ open, onClose }: InventoryModalProps) {
     setIsAdding(false);
   };
 
+  const handleCancelAdd = () => {
+    // 若已上傳暫存照片但取消表單，清理 IndexedDB 釋放空間
+    if (newPhotoKey && newPhotoKey.startsWith("idb://")) {
+      deletePhotoBlob(newPhotoKey).catch(console.warn);
+    }
+    setNewName("");
+    setNewQuantity("");
+    setNewNote("");
+    setNewPhotoKey(null);
+    setIsAdding(false);
+  };
+
+  const handleClose = () => {
+    if (isAdding && newPhotoKey && newPhotoKey.startsWith("idb://")) {
+      deletePhotoBlob(newPhotoKey).catch(console.warn);
+    }
+    setNewPhotoKey(null);
+    setIsAdding(false);
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       {open && (
@@ -138,7 +159,7 @@ export function InventoryModal({ open, onClose }: InventoryModalProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={handleClose}
             className="fixed inset-0 bg-stone-900/40 backdrop-blur-md"
           />
 
@@ -175,7 +196,7 @@ export function InventoryModal({ open, onClose }: InventoryModalProps) {
 
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 className="flex h-11 w-11 min-h-[48px] min-w-[48px] items-center justify-center rounded-2xl neu text-muted-foreground transition-all active:scale-95"
                 aria-label="關閉"
               >
@@ -191,7 +212,7 @@ export function InventoryModal({ open, onClose }: InventoryModalProps) {
                   type="button"
                   onClick={() => setActiveCategory("all")}
                   className={cn(
-                    "bouncy flex min-h-[38px] shrink-0 items-center gap-1 rounded-2xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95",
+                    "bouncy flex min-h-[44px] shrink-0 items-center gap-1 rounded-2xl px-3.5 py-2 text-xs font-bold transition-all active:scale-95",
                     activeCategory === "all"
                       ? "bg-primary text-primary-foreground shadow-xs"
                       : "neu text-muted-foreground hover:text-foreground"
@@ -211,7 +232,7 @@ export function InventoryModal({ open, onClose }: InventoryModalProps) {
                       type="button"
                       onClick={() => setActiveCategory(catKey)}
                       className={cn(
-                        "bouncy flex min-h-[38px] shrink-0 items-center gap-1.5 rounded-2xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95",
+                        "bouncy flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-2xl px-3.5 py-2 text-xs font-bold transition-all active:scale-95",
                         isActive
                           ? "bg-primary text-primary-foreground shadow-xs"
                           : "neu text-muted-foreground hover:text-foreground"
@@ -282,7 +303,7 @@ export function InventoryModal({ open, onClose }: InventoryModalProps) {
                       </span>
                       <button
                         type="button"
-                        onClick={() => setIsAdding(false)}
+                        onClick={handleCancelAdd}
                         className="bouncy flex h-7 w-7 items-center justify-center rounded-full neu text-muted-foreground active:scale-90"
                       >
                         <X className="h-3.5 w-3.5" />
@@ -418,14 +439,14 @@ export function InventoryModal({ open, onClose }: InventoryModalProps) {
                     <div className="flex gap-2 pt-1">
                       <button
                         type="button"
-                        onClick={() => setIsAdding(false)}
-                        className="bouncy flex min-h-[46px] flex-1 items-center justify-center rounded-2xl neu text-xs font-bold text-muted-foreground active:scale-95"
+                        onClick={handleCancelAdd}
+                        className="bouncy flex min-h-[48px] flex-1 items-center justify-center rounded-2xl neu text-xs font-bold text-muted-foreground active:scale-95"
                       >
                         取消
                       </button>
                       <button
                         type="submit"
-                        className="bouncy flex min-h-[46px] flex-1 items-center justify-center rounded-2xl text-xs font-black text-primary-foreground shadow-sm active:scale-95"
+                        className="bouncy flex min-h-[48px] flex-1 items-center justify-center rounded-2xl text-xs font-black text-primary-foreground shadow-sm active:scale-95"
                         style={{
                           backgroundImage:
                             "linear-gradient(140deg, var(--caramel), var(--caramel-soft))",
@@ -541,12 +562,12 @@ function InventoryItemCard({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       className={cn(
-        "relative flex items-center gap-3 rounded-[26px] p-3.5 glass border border-white/60 dark:border-white/10 shadow-sm transition-all",
+        "relative flex items-center gap-3 rounded-[26px] p-3.5 glass border border-white/60 dark:border-white/10 shadow-sm transition-all overflow-hidden",
         item.isConsumed && "opacity-60 bg-muted/30"
       )}
     >
-      {/* Left Photo or Icon */}
-      <div className="relative h-14 w-14 shrink-0 rounded-2xl overflow-hidden border border-white/60 dark:border-white/10 shadow-xs flex items-center justify-center bg-card">
+      {/* Left Photo or Icon - Perfectly centered and sized */}
+      <div className="relative h-14 w-14 shrink-0 rounded-2xl overflow-hidden border border-white/60 dark:border-white/10 shadow-xs flex items-center justify-center bg-card select-none">
         {resolvedPhoto ? (
           <img
             src={resolvedPhoto}
@@ -555,85 +576,95 @@ function InventoryItemCard({
             loading="lazy"
           />
         ) : (
-          <span className="text-2xl select-none">{meta.icon}</span>
+          <span className="text-2xl leading-none select-none flex items-center justify-center">{meta.icon}</span>
         )}
       </div>
 
-      {/* Middle Information */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <p className={cn("truncate text-sm font-black text-foreground", item.isConsumed && "line-through text-muted-foreground")}>
+      {/* Middle Information - Multi-layer overflow defense */}
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <p
+            className={cn(
+              "truncate text-sm font-black text-foreground min-w-0 flex-1",
+              item.isConsumed && "line-through text-muted-foreground"
+            )}
+            title={item.name}
+          >
             {item.name}
           </p>
           {item.quantity && (
-            <span className="shrink-0 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-bold text-secondary-foreground">
+            <span className="shrink-0 max-w-[84px] truncate rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-bold text-secondary-foreground">
               {item.quantity}
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2 mt-1 flex-wrap">
-          <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+        <div className="flex items-center gap-2 mt-1 min-w-0 flex-wrap">
+          <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1 shrink-0">
             <span>{meta.icon}</span>
             <span>{meta.tag}</span>
           </span>
-          <span className="text-muted-foreground/40 text-[10px]">·</span>
-          <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+          <span className="text-muted-foreground/40 text-[10px] shrink-0">·</span>
+          <span className="text-[11px] font-medium text-muted-foreground flex items-center gap-1 shrink-0">
             <Clock className="h-3 w-3" />
             <span>到期 {item.expiryDate}</span>
           </span>
         </div>
 
         {item.note && (
-          <p className="mt-1 truncate text-[10px] font-medium text-muted-foreground/80">
+          <p className="mt-1 truncate text-[10px] font-medium text-muted-foreground/80 min-w-0" title={item.note}>
             {item.note}
           </p>
         )}
       </div>
 
       {/* Right Side Traffic Light Tag & Quick Actions */}
-      <div className="flex flex-col items-end gap-2 shrink-0">
+      <div className="flex flex-col items-end justify-between gap-1.5 shrink-0 min-w-[76px]">
         {!item.isConsumed ? (
           <span
             className={cn(
-              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold tracking-tight shadow-xs",
+              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold tracking-tight shadow-xs shrink-0 select-none",
               tagInfo.badgeClass,
               tagInfo.pulse && "animate-pulse"
             )}
           >
-            {tagInfo.status === "expired" && <AlertTriangle className="h-3 w-3" />}
-            {tagInfo.label}
+            {(tagInfo.status === "expired" || tagInfo.status === "today") && (
+              <AlertTriangle className="h-3 w-3 shrink-0" />
+            )}
+            <span>{tagInfo.label}</span>
           </span>
         ) : (
-          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-muted-foreground">
-            已開動吃完 ✨
+          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-muted-foreground shrink-0 select-none">
+            已吃完 ✨
           </span>
         )}
 
         <div className="flex items-center gap-1">
-          {/* Toggle Consumed button */}
+          {/* Toggle Consumed button - Min 44px touch target on mobile */}
           <button
             type="button"
             onClick={onToggleConsumed}
             className={cn(
-              "bouncy flex h-8 w-8 min-h-[32px] min-w-[32px] items-center justify-center rounded-xl transition-all active:scale-90",
+              "bouncy flex h-9 w-9 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl transition-all active:scale-95",
               item.isConsumed
                 ? "bg-secondary text-secondary-foreground"
                 : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/25"
             )}
             title={item.isConsumed ? "恢復為保存中" : "標記為已吃完"}
+            aria-label={item.isConsumed ? "恢復為保存中" : "標記為已吃完"}
           >
-            {item.isConsumed ? <RotateCcw className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-4 w-4" />}
+            {item.isConsumed ? <RotateCcw className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
           </button>
 
-          {/* Delete item button */}
+          {/* Delete item button - Min 44px touch target on mobile */}
           <button
             type="button"
             onClick={onDelete}
-            className="bouncy flex h-8 w-8 min-h-[32px] min-w-[32px] items-center justify-center rounded-xl neu text-muted-foreground hover:text-destructive active:scale-90"
+            className="bouncy flex h-9 w-9 min-h-[44px] min-w-[44px] items-center justify-center rounded-xl neu text-muted-foreground hover:text-destructive active:scale-95"
             title="刪除項目"
+            aria-label="刪除庫存項目"
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 className="h-4 w-4" />
           </button>
         </div>
       </div>

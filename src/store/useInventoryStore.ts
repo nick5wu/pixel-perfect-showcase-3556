@@ -35,18 +35,28 @@ export interface InventoryItem {
 
 /** 計算距離到期日的剩餘天數 (當天為 0，過期為負數) */
 export function getDaysUntilExpiry(expiryDate: string): number {
-  if (!expiryDate) return 999;
+  if (!expiryDate || typeof expiryDate !== "string") return 999;
+
+  // 容錯防護：去除多餘空格與支援 YYYY/MM/DD 或帶時間格式
+  const cleanDate = expiryDate.trim().slice(0, 10).replace(/\//g, "-");
+  const parts = cleanDate.split("-").map(Number);
+  if (parts.length !== 3) return 999;
+
+  const [y, m, d] = parts;
+  if (!y || !m || !d || isNaN(y) || isNaN(m) || isNaN(d)) return 999;
+
+  // 統一將使用者本地時間對齊至當日午夜 00:00:00.000
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const [y, m, d] = expiryDate.split("-").map(Number);
-  if (!y || !m || !d) return 999;
-
+  // 目標到期日亦對齊至午夜 00:00:00.000
   const target = new Date(y, m - 1, d);
   target.setHours(0, 0, 0, 0);
 
+  // 毫秒差除以 1 天毫秒數 (86400000ms)，並使用 Math.round 對抗夏令時間 DST (23hr/25hr) 誤差
+  const ONE_DAY_MS = 1000 * 60 * 60 * 24;
   const diffTime = target.getTime() - today.getTime();
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return Math.round(diffTime / ONE_DAY_MS);
 }
 
 export type ExpiryTagStatus = "expired" | "today" | "urgent" | "soon" | "fresh";
@@ -64,7 +74,7 @@ export function getExpiryTagInfo(daysLeft: number): ExpiryTagInfo {
     return {
       status: "expired",
       label: `已過期 ${Math.abs(daysLeft)} 天`,
-      badgeClass: "bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30",
+      badgeClass: "bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/35 font-extrabold",
       pulse: true,
     };
   }
@@ -72,7 +82,7 @@ export function getExpiryTagInfo(daysLeft: number): ExpiryTagInfo {
     return {
       status: "today",
       label: "今天到期！⚠️",
-      badgeClass: "bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30",
+      badgeClass: "bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/35 font-extrabold",
       pulse: true,
     };
   }
@@ -80,7 +90,7 @@ export function getExpiryTagInfo(daysLeft: number): ExpiryTagInfo {
     return {
       status: "urgent",
       label: `⚠️ 即將過期 · 剩 ${daysLeft} 天`,
-      badgeClass: "bg-amber-500/15 text-amber-800 dark:text-amber-400 border border-amber-500/30",
+      badgeClass: "bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/35 font-extrabold",
       pulse: false,
     };
   }
@@ -88,14 +98,14 @@ export function getExpiryTagInfo(daysLeft: number): ExpiryTagInfo {
     return {
       status: "soon",
       label: `剩 ${daysLeft} 天`,
-      badgeClass: "bg-orange-500/15 text-orange-800 dark:text-orange-400 border border-orange-500/30",
+      badgeClass: "bg-orange-500/20 text-orange-800 dark:text-orange-300 border border-orange-500/35 font-extrabold",
       pulse: false,
     };
   }
   return {
     status: "fresh",
     label: `新鮮 · 剩 ${daysLeft} 天`,
-    badgeClass: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30",
+    badgeClass: "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/35 font-extrabold",
     pulse: false,
   };
 }
@@ -173,8 +183,16 @@ export const useInventoryStore = create<InventoryStoreState>()(
       items: SEED_INVENTORY,
 
       addItem: (itemData) => {
+        // 嚴格儲存防炸彈檢查：禁止任何 Base64 字串進入 LocalStorage
+        let safePhotoKey = itemData.photoKey;
+        if (safePhotoKey && safePhotoKey.startsWith("data:image")) {
+          console.warn("警報：攔截到 Base64 圖片企圖寫入 LocalStorage，已阻擋！");
+          safePhotoKey = undefined;
+        }
+
         const newItem: InventoryItem = {
           ...itemData,
+          photoKey: safePhotoKey,
           id: `inv_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
           createdAt: new Date().toISOString(),
         };
@@ -188,8 +206,27 @@ export const useInventoryStore = create<InventoryStoreState>()(
       },
 
       updateItem: (id, patch) => {
+        const currentItem = get().items.find((it) => it.id === id);
+        // 若更換相片，自動清理被替換的舊 IndexedDB 二進位相片
+        if (
+          patch.photoKey &&
+          currentItem?.photoKey &&
+          patch.photoKey !== currentItem.photoKey &&
+          currentItem.photoKey.startsWith("idb://")
+        ) {
+          deletePhotoBlob(currentItem.photoKey).catch((err) => {
+            console.warn("清理被替換的舊庫存相片失敗:", err);
+          });
+        }
+
+        let safePatch = { ...patch };
+        if (safePatch.photoKey && safePatch.photoKey.startsWith("data:image")) {
+          console.warn("警報：攔截到 Base64 圖片企圖寫入 LocalStorage，已阻擋！");
+          delete safePatch.photoKey;
+        }
+
         set((state) => ({
-          items: state.items.map((it) => (it.id === id ? { ...it, ...patch } : it)),
+          items: state.items.map((it) => (it.id === id ? { ...it, ...safePatch } : it)),
         }));
         toast.success("已更新庫存項目 ✨");
       },

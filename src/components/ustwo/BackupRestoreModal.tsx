@@ -14,6 +14,7 @@ import { Download, Upload, Check, AlertTriangle, ShieldCheck, Sparkles, X, FileJ
 import { toast } from "sonner";
 import { useUsTwo, type Txn, type Goal, type CatDef, type UserId, type PersonProfile, type CategoryGroup, type FixedExpense } from "@/lib/ustwo";
 import { useFarmStore } from "@/store/useFarmStore";
+import { useInventoryStore, type InventoryItem } from "@/store/useInventoryStore";
 import { syncCurrentFarmToCloud } from "@/lib/farmSync";
 import { useBodyScrollLock } from "@/lib/utils";
 
@@ -41,6 +42,7 @@ export interface UsTwoBackupData {
     unlockedSkins?: string[];
     equippedSkins?: Record<string, string>;
   };
+  inventory?: InventoryItem[];
 }
 
 export function BackupRestoreModal({
@@ -130,6 +132,14 @@ export function BackupRestoreModal({
         setFixedExpenses([...fixedExpenses, ...newFixed]);
       }
 
+      // 合併生活庫存
+      if (backupData.inventory && backupData.inventory.length > 0) {
+        const invStore = useInventoryStore.getState();
+        const existingInvIds = new Set(invStore.items.map((i) => i.id));
+        const newItems = backupData.inventory.filter((i) => !existingInvIds.has(i.id));
+        useInventoryStore.setState({ items: [...invStore.items, ...newItems] });
+      }
+
       // 合併農場：保留高等級與較高資產，聯集已解鎖造型
       if (backupData.farm) {
         const farmState = useFarmStore.getState();
@@ -210,6 +220,9 @@ export function BackupRestoreModal({
       }
       if (backupData.farm) {
         useFarmStore.getState().setFarmFromRemote(backupData.farm);
+      }
+      if (backupData.inventory) {
+        useInventoryStore.setState({ items: backupData.inventory });
       }
 
       if (isPaired) {

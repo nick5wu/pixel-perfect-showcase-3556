@@ -665,6 +665,7 @@ function ExportSection({ onImportClick }: { onImportClick: () => void }) {
 
   const exportJSON = () => {
     const farmState = useFarmStore.getState();
+    const invState = useInventoryStore.getState();
     const backup: UsTwoBackupData = {
       version: "1.0",
       appName: "UsTwo Ledger",
@@ -689,6 +690,7 @@ function ExportSection({ onImportClick }: { onImportClick: () => void }) {
         unlockedSkins: farmState.unlockedSkins,
         equippedSkins: farmState.equippedSkins,
       },
+      inventory: invState.items,
     };
 
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json;charset=utf-8;" });
