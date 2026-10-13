@@ -42,9 +42,9 @@ export function BudgetBanner() {
             <p className="text-xs font-bold text-muted-foreground">{currentMonthNum} 月共同支出預算</p>
             <button
               onClick={() => setRecapOpen(true)}
-              className="text-[10px] font-bold text-primary hover:underline flex items-center gap-0.5 ml-1"
+              className="bouncy flex min-h-[36px] items-center gap-1 rounded-full neu px-2.5 py-1 text-[11px] font-bold text-primary active:scale-95 ml-1.5"
             >
-              <Sparkles className="h-3 w-3" />
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
               <span>看小報</span>
             </button>
           </div>

@@ -77,7 +77,7 @@ export function HomeTab({
             {expanded && (
               <button
                 onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}
-                className="bouncy flex h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
+                className="bouncy flex min-h-[48px] min-w-[48px] h-12 w-12 items-center justify-center rounded-full neu active:scale-95"
                 aria-label="上個月"
               >
                 <ChevronLeft className="h-5 w-5" />
@@ -89,7 +89,7 @@ export function HomeTab({
             {expanded && (
               <button
                 onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}
-                className="bouncy flex h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
+                className="bouncy flex min-h-[48px] min-w-[48px] h-12 w-12 items-center justify-center rounded-full neu active:scale-95"
                 aria-label="下個月"
               >
                 <ChevronRight className="h-5 w-5" />
@@ -98,7 +98,7 @@ export function HomeTab({
           </div>
           <button
             onClick={() => setExpanded((e) => !e)}
-            className="bouncy flex min-h-[44px] items-center gap-1.5 rounded-full neu px-4 py-2 text-xs font-bold active:scale-95"
+            className="bouncy flex min-h-[48px] items-center gap-1.5 rounded-full neu px-4 py-2 text-xs font-bold active:scale-95"
           >
             {expanded ? "收合" : "展開月曆"}
             <ChevronDown className={cn("h-4 w-4 transition-transform", expanded && "rotate-180")} />
@@ -169,7 +169,7 @@ export function HomeTab({
           <button
             type="button"
             onClick={() => setInventoryOpen(true)}
-            className="bouncy mb-2 flex min-h-[38px] items-center gap-1.5 rounded-2xl neu px-3 py-1.5 text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95 shadow-xs"
+            className="bouncy mb-2 flex min-h-[44px] items-center gap-1.5 rounded-2xl neu px-3.5 py-2 text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95 shadow-xs"
             title="開啟生活庫存管理"
           >
             <span>❄️</span>

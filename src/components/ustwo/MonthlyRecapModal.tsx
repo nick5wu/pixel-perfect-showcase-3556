@@ -145,7 +145,7 @@ export function MonthlyRecapModal({
       >
         <button
           onClick={onClose}
-          className="bouncy absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full neu active:scale-95"
+          className="bouncy absolute right-5 top-5 flex min-h-[48px] min-w-[48px] h-12 w-12 items-center justify-center rounded-full neu active:scale-95"
           aria-label="關閉"
         >
           <X className="h-5 w-5" />
@@ -155,7 +155,7 @@ export function MonthlyRecapModal({
         <div className="flex items-center justify-between px-2 pt-1">
           <button
             onClick={prevMonth}
-            className="bouncy flex h-9 w-9 items-center justify-center rounded-full neu active:scale-95"
+            className="bouncy flex min-h-[44px] min-w-[44px] h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
             aria-label="上個月"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -166,7 +166,7 @@ export function MonthlyRecapModal({
           </div>
           <button
             onClick={nextMonth}
-            className="bouncy flex h-9 w-9 items-center justify-center rounded-full neu active:scale-95"
+            className="bouncy flex min-h-[44px] min-w-[44px] h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
             aria-label="下個月"
           >
             <ArrowRight className="h-4 w-4" />
@@ -241,8 +241,8 @@ export function MonthlyRecapModal({
               </div>
               {topPhoto && (
                 <div className="mt-2.5 flex justify-center">
-                  <div className="polaroid max-w-[120px] rounded-md rotate-[-2deg]">
-                    <img src={topPhoto} alt="紀念相片" className="h-20 w-20 object-cover rounded-sm" />
+                  <div className="polaroid max-w-[120px] rounded-2xl rotate-[-2deg] p-2">
+                    <img src={topPhoto} alt="紀念相片" className="h-20 w-20 object-cover rounded-xl" />
                   </div>
                 </div>
               )}
@@ -266,7 +266,7 @@ export function MonthlyRecapModal({
         <div className="mt-4 flex gap-2">
           <button
             onClick={copyShareText}
-            className="bouncy flex-1 flex items-center justify-center gap-1.5 rounded-2xl py-3 text-xs font-bold text-primary-foreground"
+            className="bouncy flex-1 min-h-[48px] flex items-center justify-center gap-1.5 rounded-2xl py-3 text-xs font-bold text-primary-foreground active:scale-95"
             style={{ backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))", boxShadow: "var(--shadow-soft)" }}
           >
             <Copy className="h-4 w-4" />

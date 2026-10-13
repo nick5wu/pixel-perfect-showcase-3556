@@ -70,12 +70,12 @@ export function Lightbox({ src, onClose }: { src: string | null; onClose: () => 
   return (
     <button
       onClick={onClose}
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-foreground/50 p-8 backdrop-blur-md"
+      className="fixed inset-0 z-[85] flex items-center justify-center bg-foreground/50 p-8 backdrop-blur-md"
       aria-label="Close photo"
     >
-      <span className="polaroid pop-in block max-w-sm rotate-[-1.5deg] rounded-md">
-        <img src={resolvedSrc || src} alt="Memory" className="w-full rounded-sm object-cover" />
-        <span className="mt-2 block text-center text-sm text-muted-foreground">我們的小回憶 ✨</span>
+      <span className="polaroid pop-in block max-w-sm rotate-[-1.5deg] rounded-2xl p-3">
+        <img src={resolvedSrc || src} alt="Memory" className="w-full rounded-xl object-cover" />
+        <span className="mt-2 block text-center text-sm font-semibold text-muted-foreground">我們的小回憶 ✨</span>
       </span>
     </button>
   );
@@ -88,13 +88,13 @@ function DeleteConfirm({ onCancel, onConfirm }: { onCancel: () => void; onConfir
       <p className="text-sm font-bold text-foreground">確定刪除這筆？</p>
       <button
         onClick={onConfirm}
-        className="bouncy flex min-h-[44px] items-center justify-center rounded-2xl bg-destructive px-4 py-2 text-xs font-black text-destructive-foreground shadow-sm active:scale-95"
+        className="bouncy flex min-h-[48px] items-center justify-center rounded-2xl bg-destructive px-5 py-2.5 text-xs font-black text-destructive-foreground shadow-sm active:scale-95"
       >
         刪除
       </button>
       <button
         onClick={onCancel}
-        className="bouncy flex min-h-[44px] items-center justify-center rounded-2xl neu px-4 py-2 text-xs font-bold active:scale-95"
+        className="bouncy flex min-h-[48px] items-center justify-center rounded-2xl neu px-5 py-2.5 text-xs font-bold active:scale-95"
       >
         取消
       </button>
@@ -239,13 +239,13 @@ export function TxnCard({
               e.stopPropagation();
               onPhoto?.(t.photo!);
             }}
-            className={cn("polaroid bouncy shrink-0 rounded-md hover:rotate-0", tilt)}
+            className={cn("polaroid bouncy shrink-0 rounded-2xl p-1 hover:rotate-0", tilt)}
           >
             <img
               src={resolvedPhoto || t.photo}
               alt={t.note}
               loading="lazy"
-              className="h-11 w-11 rounded-sm object-cover"
+              className="h-11 w-11 rounded-xl object-cover"
             />
           </button>
         )}

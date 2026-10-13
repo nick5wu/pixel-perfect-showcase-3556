@@ -95,7 +95,7 @@ function NicknameModalInner({
         <button
           type="button"
           onClick={onClose}
-          className="bouncy absolute right-5 top-5 flex h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
+          className="bouncy absolute right-5 top-5 flex min-h-[48px] min-w-[48px] h-12 w-12 items-center justify-center rounded-full neu active:scale-95"
           aria-label="關閉"
         >
           <X className="h-5 w-5" />
@@ -286,17 +286,17 @@ function AnniversaryEdit() {
             showQuickPresets={false}
             className="flex-1 max-w-[220px]"
           />
-          <button onClick={commit} className="bouncy flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <Check className="h-4 w-4" />
+          <button onClick={commit} className="bouncy flex min-h-[44px] min-w-[44px] h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-95" aria-label="確認修改紀念日">
+            <Check className="h-4.5 w-4.5" />
           </button>
-          <button onClick={() => { setDraft(anniversary); setEditing(false); }} className="bouncy flex h-9 w-9 shrink-0 items-center justify-center rounded-full neu">
-            <X className="h-4 w-4" />
+          <button onClick={() => { setDraft(anniversary); setEditing(false); }} className="bouncy flex min-h-[44px] min-w-[44px] h-11 w-11 shrink-0 items-center justify-center rounded-full neu active:scale-95" aria-label="取消修改紀念日">
+            <X className="h-4.5 w-4.5" />
           </button>
         </div>
       ) : (
         <div className="mt-2 flex items-center justify-center gap-2">
           <p className="text-xs text-muted-foreground">自 {anniversary} 起 🧡</p>
-          <button onClick={() => setEditing(true)} className="bouncy flex h-7 w-7 items-center justify-center rounded-full neu">
+          <button onClick={() => setEditing(true)} className="bouncy flex min-h-[38px] min-w-[38px] h-9 w-9 items-center justify-center rounded-full neu active:scale-95" aria-label="修改紀念日">
             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
         </div>
@@ -401,7 +401,7 @@ function AppearanceSection({
                 key={value}
                 onClick={() => setDarkMode(value)}
                 className={cn(
-                  "bouncy flex items-center justify-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all",
+                  "bouncy flex min-h-[40px] items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all active:scale-95",
                   darkMode === value ? "text-primary-foreground" : "text-muted-foreground"
                 )}
                 style={
@@ -454,11 +454,11 @@ function BudgetEditor() {
             placeholder="例如：30000"
             className="h-10 flex-1 rounded-2xl neu-inset px-3 text-sm outline-none"
           />
-          <button onClick={commit} className="bouncy flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
-            <Check className="h-4 w-4" />
+          <button onClick={commit} className="bouncy flex min-h-[44px] min-w-[44px] h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground active:scale-95" aria-label="確認預算">
+            <Check className="h-4.5 w-4.5" />
           </button>
-          <button onClick={() => setEditing(false)} className="bouncy flex h-9 w-9 items-center justify-center rounded-full neu">
-            <X className="h-4 w-4" />
+          <button onClick={() => setEditing(false)} className="bouncy flex min-h-[44px] min-w-[44px] h-11 w-11 items-center justify-center rounded-full neu active:scale-95" aria-label="取消預算">
+            <X className="h-4.5 w-4.5" />
           </button>
         </div>
       ) : (
@@ -466,7 +466,7 @@ function BudgetEditor() {
           <p className="text-lg font-extrabold tabular-nums">
             {budget > 0 ? money(budget) : <span className="text-muted-foreground text-sm font-semibold">未設定</span>}
           </p>
-          <button onClick={() => { setDraft(budget > 0 ? String(budget) : ""); setEditing(true); }} className="bouncy flex h-8 w-8 items-center justify-center rounded-full neu">
+          <button onClick={() => { setDraft(budget > 0 ? String(budget) : ""); setEditing(true); }} className="bouncy flex min-h-[38px] min-w-[38px] h-9 w-9 items-center justify-center rounded-full neu active:scale-95" aria-label="修改預算">
             <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
         </div>
@@ -713,7 +713,7 @@ function ExportSection({ onImportClick }: { onImportClick: () => void }) {
       <div className="grid grid-cols-2 gap-2">
         <button
           onClick={exportJSON}
-          className="bouncy flex items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-bold text-primary-foreground"
+          className="bouncy flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-bold text-primary-foreground active:scale-95"
           style={{ backgroundImage: "linear-gradient(140deg, var(--caramel), var(--caramel-soft))", boxShadow: "var(--shadow-soft)" }}
         >
           <Download className="h-4 w-4" />
@@ -721,7 +721,7 @@ function ExportSection({ onImportClick }: { onImportClick: () => void }) {
         </button>
         <button
           onClick={onImportClick}
-          className="bouncy flex items-center justify-center gap-1.5 rounded-2xl neu py-2.5 text-xs font-bold text-foreground active:scale-95"
+          className="bouncy flex min-h-[48px] items-center justify-center gap-1.5 rounded-2xl neu py-2.5 text-xs font-bold text-foreground active:scale-95"
         >
           <Upload className="h-4 w-4 text-primary" />
           匯入還原備份
@@ -777,7 +777,7 @@ function CloudSection({ onOpenCloud }: { onOpenCloud?: (() => void) | undefined 
         </div>
         <button
           onClick={onOpenCloud}
-          className="bouncy rounded-2xl bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow"
+          className="bouncy min-h-[44px] flex items-center rounded-2xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow active:scale-95"
         >
           {isPaired ? "小窩設定" : "設定連線"}
         </button>
@@ -989,7 +989,7 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
               key={m}
               onClick={() => setRecap(m)}
               className={cn(
-                "bouncy rounded-2xl py-2 text-sm font-bold",
+                "bouncy min-h-[44px] flex items-center justify-center rounded-2xl py-2 text-sm font-bold active:scale-95",
                 recap === m ? "text-primary-foreground" : "text-muted-foreground",
               )}
               style={

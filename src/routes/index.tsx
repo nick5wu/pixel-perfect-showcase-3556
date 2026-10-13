@@ -138,7 +138,7 @@ function App() {
                         type="button"
                         onClick={() => handleSwitchUser(who)}
                         className={cn(
-                          "bouncy flex min-h-[38px] items-center gap-1 rounded-xl px-2.5 py-1 text-xs font-bold transition-all active:scale-95",
+                          "bouncy flex min-h-[40px] items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all active:scale-95",
                           isActive
                             ? "bg-primary text-primary-foreground shadow-xs"
                             : "neu text-muted-foreground hover:text-foreground",
@@ -162,10 +162,10 @@ function App() {
                       lock();
                       toast.success("🔒 私房錢保險箱已立即上鎖！");
                     }}
-                    className="bouncy flex min-h-[38px] items-center gap-1 rounded-xl px-2.5 py-1 text-[11px] font-bold text-emerald-700 bg-emerald-500/15 dark:text-emerald-300 dark:bg-emerald-950/40 active:scale-95"
+                    className="bouncy flex min-h-[40px] items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-500/15 dark:text-emerald-300 dark:bg-emerald-950/40 active:scale-95"
                     title="保險箱已解鎖 · 點擊立即上鎖"
                   >
-                    <Unlock className="h-3 w-3" />
+                    <Unlock className="h-3.5 w-3.5" />
                     <span>已解鎖 · 上鎖</span>
                   </button>
                 ) : (
@@ -175,10 +175,10 @@ function App() {
                       setPendingSwitchUser(null);
                       setPinModalOpen(true);
                     }}
-                    className="bouncy flex min-h-[38px] items-center gap-1 rounded-xl px-2.5 py-1 text-[11px] font-bold text-amber-800 bg-amber-500/15 dark:text-amber-200 dark:bg-amber-950/40 active:scale-95"
+                    className="bouncy flex min-h-[40px] items-center gap-1.5 rounded-xl px-3 py-1.5 text-[11px] font-bold text-amber-800 bg-amber-500/15 dark:text-amber-200 dark:bg-amber-950/40 active:scale-95"
                     title="私房錢已上鎖 · 點擊輸入 PIN 碼解鎖"
                   >
-                    <Lock className="h-3 w-3" />
+                    <Lock className="h-3.5 w-3.5" />
                     <span>私房錢已鎖</span>
                   </button>
                 )

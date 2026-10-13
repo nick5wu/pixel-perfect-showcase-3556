@@ -250,7 +250,7 @@ create policy "receipts_insert" on storage.objects for insert with check (bucket
               </div>
               <button
                 onClick={onClose}
-                className="bouncy flex h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
+                className="bouncy flex min-h-[48px] min-w-[48px] h-12 w-12 items-center justify-center rounded-full neu active:scale-95"
                 aria-label="關閉"
               >
                 <X className="h-5 w-5" />
@@ -307,7 +307,7 @@ create policy "receipts_insert" on storage.objects for insert with check (bucket
           <button
             onClick={() => setTab("pair")}
             className={cn(
-              "bouncy rounded-xl py-2",
+              "bouncy min-h-[44px] flex items-center justify-center rounded-xl py-2 active:scale-95",
               tab === "pair" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground",
             )}
           >
@@ -316,7 +316,7 @@ create policy "receipts_insert" on storage.objects for insert with check (bucket
           <button
             onClick={() => setTab("config")}
             className={cn(
-              "bouncy rounded-xl py-2",
+              "bouncy min-h-[44px] flex items-center justify-center rounded-xl py-2 active:scale-95",
               tab === "config" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground",
             )}
           >
@@ -325,7 +325,7 @@ create policy "receipts_insert" on storage.objects for insert with check (bucket
           <button
             onClick={() => setTab("sql")}
             className={cn(
-              "bouncy rounded-xl py-2",
+              "bouncy min-h-[44px] flex items-center justify-center rounded-xl py-2 active:scale-95",
               tab === "sql" ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground",
             )}
           >
@@ -348,7 +348,7 @@ create policy "receipts_insert" on storage.objects for insert with check (bucket
                 <div className="mt-3 flex justify-center gap-2">
                   <button
                     onClick={copyCode}
-                    className="bouncy flex items-center gap-1.5 rounded-2xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow"
+                    className="bouncy flex min-h-[48px] items-center gap-1.5 rounded-2xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow active:scale-95"
                   >
                     <Copy className="h-3.5 w-3.5" />
                     複製邀請碼
@@ -356,7 +356,7 @@ create policy "receipts_insert" on storage.objects for insert with check (bucket
                   <button
                     onClick={handleSyncToCloud}
                     disabled={syncing}
-                    className="bouncy flex items-center gap-1.5 rounded-2xl neu px-4 py-2 text-xs font-bold"
+                    className="bouncy flex min-h-[48px] items-center gap-1.5 rounded-2xl neu px-4 py-2.5 text-xs font-bold active:scale-95"
                   >
                     <RefreshCw className={cn("h-3.5 w-3.5", syncing && "animate-spin")} />
                     上傳本機資料 ({txns.length})
@@ -373,7 +373,7 @@ create policy "receipts_insert" on storage.objects for insert with check (bucket
                   <button
                     onClick={handleCreateRoom}
                     disabled={pairing}
-                    className="bouncy mt-3 w-full rounded-2xl bg-primary py-2.5 text-xs font-bold text-primary-foreground shadow"
+                    className="bouncy mt-3 w-full min-h-[48px] rounded-2xl bg-primary py-2.5 text-xs font-bold text-primary-foreground shadow active:scale-95"
                   >
                     {pairing ? "建立中..." : "建立新小窩 ✨"}
                   </button>
@@ -396,12 +396,12 @@ create policy "receipts_insert" on storage.objects for insert with check (bucket
                       value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
                       placeholder="例如 USTWO-8823"
-                      className="h-10 flex-1 rounded-2xl neu-inset px-3 font-mono text-xs font-bold outline-none uppercase"
+                      className="min-h-[48px] h-12 flex-1 rounded-2xl neu-inset px-4 font-mono text-xs font-bold outline-none uppercase"
                     />
                     <button
                       onClick={handleJoinRoom}
                       disabled={pairing}
-                      className="bouncy rounded-2xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow"
+                      className="bouncy min-h-[48px] flex items-center rounded-2xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow active:scale-95"
                     >
                       {pairing ? "加入中..." : "加入小窩 💕"}
                     </button>
@@ -426,7 +426,7 @@ create policy "receipts_insert" on storage.objects for insert with check (bucket
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://xyzcompany.supabase.co"
-                className="mt-1 h-10 w-full rounded-2xl neu-inset px-3 text-xs outline-none"
+                className="mt-1 min-h-[48px] h-12 w-full rounded-2xl neu-inset px-4 text-xs outline-none"
               />
             </div>
 
@@ -457,14 +457,14 @@ create policy "receipts_insert" on storage.objects for insert with check (bucket
             <div className="flex gap-2 pt-2">
               <button
                 onClick={handleSaveConfig}
-                className="bouncy flex-1 rounded-2xl bg-primary py-2.5 text-xs font-bold text-primary-foreground shadow"
+                className="bouncy min-h-[48px] flex-1 rounded-2xl bg-primary py-2.5 text-xs font-bold text-primary-foreground shadow active:scale-95"
               >
                 儲存設定
               </button>
               <button
                 onClick={handleTest}
                 disabled={testing}
-                className="bouncy rounded-2xl neu px-4 py-2.5 text-xs font-bold"
+                className="bouncy min-h-[48px] rounded-2xl neu px-5 py-2.5 text-xs font-bold active:scale-95"
               >
                 {testing ? "連線中..." : "測試連線"}
               </button>
@@ -496,7 +496,7 @@ alter publication supabase_realtime add table ...;`}
             </div>
             <button
               onClick={copySqlSchema}
-              className="bouncy flex w-full items-center justify-center gap-1.5 rounded-2xl bg-primary py-2.5 text-xs font-bold text-primary-foreground shadow"
+              className="bouncy flex min-h-[48px] w-full items-center justify-center gap-1.5 rounded-2xl bg-primary py-2.5 text-xs font-bold text-primary-foreground shadow active:scale-95"
             >
               <Copy className="h-3.5 w-3.5" />
               複製完整 SQL 建立腳本

@@ -291,7 +291,7 @@ export function AddModal({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center">
+        <div className="fixed inset-0 z-[70] flex items-end justify-center">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -549,13 +549,13 @@ export function AddModal({
         {/* Polaroid photo preview */}
         {photo && (
           <div className="mt-3 flex justify-center">
-            <div className="polaroid rotate-[-2deg] rounded-md">
+            <div className="polaroid rotate-[-2deg] rounded-2xl p-2.5">
               <img
                 src={resolvedPhoto || photo}
                 alt="選取的照片"
-                className="h-28 w-28 rounded-sm object-cover"
+                className="h-28 w-28 rounded-xl object-cover"
               />
-              <p className="mt-1 text-center text-[10px] text-muted-foreground">點相機圖標可移除 📷</p>
+              <p className="mt-1.5 text-center text-[10px] font-medium text-muted-foreground">點相機圖標可移除 📷</p>
             </div>
           </div>
         )}
@@ -642,27 +642,27 @@ export function AddModal({
                 )}
               </div>
 
-              {/* Quick breakdown preset buttons (thumb-friendly 44px targets) */}
+              {/* Quick breakdown preset buttons (thumb-friendly >=48px targets) */}
               {totalVal > 0 && (
                 <div className="flex gap-1.5">
                   <button
                     type="button"
                     onClick={() => setForPartnerAmount(String(Math.round(totalVal / 2)))}
-                    className="bouncy flex min-h-[44px] flex-1 items-center justify-center rounded-2xl neu px-2 py-2 text-center text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95"
+                    className="bouncy flex min-h-[48px] flex-1 items-center justify-center rounded-2xl neu px-2 py-2 text-center text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95"
                   >
                     各付一半 ({Math.round(totalVal / 2)})
                   </button>
                   <button
                     type="button"
                     onClick={() => setForPartnerAmount(String(totalVal))}
-                    className="bouncy flex min-h-[44px] flex-1 items-center justify-center rounded-2xl neu px-2 py-2 text-center text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95"
+                    className="bouncy flex min-h-[48px] flex-1 items-center justify-center rounded-2xl neu px-2 py-2 text-center text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95"
                   >
                     我全幫出 ({totalVal})
                   </button>
                   <button
                     type="button"
                     onClick={() => setForPartnerAmount("0")}
-                    className="bouncy flex min-h-[44px] flex-1 items-center justify-center rounded-2xl neu px-2 py-2 text-center text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95"
+                    className="bouncy flex min-h-[48px] flex-1 items-center justify-center rounded-2xl neu px-2 py-2 text-center text-xs font-bold text-muted-foreground hover:text-foreground active:scale-95"
                   >
                     純共同 (0)
                   </button>

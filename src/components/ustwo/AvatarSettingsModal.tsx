@@ -79,7 +79,7 @@ export function AvatarSettingsModal({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -203,15 +203,16 @@ export function AvatarSettingsModal({
                     )}
                   </div>
 
-                  {/* Camera / Edit Badge */}
+                  {/* Camera / Edit Badge - Touch target enlarged to >= 44px */}
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isProcessing}
-                    className="bouncy absolute bottom-0 right-0 flex h-8 w-8 min-h-[32px] min-w-[32px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-2 ring-card active:scale-90"
+                    className="bouncy absolute bottom-0 right-0 flex h-10 w-10 min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-2 ring-card active:scale-90"
                     title="上傳自訂照片"
+                    aria-label="上傳自訂照片"
                   >
-                    <Camera className="h-4 w-4" />
+                    <Camera className="h-5 w-5" />
                   </button>
                 </div>
 

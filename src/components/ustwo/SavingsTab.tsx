@@ -17,7 +17,7 @@ const pop = {
 function Sheet({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   useBodyScrollLock(true);
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
+    <div className="fixed inset-0 z-[70] flex items-end justify-center">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -77,7 +77,7 @@ function DepositSheet({ goal, onClose }: { goal: Goal; onClose: () => void }) {
         </div>
         <button
           onClick={onClose}
-          className="bouncy flex h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
+          className="bouncy flex min-h-[48px] min-w-[48px] h-12 w-12 items-center justify-center rounded-full neu active:scale-95"
           aria-label="關閉"
         >
           <X className="h-5 w-5" />
@@ -100,7 +100,7 @@ function DepositSheet({ goal, onClose }: { goal: Goal; onClose: () => void }) {
           <button
             key={q}
             onClick={() => setAmt(String((Number(amt) || 0) + q))}
-            className="bouncy flex min-h-[44px] items-center justify-center rounded-2xl neu px-2 py-2.5 text-xs font-bold active:scale-95"
+            className="bouncy flex min-h-[48px] items-center justify-center rounded-2xl neu px-2 py-2.5 text-xs font-bold active:scale-95"
           >
             +{q.toLocaleString()}
           </button>
@@ -138,16 +138,16 @@ function NewGoalSheet({ onClose }: { onClose: () => void }) {
         <p className="text-lg font-bold">新增存錢目標</p>
         <button
           onClick={onClose}
-          className="bouncy flex h-11 w-11 items-center justify-center rounded-full neu active:scale-95"
+          className="bouncy flex min-h-[48px] min-w-[48px] h-12 w-12 items-center justify-center rounded-full neu active:scale-95"
           aria-label="關閉"
         >
           <X className="h-5 w-5" />
         </button>
       </div>
       <div className="space-y-2.5">
-        <input value={zh} onChange={(e) => setZh(e.target.value)} placeholder="目標名稱，例如：韓國旅行" className="h-11 w-full rounded-2xl neu-inset px-4 text-sm outline-none" />
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="英文副標（選填）" className="h-11 w-full rounded-2xl neu-inset px-4 text-sm outline-none" />
-        <input inputMode="numeric" value={target} onChange={(e) => setTarget(e.target.value.replace(/\D/g, ""))} placeholder="目標金額 NT$" className="h-11 w-full rounded-2xl neu-inset px-4 text-sm outline-none" />
+        <input value={zh} onChange={(e) => setZh(e.target.value)} placeholder="目標名稱，例如：韓國旅行" className="min-h-[48px] h-12 w-full rounded-2xl neu-inset px-4 text-sm outline-none" />
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="英文副標（選填）" className="min-h-[48px] h-12 w-full rounded-2xl neu-inset px-4 text-sm outline-none" />
+        <input inputMode="numeric" value={target} onChange={(e) => setTarget(e.target.value.replace(/\D/g, ""))} placeholder="目標金額 NT$" className="min-h-[48px] h-12 w-full rounded-2xl neu-inset px-4 text-sm outline-none" />
       </div>
       <p className="mb-2 mt-4 text-xs font-bold text-muted-foreground">圖案</p>
       <div className="grid grid-cols-8 gap-1.5">
@@ -196,7 +196,7 @@ export function SavingsTab() {
       <section>
         <div className="flex items-center justify-between">
           <SectionTitle zh="夢想撲滿" en="Dream piggy banks" />
-          <button onClick={() => setCreating(true)} className="bouncy mb-3 flex min-h-[44px] items-center gap-1.5 rounded-full neu px-4 py-2 text-xs font-bold active:scale-95">
+          <button onClick={() => setCreating(true)} className="bouncy mb-3 flex min-h-[48px] items-center gap-1.5 rounded-full neu px-4 py-2 text-xs font-bold active:scale-95">
             <Plus className="h-4 w-4" /> 新增目標
           </button>
         </div>
@@ -215,21 +215,21 @@ export function SavingsTab() {
                   </div>
                   {confirmId === g.id ? (
                     <div className="flex shrink-0 items-center gap-1.5">
-                      <button onClick={() => setConfirmId(null)} className="bouncy min-h-[44px] rounded-2xl neu px-4 py-2 text-xs font-bold active:scale-95">取消</button>
+                      <button onClick={() => setConfirmId(null)} className="bouncy min-h-[48px] rounded-2xl neu px-4 py-2 text-xs font-bold active:scale-95">取消</button>
                       <button
                         onClick={() => { removeGoal(g.id); setConfirmId(null); toast(`已刪除「${g.zh}」`); }}
-                        className="bouncy min-h-[44px] rounded-2xl bg-destructive px-4 py-2 text-xs font-bold text-destructive-foreground active:scale-95"
+                        className="bouncy min-h-[48px] rounded-2xl bg-destructive px-4 py-2 text-xs font-bold text-destructive-foreground active:scale-95"
                       >刪除</button>
                     </div>
                   ) : (
                     <>
-                      <button onClick={() => setConfirmId(g.id)} className="bouncy flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground neu active:scale-90" aria-label="刪除目標">
+                      <button onClick={() => setConfirmId(g.id)} className="bouncy flex min-h-[48px] min-w-[48px] h-12 w-12 shrink-0 items-center justify-center rounded-full text-muted-foreground neu active:scale-90" aria-label="刪除目標">
                         <Trash2 className="h-4 w-4" />
                       </button>
                       <button
                         disabled={done}
                         onClick={() => setDepositId(g.id)}
-                        className="bouncy flex h-11 shrink-0 items-center gap-1 rounded-2xl px-3.5 text-xs font-bold text-primary-foreground disabled:opacity-60 active:scale-95 shadow-sm"
+                        className="bouncy flex min-h-[48px] h-12 shrink-0 items-center gap-1 rounded-2xl px-4 text-xs font-bold text-primary-foreground disabled:opacity-60 active:scale-95 shadow-sm"
                         style={pop}
                       >
                         {done ? "達成！" : (<><Plus className="h-4 w-4" />存錢</>)}

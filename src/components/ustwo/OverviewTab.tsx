@@ -41,7 +41,7 @@ export function OverviewTab({ onEdit }: { onEdit: (t: Txn) => void }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="搜尋備註，例如：火鍋"
-            className="h-11 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="min-h-[48px] h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
         </div>
 
@@ -73,8 +73,8 @@ export function OverviewTab({ onEdit }: { onEdit: (t: Txn) => void }) {
                   key={c}
                   onClick={() => setCats((p) => (on ? p.filter((x) => x !== c) : [...p, c]))}
                   className={cn(
-                    "bouncy shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-bold",
-                    on ? "text-primary-foreground" : "neu text-muted-foreground",
+                    "bouncy flex min-h-[40px] items-center shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-xs font-bold active:scale-95",
+                    on ? "text-primary-foreground shadow-sm" : "neu text-muted-foreground",
                   )}
                   style={on ? { backgroundColor: tint } : undefined}
                 >

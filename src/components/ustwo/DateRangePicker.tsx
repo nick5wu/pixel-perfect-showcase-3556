@@ -39,19 +39,19 @@ export function DateRangePicker({ from, to, onChange }: Props) {
     <div className="flex items-center gap-2">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="ghost" aria-label="選擇日期範圍" className={cn("bouncy flex h-11 min-w-0 flex-1 justify-start items-center gap-2 rounded-2xl neu px-4 text-sm font-bold", !from && "text-muted-foreground")}>
+          <Button variant="ghost" aria-label="選擇日期範圍" className={cn("bouncy flex min-h-[48px] h-12 min-w-0 flex-1 justify-start items-center gap-2 rounded-2xl neu px-4 text-sm font-bold", !from && "text-muted-foreground")}>
             <CalendarHeart className="h-4 w-4 shrink-0 text-primary" />
             <span className="truncate">{text}</span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="planner-popup pointer-events-auto z-[90] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto">
+        <PopoverContent align="start" className="planner-popup pointer-events-auto z-[95] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto">
           <div className="no-scrollbar mb-5 flex gap-2 overflow-x-auto">
             {presets.map(([name, fn]) => (
               <Button
                 variant="ghost"
                 key={name}
                 onClick={() => { const [a, b] = fn(); onChange(toKey(a), toKey(b)); setOpen(false); }}
-                className="planner-preset bouncy h-10 shrink-0 rounded-full px-3 text-xs font-semibold"
+                className="planner-preset bouncy min-h-[44px] h-11 shrink-0 rounded-full px-4 text-xs font-semibold active:scale-95"
               >
                 {name}
               </Button>
@@ -64,13 +64,13 @@ export function DateRangePicker({ from, to, onChange }: Props) {
             onMonthChange={setMonth}
             onSelect={(r) => onChange(r?.from ? toKey(r.from) : "", r?.to ? toKey(r.to) : r?.from ? toKey(r.from) : "")}
           />
-          <Button onClick={() => setOpen(false)} className="planner-complete bouncy w-full text-base font-bold text-primary-foreground">
+          <Button onClick={() => setOpen(false)} className="planner-complete bouncy min-h-[48px] h-12 w-full text-base font-bold text-primary-foreground active:scale-95">
             完成
           </Button>
         </PopoverContent>
       </Popover>
       {from && (
-        <Button variant="ghost" onClick={() => onChange("", "")} className="bouncy flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl neu" aria-label="清除日期">
+        <Button variant="ghost" onClick={() => onChange("", "")} className="bouncy flex min-h-[48px] min-w-[48px] h-12 w-12 shrink-0 items-center justify-center rounded-2xl neu active:scale-95" aria-label="清除日期">
           <X className="h-4 w-4" />
         </Button>
       )}

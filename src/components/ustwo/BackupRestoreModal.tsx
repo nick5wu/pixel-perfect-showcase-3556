@@ -263,7 +263,7 @@ export function BackupRestoreModal({
       >
         <button
           onClick={onClose}
-          className="bouncy absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full neu active:scale-95"
+          className="bouncy absolute right-5 top-5 flex min-h-[48px] min-w-[48px] h-12 w-12 items-center justify-center rounded-full neu active:scale-95"
           aria-label="關閉"
         >
           <X className="h-5 w-5" />

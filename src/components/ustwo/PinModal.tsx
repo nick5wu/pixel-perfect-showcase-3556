@@ -144,7 +144,7 @@ export function PinModal({
       >
         <button
           onClick={onCancel}
-          className="bouncy absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full neu active:scale-95"
+          className="bouncy absolute right-5 top-5 flex min-h-[48px] min-w-[48px] h-12 w-12 items-center justify-center rounded-full neu active:scale-95"
           aria-label="關閉"
         >
           <X className="h-5 w-5" />
@@ -176,7 +176,7 @@ export function PinModal({
                   boxShadow: isFilled ? "var(--shadow-pop)" : "var(--neu-inset)",
                 }}
               >
-                {isFilled && <div className="h-3 w-3 rounded-full bg-white shadow-sm" />}
+                {isFilled && <div className="h-3 w-3 rounded-full bg-primary-foreground shadow-sm" />}
               </div>
             );
           })}
@@ -190,7 +190,7 @@ export function PinModal({
                 <button
                   key={k}
                   onClick={() => handleDigit(k)}
-                  className="bouncy flex min-h-[48px] h-12 items-center justify-center rounded-2xl text-xs font-bold text-muted-foreground active:scale-95"
+                  className="bouncy flex min-h-[52px] h-13 items-center justify-center rounded-2xl text-xs font-bold text-muted-foreground active:scale-95"
                 >
                   取消
                 </button>
@@ -201,7 +201,7 @@ export function PinModal({
                 <button
                   key={k}
                   onClick={() => handleDigit(k)}
-                  className="bouncy flex min-h-[48px] h-12 items-center justify-center rounded-2xl neu text-foreground active:scale-95"
+                  className="bouncy flex min-h-[52px] h-13 items-center justify-center rounded-2xl neu text-foreground active:scale-95"
                   aria-label="刪除最後一位"
                 >
                   <Delete className="h-5 w-5" />
@@ -212,7 +212,7 @@ export function PinModal({
               <button
                 key={k}
                 onClick={() => handleDigit(k)}
-                className="bouncy flex min-h-[48px] h-12 items-center justify-center rounded-2xl neu text-lg font-extrabold text-foreground active:scale-95"
+                className="bouncy flex min-h-[52px] h-13 items-center justify-center rounded-2xl neu text-lg font-extrabold text-foreground active:scale-95"
               >
                 {k}
               </button>

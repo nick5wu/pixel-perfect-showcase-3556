@@ -134,7 +134,7 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
             key={m}
             onClick={() => handleModeSwitch(m)}
             className={cn(
-              "bouncy rounded-3xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5",
+              "bouncy min-h-[48px] rounded-3xl py-2.5 text-sm font-bold flex items-center justify-center gap-1.5 active:scale-95",
               mode === m ? "text-primary-foreground" : "text-muted-foreground",
             )}
             style={
@@ -167,7 +167,7 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
                   setMode("joint");
                   toast.info("🔒 私密帳本已重新上鎖");
                 }}
-                className="bouncy flex items-center gap-1 rounded-xl neu px-2.5 py-1 text-[11px] font-bold text-muted-foreground active:scale-95"
+                className="bouncy flex min-h-[38px] items-center gap-1.5 rounded-xl neu px-3.5 py-1.5 text-xs font-bold text-muted-foreground active:scale-95"
               >
                 <Lock className="h-3 w-3" />
                 立即上鎖
@@ -197,7 +197,7 @@ export function StatsTab({ onEdit }: { onEdit?: (t: Txn) => void }) {
                   key={p}
                   onClick={() => setPeriod(p)}
                   className={cn(
-                    "bouncy rounded-xl px-2.5 py-1 font-bold transition-all",
+                    "bouncy flex min-h-[38px] items-center justify-center rounded-xl px-3.5 py-1.5 font-bold transition-all active:scale-95",
                     period === p ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground",
                   )}
                 >

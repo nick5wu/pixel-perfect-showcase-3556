@@ -283,7 +283,7 @@ export function CategorySettingsModal({
                             {group.zh}
                           </p>
                           {group.custom && (
-                            <span className="shrink-0 rounded-md bg-secondary/80 px-1.5 py-0.5 text-[9px] font-bold text-secondary-foreground">
+                            <span className="shrink-0 rounded-xl bg-secondary/80 px-2 py-0.5 text-[9px] font-bold text-secondary-foreground">
                               自訂
                             </span>
                           )}
@@ -398,13 +398,13 @@ export function CategorySettingsModal({
                                   />
                                   <button
                                     onClick={() => handleCreateSub(group.id)}
-                                    className="bouncy flex min-h-[44px] px-3.5 items-center justify-center rounded-xl bg-primary text-xs font-bold text-primary-foreground shadow active:scale-95"
+                                    className="bouncy flex min-h-[48px] px-4 items-center justify-center rounded-2xl bg-primary text-xs font-bold text-primary-foreground shadow active:scale-95"
                                   >
                                     儲存
                                   </button>
                                   <button
                                     onClick={() => setAddingSubGroupId(null)}
-                                    className="bouncy flex min-h-[44px] px-3 items-center justify-center rounded-xl neu text-xs font-bold text-muted-foreground active:scale-95"
+                                    className="bouncy flex min-h-[48px] px-3.5 items-center justify-center rounded-2xl neu text-xs font-bold text-muted-foreground active:scale-95"
                                   >
                                     取消
                                   </button>
@@ -439,7 +439,7 @@ export function CategorySettingsModal({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowGroupDialog(false)}
-                  className="absolute inset-0 bg-black/40 backdrop-blur-xs"
+                  className="absolute inset-0 bg-[oklch(0.22_0.02_55/0.45)] backdrop-blur-md"
                 />
                 <motion.div
                   initial={{ scale: 0.92, opacity: 0, y: 16 }}
@@ -523,7 +523,7 @@ export function CategorySettingsModal({
                             aria-label={key}
                             className={cn(
                               "bouncy flex min-h-[48px] min-w-[48px] items-center justify-center rounded-2xl transition-all active:scale-90",
-                              isSelected ? "bg-white dark:bg-card shadow-sm" : "hover:bg-muted/40",
+                              isSelected ? "bg-card shadow-sm ring-2 ring-primary" : "hover:bg-muted/40",
                             )}
                           >
                             <IconComp

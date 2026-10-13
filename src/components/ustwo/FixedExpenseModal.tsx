@@ -217,7 +217,7 @@ export function FixedExpenseModal({
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[65] flex items-end justify-center">
+        <div className="fixed inset-0 z-[70] flex items-end justify-center">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -498,7 +498,7 @@ export function FixedExpenseModal({
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   onClick={() => setShowFormDialog(false)}
-                  className="absolute inset-0 bg-black/45 backdrop-blur-xs"
+                  className="absolute inset-0 bg-[oklch(0.22_0.02_55/0.45)] backdrop-blur-md"
                 />
 
                 <motion.div

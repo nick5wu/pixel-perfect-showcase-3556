@@ -69,15 +69,15 @@ export function DatePicker({
             variant="ghost"
             aria-label="選擇日期"
             type="button"
-            className="bouncy neu flex h-10 min-w-0 flex-1 items-center gap-2 rounded-2xl px-3.5 text-xs font-bold transition-colors"
+            className="bouncy neu flex min-h-[48px] h-12 min-w-0 flex-1 items-center gap-2 rounded-2xl px-4 text-xs font-bold transition-colors"
           >
-            <CalendarHeart className="h-4 w-4 shrink-0 text-primary" />
+            <CalendarHeart className="h-4.5 w-4.5 shrink-0 text-primary" />
             <span className="truncate">{formatFriendly(value) || value}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent
           align="start"
-          className="planner-popup pointer-events-auto z-[90] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto"
+          className="planner-popup pointer-events-auto z-[95] max-h-[var(--radix-popover-content-available-height)] overflow-y-auto"
         >
           {showQuickPresets && (
             <div className="mb-5 flex items-center gap-3">
@@ -95,7 +95,7 @@ export function DatePicker({
                     onChange(key);
                     setOpen(false);
                   }}
-                  className="planner-preset bouncy h-10 rounded-full px-6 text-sm font-semibold"
+                  className="planner-preset bouncy min-h-[44px] h-11 rounded-full px-6 text-sm font-semibold active:scale-95"
                 >
                   {label}
                 </Button>
@@ -118,7 +118,7 @@ export function DatePicker({
           <Button
             type="button"
             onClick={() => setOpen(false)}
-            className="planner-complete bouncy w-full text-base font-bold text-primary-foreground"
+            className="planner-complete bouncy min-h-[48px] h-12 w-full text-base font-bold text-primary-foreground active:scale-95"
           >
             完成
           </Button>
@@ -134,7 +134,7 @@ export function DatePicker({
             type="button"
             onClick={() => onChange(todayKey)}
             className={cn(
-              "bouncy rounded-2xl px-3 py-2 text-xs font-bold transition-all",
+              "bouncy min-h-[48px] rounded-2xl px-3.5 py-2.5 text-xs font-bold transition-all active:scale-95",
               value === todayKey
                 ? "text-primary-foreground shadow-sm"
                 : "neu text-muted-foreground",
@@ -156,7 +156,7 @@ export function DatePicker({
             type="button"
             onClick={() => onChange(yesterdayKey)}
             className={cn(
-              "bouncy rounded-2xl px-3 py-2 text-xs font-bold transition-all",
+              "bouncy min-h-[48px] rounded-2xl px-3.5 py-2.5 text-xs font-bold transition-all active:scale-95",
               value === yesterdayKey
                 ? "text-primary-foreground shadow-sm"
                 : "neu text-muted-foreground",
