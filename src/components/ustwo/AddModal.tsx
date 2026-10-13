@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, CalendarDays, Lock, Users, X, Delete, Plus, Check, ImageOff } from "lucide-react";
+import { Camera, CalendarDays, Lock, Users, X, Delete, Plus, Check, ImageOff, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -102,7 +102,15 @@ export function AddModal({
   date: string;
   initialTxn?: Txn; // when set → edit mode
 }) {
-  const { activeUser, addTxn, updateTxn, categories, addCategory, removeCategory, coupleId } = useUsTwo();
+  const {
+    activeUser,
+    addTxn,
+    updateTxn,
+    categoryGroups,
+    resolveCat,
+    addSubCategory,
+    coupleId,
+  } = useUsTwo();
   const isEdit = !!initialTxn;
 
   useBodyScrollLock(open);
@@ -111,7 +119,17 @@ export function AddModal({
   // Date is directly taken from the current selected/today date, no complex picker here
   const [date, setDate] = useState(isEdit ? initialTxn.date : (defaultDate || todayStr()));
   const [kind, setKind] = useState<Kind>(isEdit ? initialTxn.kind : "expense");
-  const [category, setCategory] = useState<Category>(isEdit ? initialTxn.category : "breakfast");
+
+  const resolvedInit = initialTxn ? resolveCat(initialTxn.category, initialTxn.subCategory) : null;
+  const initialGroup =
+    resolvedInit?.group ||
+    categoryGroups.find((g) => g.kind === (initialTxn?.kind || "expense")) ||
+    categoryGroups[0];
+
+  const [selectedGroupId, setSelectedGroupId] = useState<string>(initialGroup?.id || "food");
+  const [selectedSubId, setSelectedSubId] = useState<string>(
+    resolvedInit?.sub?.id || initialGroup?.subCategories[0]?.id || "",
+  );
   const [note, setNote] = useState(isEdit ? initialTxn.note : "");
 
   // 1. Private First: Default is personal expense (isShared = false).
@@ -124,38 +142,70 @@ export function AddModal({
   const [photo, setPhoto] = useState<string | null>(isEdit ? (initialTxn.photo ?? null) : null);
   const resolvedPhoto = useResolvedPhoto(photo);
   const [photoLoading, setPhotoLoading] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newIcon, setNewIcon] = useState("sparkles");
-  const [newTint, setNewTint] = useState<string>("var(--cat-1)");
+  const [inlineAddingSub, setInlineAddingSub] = useState(false);
+  const [newSubName, setNewSubName] = useState("");
 
   const fileRef = useRef<HTMLInputElement>(null);
-  const list = categories.filter((c) => c.kind === kind);
 
-  // Sync date when defaultDate changes for add mode
+  // Sync state when open or initialTxn / defaultDate changes
   useEffect(() => {
-    if (!isEdit) setDate(defaultDate || todayStr());
-  }, [defaultDate, isEdit]);
+    if (open) {
+      if (initialTxn) {
+        const res = resolveCat(initialTxn.category, initialTxn.subCategory);
+        setSelectedGroupId(res.group.id);
+        setSelectedSubId(res.sub?.id || res.group.subCategories[0]?.id || "");
+        setAmount(String(initialTxn.amount));
+        setDate(initialTxn.date);
+        setKind(initialTxn.kind);
+        setNote(initialTxn.note);
+        setIsShared(!initialTxn.isPrivate);
+        setForPartnerAmount(initialTxn.forPartnerAmount ? String(initialTxn.forPartnerAmount) : "");
+        setPhoto(initialTxn.photo ?? null);
+      } else {
+        setAmount("");
+        setDate(defaultDate || todayStr());
+        const defGroup = categoryGroups.find((g) => g.kind === "expense") || categoryGroups[0];
+        if (defGroup) {
+          setSelectedGroupId(defGroup.id);
+          setSelectedSubId(defGroup.subCategories[0]?.id || "");
+        }
+        setKind("expense");
+        setNote("");
+        setIsShared(false);
+        setForPartnerAmount("");
+        setPhoto(null);
+      }
+      setInlineAddingSub(false);
+      setNewSubName("");
+    }
+  }, [open, initialTxn, defaultDate, categoryGroups, resolveCat]);
 
   const switchKind = (k: Kind) => {
     setKind(k);
-    setCategory(categories.find((c) => c.kind === k)?.id ?? "");
-    setCreating(false);
-    setEditing(false);
+    const firstGroup = categoryGroups.find((g) => g.kind === k) || categoryGroups[0];
+    if (firstGroup) {
+      setSelectedGroupId(firstGroup.id);
+      setSelectedSubId(firstGroup.subCategories[0]?.id || "");
+    }
+    setInlineAddingSub(false);
   };
 
-  const createCat = () => {
-    const zh = newName.trim();
+  const handleQuickAddSub = () => {
+    const zh = newSubName.trim();
     if (!zh) {
-      toast("幫細項取個名字吧 ✨");
+      toast("請填寫細項名稱 ✨");
       return;
     }
-    const def = addCategory({ zh, kind, icon: newIcon, tint: newTint });
-    setCategory(def.id);
-    setNewName("");
-    setCreating(false);
-    toast.success(`新增了「${zh}」`);
+    const newId = `sub_${Date.now().toString(36)}`;
+    const curGroup = categoryGroups.find((g) => g.id === selectedGroupId);
+    addSubCategory(selectedGroupId, {
+      id: newId,
+      zh,
+      icon: curGroup?.icon || "sparkles",
+    });
+    setSelectedSubId(newId);
+    setNewSubName("");
+    setInlineAddingSub(false);
   };
 
   const press = (k: string) => {
@@ -209,7 +259,8 @@ export function AddModal({
       date: date || todayStr(),
       amount: value,
       kind,
-      category,
+      category: selectedGroupId,
+      ...(selectedSubId ? { subCategory: selectedSubId } : {}),
       note: note.trim(),
       payer: isEdit ? initialTxn.payer : activeUser,
       isPrivate,
@@ -307,140 +358,149 @@ export function AddModal({
           ))}
         </div>
 
-        {/* Subcategories */}
-        <div className="mt-3 flex items-center justify-between px-1">
-          <p className="text-xs font-bold text-muted-foreground">選擇細項</p>
-          {list.some((c) => c.custom) && (
-            <button onClick={() => setEditing((e) => !e)} className="text-xs font-bold text-primary">
-              {editing ? "完成" : "編輯自訂"}
-            </button>
-          )}
-        </div>
-        <div className="mt-2 grid grid-cols-5 gap-2">
-          {list.map((c) => {
-            const Icon = iconOf(c);
-            const active = category === c.id;
-            return (
-              <div key={c.id} className="relative">
-                <button
-                  onClick={() => setCategory(c.id)}
-                  className="bouncy flex w-full flex-col items-center gap-1 rounded-2xl py-2 text-[10px] font-semibold"
-                  style={{
-                    backgroundColor: active ? `color-mix(in oklch, ${c.tint} 22%, white)` : "transparent",
-                    boxShadow: active ? "var(--shadow-soft)" : "none",
-                  }}
-                >
-                  <Stamp tint={c.tint}>
-                    <Icon
-                      className="h-[18px] w-[18px]"
-                      strokeWidth={2.2}
-                      style={{ color: `color-mix(in oklch, ${c.tint} 75%, black)` }}
-                    />
-                  </Stamp>
-                  <span className="w-full truncate px-0.5 text-center">{c.zh}</span>
-                </button>
-                {editing && c.custom && (
-                  <button
-                    aria-label={`刪除 ${c.zh}`}
-                    onClick={() => {
-                      removeCategory(c.id);
-                      if (category === c.id) setCategory(list[0]?.id ?? "");
-                    }}
-                    className="pop-in absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+        {/* Nested Categories Selection */}
+        {(() => {
+          const currentSelectedGroup = categoryGroups.find((g) => g.id === selectedGroupId);
+          const currentSelectedSub = currentSelectedGroup?.subCategories.find((s) => s.id === selectedSubId);
+
+          return (
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <p className="text-xs font-bold text-muted-foreground">選擇分類與細項</p>
+                {currentSelectedGroup && (
+                  <span className="text-[11px] font-extrabold text-primary">
+                    {currentSelectedGroup.zh}
+                    {currentSelectedSub ? ` · ${currentSelectedSub.zh}` : ""}
+                  </span>
                 )}
               </div>
-            );
-          })}
-          <button
-            onClick={() => setCreating((v) => !v)}
-            className="bouncy flex flex-col items-center gap-1 rounded-2xl py-2 text-[10px] font-semibold text-muted-foreground"
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-dashed border-border">
-              <Plus className="h-4 w-4" />
-            </span>
-            新增
-          </button>
-        </div>
 
-        {creating && (
-          <div className="glass pop-in mt-3 space-y-3 rounded-3xl p-4">
-            <div className="flex items-center gap-3">
-              <Stamp tint={newTint} big>
-                {(() => {
-                  const I = ICONS[newIcon] ?? Plus;
-                  return (
-                    <I
-                      className="h-5 w-5"
-                      strokeWidth={2.2}
-                      style={{ color: `color-mix(in oklch, ${newTint} 75%, black)` }}
-                    />
-                  );
-                })()}
-              </Stamp>
-              <input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value.slice(0, 6))}
-                placeholder={kind === "expense" ? "例如：健身房" : "例如：二手拍賣"}
-                className="h-11 flex-1 rounded-2xl neu-inset px-4 text-sm outline-none placeholder:text-muted-foreground"
-              />
-            </div>
-            <div className="flex justify-between items-center py-1">
-              {TINTS.map((t) => (
-                <button
-                  key={t}
-                  aria-label="選擇顏色"
-                  onClick={() => setNewTint(t)}
-                  className="bouncy flex h-9 w-9 items-center justify-center rounded-full active:scale-95"
-                  style={{
-                    backgroundColor: `color-mix(in oklch, ${t} 45%, white)`,
-                    boxShadow: newTint === t ? `0 0 0 2.5px ${t}` : "none",
-                  }}
-                >
-                  {newTint === t && (
-                    <Check
-                      className="h-4 w-4"
-                      style={{ color: `color-mix(in oklch, ${t} 70%, black)` }}
-                    />
+              {/* Main Categories 5-column grid */}
+              <div className="grid grid-cols-5 gap-1.5">
+                {categoryGroups
+                  .filter((g) => g.kind === kind)
+                  .map((g) => {
+                    const Icon = (g.icon && ICONS[g.icon]) || Sparkles;
+                    const active = selectedGroupId === g.id;
+                    return (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedGroupId(g.id);
+                          setSelectedSubId(g.subCategories[0]?.id || "");
+                          setInlineAddingSub(false);
+                        }}
+                        className="bouncy flex flex-col items-center gap-1 rounded-2xl py-2 text-[10px] font-semibold transition-all active:scale-95"
+                        style={{
+                          backgroundColor: active
+                            ? `color-mix(in oklch, ${g.tint} 22%, white)`
+                            : "transparent",
+                          boxShadow: active ? "var(--shadow-soft)" : "none",
+                        }}
+                      >
+                        <Stamp tint={g.tint}>
+                          <Icon
+                            className="h-[18px] w-[18px]"
+                            strokeWidth={2.2}
+                            style={{ color: `color-mix(in oklch, ${g.tint} 75%, black)` }}
+                          />
+                        </Stamp>
+                        <span
+                          className={cn(
+                            "w-full truncate px-0.5 text-center",
+                            active ? "font-bold text-foreground" : "text-muted-foreground",
+                          )}
+                        >
+                          {g.zh}
+                        </span>
+                      </button>
+                    );
+                  })}
+              </div>
+
+              {/* Subcategories Inset Tray */}
+              {currentSelectedGroup && currentSelectedGroup.subCategories.length > 0 && (
+                <div className="neu-inset rounded-2xl p-2.5 space-y-2">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-[10px] font-bold text-muted-foreground">
+                      {currentSelectedGroup.zh} · 細項選擇
+                    </span>
+                    {!inlineAddingSub && (
+                      <button
+                        type="button"
+                        onClick={() => setInlineAddingSub(true)}
+                        className="bouncy flex items-center gap-0.5 text-[10px] font-bold text-primary active:scale-95"
+                      >
+                        <Plus className="h-3 w-3" />
+                        自訂細項
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {currentSelectedGroup.subCategories.map((sub) => {
+                      const isSubActive = selectedSubId === sub.id;
+                      return (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          onClick={() => setSelectedSubId(sub.id)}
+                          className={cn(
+                            "bouncy rounded-full px-3 py-1 text-xs font-bold transition-all active:scale-95",
+                            isSubActive
+                              ? "text-primary-foreground shadow-xs font-black"
+                              : "bg-background/80 text-muted-foreground hover:text-foreground",
+                          )}
+                          style={
+                            isSubActive
+                              ? {
+                                  backgroundColor: currentSelectedGroup.tint,
+                                  boxShadow: "var(--shadow-soft)",
+                                }
+                              : undefined
+                          }
+                        >
+                          {sub.zh}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {inlineAddingSub && (
+                    <div className="flex items-center gap-1.5 pt-1">
+                      <input
+                        autoFocus
+                        value={newSubName}
+                        onChange={(e) => setNewSubName(e.target.value.slice(0, 8))}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleQuickAddSub();
+                          if (e.key === "Escape") setInlineAddingSub(false);
+                        }}
+                        placeholder="輸入新細項名稱..."
+                        className="h-8 flex-1 rounded-xl bg-background px-2.5 text-xs font-medium outline-none border border-border focus:border-primary"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleQuickAddSub}
+                        className="bouncy flex h-8 px-2.5 items-center justify-center rounded-xl bg-primary text-[11px] font-bold text-primary-foreground shadow active:scale-95"
+                      >
+                        加入
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInlineAddingSub(false)}
+                        className="bouncy flex h-8 px-2 items-center justify-center rounded-xl neu text-[11px] font-bold text-muted-foreground active:scale-95"
+                      >
+                        取消
+                      </button>
+                    </div>
                   )}
-                </button>
-              ))}
+                </div>
+              )}
             </div>
-            <div className="no-scrollbar grid max-h-36 grid-cols-8 gap-1.5 overflow-y-auto">
-              {Object.entries(ICONS).map(([key, I]) => (
-                <button
-                  key={key}
-                  aria-label={key}
-                  onClick={() => setNewIcon(key)}
-                  className="bouncy flex h-11 items-center justify-center rounded-xl active:scale-95"
-                  style={{
-                    backgroundColor: newIcon === key ? `color-mix(in oklch, ${newTint} 30%, white)` : "transparent",
-                  }}
-                >
-                  <I
-                    className="h-5 w-5"
-                    strokeWidth={2.2}
-                    style={{
-                      color:
-                        newIcon === key
-                          ? `color-mix(in oklch, ${newTint} 75%, black)`
-                          : "var(--muted-foreground)",
-                    }}
-                  />
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={createCat}
-              className="bouncy h-11 w-full rounded-2xl text-sm font-extrabold text-primary-foreground"
-              style={{ backgroundColor: "var(--caramel)", boxShadow: "var(--shadow-soft)" }}
-            >
-              新增細項
-            </button>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Numpad */}
         <div className="mt-3.5 grid grid-cols-3 gap-2">

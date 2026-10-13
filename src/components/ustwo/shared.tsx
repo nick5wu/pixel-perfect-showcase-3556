@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
-import { Lock, Pencil, Trash2, X } from "lucide-react";
-import { PEOPLE, money, iconOf, useUsTwo, type Txn } from "@/lib/ustwo";
+import { Lock, Pencil, Trash2, X, CalendarDays } from "lucide-react";
+import { PEOPLE, money, iconOf, ICONS, useUsTwo, type Txn } from "@/lib/ustwo";
 import { useResolvedPhoto } from "@/lib/photoStorage";
 import { cn } from "@/lib/utils";
 
@@ -81,9 +81,13 @@ export function TxnCard({
   onEdit?: (t: Txn) => void;
   index?: number;
 }) {
-  const { people, getCat, deleteTxn } = useUsTwo();
+  const { people, getCat, resolveCat, deleteTxn } = useUsTwo();
+  const resolved = resolveCat(t.category, t.subCategory);
   const cat = getCat(t.category);
-  const Icon = iconOf(cat);
+  const Icon = (resolved.sub?.icon && ICONS[resolved.sub.icon]) || iconOf(cat);
+  const displayCatLabel = resolved.sub
+    ? `${resolved.group.zh} · ${resolved.sub.zh}`
+    : cat.zh;
   const tilt = index % 2 === 0 ? "rotate-1" : "-rotate-1";
   const [confirming, setConfirming] = useState(false);
   const resolvedPhoto = useResolvedPhoto(t.photo);
@@ -157,15 +161,15 @@ export function TxnCard({
       >
         <span
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/60 shadow-xs"
-          style={{ backgroundColor: `color-mix(in oklch, ${cat.tint} 24%, white)` }}
+          style={{ backgroundColor: `color-mix(in oklch, ${resolved.group.tint} 24%, white)` }}
         >
-          <Icon className="h-5 w-5" style={{ color: `color-mix(in oklch, ${cat.tint} 80%, black)` }} />
+          <Icon className="h-5 w-5" style={{ color: `color-mix(in oklch, ${resolved.group.tint} 80%, black)` }} />
         </span>
 
         {/* 筆記與明細文字區 (解除按鈕佔位，獲得充裕橫向寬度，杜絕字體被擠壓為直排或折行) */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <p className="truncate text-[15px] font-bold text-foreground">{t.note || cat.zh}</p>
+            <p className="truncate text-[15px] font-bold text-foreground">{t.note || displayCatLabel}</p>
             {t.isPrivate ? (
               <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-semibold text-secondary-foreground">
                 <Lock className="h-2.5 w-2.5" /> 個人
@@ -173,6 +177,11 @@ export function TxnCard({
             ) : (
               <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
                 共同
+              </span>
+            )}
+            {t.subscriptionId && (
+              <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:text-blue-400">
+                <CalendarDays className="h-2.5 w-2.5" /> 固定
               </span>
             )}
             {t.forPartnerAmount && t.forPartnerAmount > 0 ? (
@@ -183,7 +192,7 @@ export function TxnCard({
           </div>
           <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap truncate">
             <span>{people[t.payer].emoji}</span>
-            <span>{people[t.payer].zh}付的 · {cat.zh}</span>
+            <span>{people[t.payer].zh}付的 · {displayCatLabel}</span>
           </p>
         </div>
 

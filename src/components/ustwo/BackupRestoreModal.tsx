@@ -12,7 +12,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Download, Upload, Check, AlertTriangle, ShieldCheck, Sparkles, X, FileJson, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
-import { useUsTwo, type Txn, type Goal, type CatDef, type UserId, type PersonProfile } from "@/lib/ustwo";
+import { useUsTwo, type Txn, type Goal, type CatDef, type UserId, type PersonProfile, type CategoryGroup, type FixedExpense } from "@/lib/ustwo";
 import { useFarmStore } from "@/store/useFarmStore";
 import { syncCurrentFarmToCloud } from "@/lib/farmSync";
 import { useBodyScrollLock } from "@/lib/utils";
@@ -24,6 +24,8 @@ export interface UsTwoBackupData {
   txns?: Txn[];
   goals?: Goal[];
   categories?: CatDef[];
+  categoryGroups?: CategoryGroup[];
+  fixedExpenses?: FixedExpense[];
   anniversary?: string;
   budget?: number;
   people?: Record<UserId, PersonProfile>;
@@ -59,6 +61,10 @@ export function BackupRestoreModal({
     setGoals,
     categories,
     setCategories,
+    categoryGroups,
+    setCategoryGroups,
+    fixedExpenses,
+    setFixedExpenses,
     setAnniversary,
     setBudget,
     setPerson,
@@ -103,11 +109,25 @@ export function BackupRestoreModal({
         setGoals([...goals, ...newGoals]);
       }
 
-      // 合併分類
+      // 合併傳統分類
       if (backupData.categories && backupData.categories.length > 0) {
         const existingCatIds = new Set(categories.map((c) => c.id));
         const newCats = backupData.categories.filter((c) => !existingCatIds.has(c.id));
         setCategories([...categories, ...newCats]);
+      }
+
+      // 合併主次大類別
+      if (backupData.categoryGroups && backupData.categoryGroups.length > 0) {
+        const existingGroupIds = new Set(categoryGroups.map((g) => g.id));
+        const newGroups = backupData.categoryGroups.filter((g) => !existingGroupIds.has(g.id));
+        setCategoryGroups([...categoryGroups, ...newGroups]);
+      }
+
+      // 合併固定支出
+      if (backupData.fixedExpenses && backupData.fixedExpenses.length > 0) {
+        const existingFixedIds = new Set(fixedExpenses.map((f) => f.id));
+        const newFixed = backupData.fixedExpenses.filter((f) => !existingFixedIds.has(f.id));
+        setFixedExpenses([...fixedExpenses, ...newFixed]);
       }
 
       // 合併農場：保留高等級與較高資產，聯集已解鎖造型
@@ -168,6 +188,12 @@ export function BackupRestoreModal({
       }
       if (backupData.categories) {
         setCategories(backupData.categories);
+      }
+      if (backupData.categoryGroups) {
+        setCategoryGroups(backupData.categoryGroups);
+      }
+      if (backupData.fixedExpenses) {
+        setFixedExpenses(backupData.fixedExpenses);
       }
       if (backupData.anniversary) {
         setAnniversary(backupData.anniversary);

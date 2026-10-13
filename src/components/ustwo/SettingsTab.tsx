@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Heart, Sparkles, Pencil, Check, X, Sun, Moon, Monitor, Download, Upload, Wallet, Cloud, FileJson, Lock, Unlock, KeyRound, ShieldCheck } from "lucide-react";
+import { Heart, Sparkles, Pencil, Check, X, Sun, Moon, Monitor, Download, Upload, Wallet, Cloud, FileJson, Lock, Unlock, KeyRound, ShieldCheck, Tag, CalendarDays } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { money, toKey, useUsTwo, type UserId, type DarkMode } from "@/lib/ustwo";
@@ -7,6 +7,8 @@ import { useFarmStore } from "@/store/useFarmStore";
 import { useVaultLock } from "@/lib/vaultLock";
 import { PinModal } from "./PinModal";
 import { BackupRestoreModal, type UsTwoBackupData } from "./BackupRestoreModal";
+import { CategorySettingsModal } from "./CategorySettingsModal";
+import { FixedExpenseModal } from "./FixedExpenseModal";
 import { Avatar, SectionTitle } from "./shared";
 import { WidgetPreview } from "./WidgetPreview";
 import { DatePicker } from "./DatePicker";
@@ -519,7 +521,17 @@ function csvEscape(v: string | number | boolean): string {
 }
 
 function ExportSection({ onImportClick }: { onImportClick: () => void }) {
-  const { txns, goals, categories, anniversary, budget, people, getCat } = useUsTwo();
+  const {
+    txns,
+    goals,
+    categories,
+    categoryGroups,
+    fixedExpenses,
+    anniversary,
+    budget,
+    people,
+    getCat,
+  } = useUsTwo();
 
   const exportCSV = () => {
     const rows = [
@@ -555,6 +567,8 @@ function ExportSection({ onImportClick }: { onImportClick: () => void }) {
       txns,
       goals,
       categories,
+      categoryGroups,
+      fixedExpenses,
       anniversary,
       budget,
       people,
@@ -668,10 +682,12 @@ function CloudSection({ onOpenCloud }: { onOpenCloud?: (() => void) | undefined 
 // ─── SettingsTab ──────────────────────────────────────────────────────────────
 
 export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
-  const { visible } = useUsTwo();
+  const { visible, categoryGroups, fixedExpenses } = useUsTwo();
   const [showWidget, setShowWidget] = useState(true);
   const [recap, setRecap] = useState<"month" | "year">("month");
   const [editingWho, setEditingWho] = useState<UserId | null>(null);
+  const [openCategorySettings, setOpenCategorySettings] = useState(false);
+  const [openFixedExpenses, setOpenFixedExpenses] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [backupModalData, setBackupModalData] = useState<UsTwoBackupData | null>(null);
@@ -742,6 +758,44 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
       {/* Budget */}
       <BudgetEditor />
 
+      {/* 模組一：財務核心管理 (主次類別 & 固定支出) */}
+      <section className="glass rounded-[2rem] p-5 space-y-3">
+        <SectionTitle zh="財務核心管理" en="Financial settings" />
+        <div className="grid grid-cols-2 gap-3">
+          {/* 記帳類別管理卡片 */}
+          <button
+            onClick={() => setOpenCategorySettings(true)}
+            className="bouncy flex flex-col items-start gap-2.5 rounded-3xl neu p-4 text-left transition-all active:scale-95 hover:shadow-md"
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-700 dark:text-amber-400">
+              <Tag className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-foreground">記帳類別管理</p>
+              <p className="text-[11px] font-semibold text-muted-foreground mt-0.5">
+                主次類別 · {categoryGroups.length} 個大類
+              </p>
+            </div>
+          </button>
+
+          {/* 固定支出與訂閱卡片 */}
+          <button
+            onClick={() => setOpenFixedExpenses(true)}
+            className="bouncy flex flex-col items-start gap-2.5 rounded-3xl neu p-4 text-left transition-all active:scale-95 hover:shadow-md"
+          >
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-700 dark:text-blue-400">
+              <CalendarDays className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-foreground">固定支出與訂閱</p>
+              <p className="text-[11px] font-semibold text-muted-foreground mt-0.5">
+                自動扣款 · {fixedExpenses.length} 個項目
+              </p>
+            </div>
+          </button>
+        </div>
+      </section>
+
       {/* Vault PIN Lock */}
       <VaultPinSection />
 
@@ -811,6 +865,18 @@ export function SettingsTab({ onOpenCloud }: { onOpenCloud?: () => void }) {
         open={Boolean(backupModalData)}
         backupData={backupModalData}
         onClose={() => setBackupModalData(null)}
+      />
+
+      {/* Category Settings Modal */}
+      <CategorySettingsModal
+        open={openCategorySettings}
+        onClose={() => setOpenCategorySettings(false)}
+      />
+
+      {/* Fixed Expenses Modal */}
+      <FixedExpenseModal
+        open={openFixedExpenses}
+        onClose={() => setOpenFixedExpenses(false)}
       />
     </div>
   );
