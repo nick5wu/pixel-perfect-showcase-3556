@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
+import { motion, useMotionValue, useTransform, AnimatePresence, type PanInfo } from "framer-motion";
 import { Lock, Pencil, Trash2, X, CalendarDays } from "lucide-react";
 import { PEOPLE, money, iconOf, ICONS, useUsTwo, type Txn } from "@/lib/ustwo";
 import { useResolvedPhoto } from "@/lib/photoStorage";
@@ -81,24 +81,45 @@ export function Lightbox({ src, onClose }: { src: string | null; onClose: () => 
   );
 }
 
-/** Confirm-delete overlay shown inline inside TxnCard */
+/** Confirm-delete overlay shown inline inside TxnCard with z-30 elevation */
 function DeleteConfirm({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
   return (
-    <div className="pop-in absolute inset-0 z-10 flex items-center justify-center gap-3 rounded-3xl bg-[oklch(0.97_0.015_78/0.94)] dark:bg-[oklch(0.24_0.018_55/0.95)] backdrop-blur-md px-3">
-      <p className="text-sm font-bold text-foreground">確定刪除這筆？</p>
-      <button
-        onClick={onConfirm}
-        className="bouncy flex min-h-[48px] items-center justify-center rounded-2xl bg-destructive px-5 py-2.5 text-xs font-black text-destructive-foreground shadow-sm active:scale-95"
-      >
-        刪除
-      </button>
-      <button
-        onClick={onCancel}
-        className="bouncy flex min-h-[48px] items-center justify-center rounded-2xl neu px-5 py-2.5 text-xs font-bold active:scale-95"
-      >
-        取消
-      </button>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ duration: 0.16 }}
+      className="absolute inset-0 z-30 flex items-center justify-between rounded-3xl bg-card border-2 border-destructive/25 shadow-lg px-4"
+    >
+      <div className="flex items-center gap-2">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-destructive/15 text-destructive">
+          <Trash2 className="h-5 w-5" />
+        </span>
+        <p className="text-sm font-bold text-foreground">確定刪除這筆花費？</p>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onConfirm();
+          }}
+          className="bouncy flex min-h-[44px] items-center justify-center rounded-2xl bg-destructive px-4 py-2 text-xs font-black text-destructive-foreground shadow-xs active:scale-95"
+        >
+          刪除
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCancel();
+          }}
+          className="bouncy flex min-h-[44px] items-center justify-center rounded-2xl neu px-4 py-2 text-xs font-bold text-foreground active:scale-95"
+        >
+          取消
+        </button>
+      </div>
+    </motion.div>
   );
 }
 
@@ -126,10 +147,17 @@ export function TxnCard({
 
   // Framer Motion 左右滑動位移監聽與閾值動態映射
   const x = useMotionValue(0);
-  const editOpacity = useTransform(x, [15, 75], [0.3, 1]);
-  const editScale = useTransform(x, [15, 75], [0.85, 1.1]);
-  const deleteOpacity = useTransform(x, [-15, -75], [0.3, 1]);
-  const deleteScale = useTransform(x, [-15, -75], [0.85, 1.1]);
+
+  // 底層背景僅在有實際拖曳時顯現，平時靜止時徹底透明 (opacity 0) 杜絕任何顏色或文字滲漏
+  const bgOpacity = useTransform(x, [-60, -15, 0, 15, 60], [1, 0, 0, 0, 1]);
+
+  // 右滑露出編輯：x <= 15 時透明度嚴格維持 0（向左滑動的所有負值均為 0，絕不會留在項目下面！）
+  const editOpacity = useTransform(x, [-10, 0, 15, 75], [0, 0, 0, 1]);
+  const editScale = useTransform(x, [-10, 0, 15, 75], [0.8, 0.8, 0.85, 1.05]);
+
+  // 左滑露出刪除：x >= -15 時透明度嚴格維持 0（向右滑動的所有正值均為 0，絕不會留在項目下面！）
+  const deleteOpacity = useTransform(x, [10, 0, -15, -75], [0, 0, 0, 1]);
+  const deleteScale = useTransform(x, [10, 0, -15, -75], [0.8, 0.8, 0.85, 1.05]);
 
   const SWIPE_THRESHOLD = 75; // 滑動臨界閾值 (超過 75px 觸發編輯或刪除)
 
@@ -143,20 +171,12 @@ export function TxnCard({
 
   return (
     <div className="relative overflow-hidden rounded-3xl select-none shadow-[var(--shadow-soft)]">
-      {/* 刪除確認彈窗 (內嵌提示) */}
-      {confirming && (
-        <DeleteConfirm
-          onCancel={() => setConfirming(false)}
-          onConfirm={() => {
-            deleteTxn(t.id);
-            setConfirming(false);
-          }}
-        />
-      )}
-
-      {/* 底層動作露出背景層 (Revealed Actions Layer) */}
-      <div className="absolute inset-0 flex items-center justify-between px-4 rounded-3xl bg-muted/60">
-        {/* 右滑露出：編輯動作 (Caramel 溫暖色調) */}
+      {/* 底層動作露出背景層 (Revealed Actions Layer) - 平時完全隱藏 (bgOpacity: 0)，僅在拖曳時顯現 */}
+      <motion.div
+        style={{ opacity: bgOpacity }}
+        className="pointer-events-none absolute inset-0 flex items-center justify-between px-4 rounded-3xl bg-muted/70"
+      >
+        {/* 右滑露出：編輯動作 (Caramel 溫暖色調) - 左滑時此處 opacity 嚴格為 0 */}
         <motion.div
           style={{ opacity: editOpacity, scale: editScale }}
           className="flex items-center gap-1.5 text-[var(--caramel)] font-black text-xs"
@@ -167,7 +187,7 @@ export function TxnCard({
           <span>編輯花費</span>
         </motion.div>
 
-        {/* 左滑露出：刪除動作 (Destructive 紅色調) */}
+        {/* 左滑露出：刪除動作 (Destructive 紅色調) - 右滑時此處 opacity 嚴格為 0 */}
         <motion.div
           style={{ opacity: deleteOpacity, scale: deleteScale }}
           className="flex items-center gap-1.5 text-destructive font-black text-xs ml-auto"
@@ -177,9 +197,9 @@ export function TxnCard({
             <Trash2 className="h-4.5 w-4.5 stroke-[2.5]" />
           </div>
         </motion.div>
-      </div>
+      </motion.div>
 
-      {/* 上層卡片本體：支援 X 軸手勢拖曳，垂直滾動鎖定 (touchAction: pan-y, dragDirectionLock) */}
+      {/* 上層卡片本體：支援 X 軸手勢拖曳，垂直滾動鎖定；點擊直接開啟編輯；實心卡片表面杜絕透底 */}
       <motion.div
         drag="x"
         dragDirectionLock
@@ -189,7 +209,12 @@ export function TxnCard({
         animate={{ x: 0 }}
         transition={{ type: "spring", stiffness: 450, damping: 32 }}
         style={{ x, touchAction: "pan-y" }}
-        className="glass pop-in relative z-10 flex items-center gap-3 rounded-3xl p-3 bg-card/95 border border-white/60 dark:border-white/10"
+        onTap={() => {
+          if (!confirming && onEdit) {
+            onEdit(t);
+          }
+        }}
+        className="pop-in relative z-10 flex items-center gap-3 rounded-3xl p-3 bg-card border border-white/60 dark:border-white/10 cursor-pointer active:scale-[0.99] transition-transform"
       >
         <span
           className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/60 shadow-xs"
@@ -198,7 +223,7 @@ export function TxnCard({
           <Icon className="h-5 w-5" style={{ color: `color-mix(in oklch, ${resolved.group.tint} 80%, black)` }} />
         </span>
 
-        {/* 筆記與明細文字區 (解除按鈕佔位，獲得充裕橫向寬度，杜絕字體被擠壓為直排或折行) */}
+        {/* 筆記與明細文字區 */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 flex-wrap">
             <p className="truncate text-[15px] font-bold text-foreground">{t.note || displayCatLabel}</p>
@@ -235,6 +260,7 @@ export function TxnCard({
         {/* 拍立得照片縮圖 */}
         {t.photo && (
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               onPhoto?.(t.photo!);
@@ -259,6 +285,19 @@ export function TxnCard({
           {money(t.amount)}
         </p>
       </motion.div>
+
+      {/* 刪除確認彈窗 (內嵌提示：置頂於最上層 z-30，絕不被卡片或動作遮擋) */}
+      <AnimatePresence>
+        {confirming && (
+          <DeleteConfirm
+            onCancel={() => setConfirming(false)}
+            onConfirm={() => {
+              deleteTxn(t.id);
+              setConfirming(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

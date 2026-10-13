@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, CalendarDays, Lock, Users, X, Delete, Plus, Check, ImageOff, Sparkles } from "lucide-react";
+import { Camera, CalendarDays, Lock, Users, X, Delete, Plus, Check, ImageOff, Sparkles, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -110,6 +110,7 @@ export function AddModal({
     resolveCat,
     addSubCategory,
     coupleId,
+    deleteTxn,
   } = useUsTwo();
   const isEdit = !!initialTxn;
 
@@ -683,6 +684,24 @@ export function AddModal({
         >
           {isEdit ? "儲存修改 ✏️" : "記下來 🧡"}
         </button>
+
+        {/* Delete button (Edit mode only) */}
+        {isEdit && initialTxn && (
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm("確定要刪除這筆花費紀錄嗎？")) {
+                deleteTxn(initialTxn.id);
+                toast.success("已成功刪除記帳紀錄");
+                onClose();
+              }
+            }}
+            className="bouncy mt-2.5 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-destructive/10 text-destructive text-sm font-bold active:scale-95 transition-colors hover:bg-destructive/15"
+          >
+            <Trash2 className="h-4 w-4" />
+            刪除這筆記帳
+          </button>
+        )}
       </motion.div>
     </div>
       )}
